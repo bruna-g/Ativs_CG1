@@ -8,11 +8,12 @@ int main(){
     float hJanela = 5.0;
     float dJanela = 2.0;
 
+    Point Po(0,0,0);
 
     float rEsfera = 3.0;
+    Point centroEsfera(0,0,-(dJanela + rEsfera));
     int nCol = 15;
     int nLin = 15;
-    Point centroEsfera(0,0,-(dJanela + rEsfera));
 
     vector<vector<int>> matCanvas(nLin, vector<int>(nCol,0));
 
@@ -27,6 +28,15 @@ int main(){
         int y = -hJanela/2 -Dy/2 -l*Dx; 
         for (int c=0; c<nCol; c++){
             int x = -wJanela/2 +Dx/2 +c*Dx;
+            Point Pj(x,y,z);
+
+            Vector dr = calcula_dr(Po, Pj);
+
+            Vector w = subtrai_pontos(Po, centroEsfera);
+
+            int a = 
+
+            
 
         }
     }
@@ -67,13 +77,13 @@ class Vector{
 // };
 
 
-Vector subtrai_vetores(Vector&  p1, Vector&  p2){
-    Vector sub(p1.i - p2.i, p1.j - p2.j, p1.k - p2.k);
+Vector subtrai_pontos(Point&  p1, Point&  p2){
+    Vector sub(p1.x- p2.x, p1.y - p2.y, p1.z - p2.z);
     return sub;
 }
 
-Vector calcula_dr(Vector& Po, Vector& Pj){
-    Vector Dr = subtrai_vetores(Pj, Po);
+Vector calcula_dr(Point& Po, Point& Pj){
+    Vector Dr = subtrai_pontos(Po, Pj);
     int drNorma = calcula_norma(Dr);
     Vector dr(Dr.i/drNorma, Dr.j/drNorma, Dr.k/drNorma);
     return dr;
