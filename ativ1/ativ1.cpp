@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <cmath>
 using namespace std;
 
 int main(){
@@ -7,9 +8,11 @@ int main(){
     float hJanela = 5.0;
     float dJanela = 2.0;
 
+
     float rEsfera = 3.0;
     int nCol = 15;
     int nLin = 15;
+    Point centroEsfera(0,0,-(dJanela + rEsfera));
 
     vector<vector<int>> matCanvas(nLin, vector<int>(nCol,0));
 
@@ -30,57 +33,54 @@ int main(){
     return 0;
 }
 
-class Esfera{
-    private:
-        int centro[3];
-        int raio;
-//        int p[3];
+class Point{
     public:
-        Esfera(int centro_esf[3], int raio_esf){
-            centro[0] = centro_esf[0];
-            centro[1] = centro_esf[1];
-            centro[2] = centro_esf[2];
-            raio = raio_esf;
-        }
-
-        int* getCentro() {return centro;}
-        int getRaio() {return raio;}
-
-        bool intersecta(Raio (int p0[3], int pj[3]), Esfera(int centro[3], int raio)){
-
-            return true;
-        }
+    int x, y, z, p;
+    Point(int x_p, int y_p, int z_p){
+        x = x_p;
+        y = y_p;
+        z = z_p;
+        p = 1;
+    }
 };
 
-class Raio{
-    private:
-        int Po[3]; 
-        int Pj[3];
+class Vector{
     public:
-        Raio(int ponto_inicial[3], int ponto_final[3]){
-            Po[0] = ponto_inicial[0];
-            Po[1] = ponto_inicial[1];
-            Po[2] = ponto_inicial[2];
-            Pj[0] = ponto_final[0];
-            Pj[1] = ponto_final[1];
-            Pj[2] = ponto_final[2];
-        }
-        int* getPo() {return Po;}
-        int* getPj() {return Pj;}
-        int* getDr(int Po[3], int Pj[3]){
-            int Dr[3];
-            Dr[0] = Pj[0] - Po[0];
-            Dr[1] = Pj[1] - Po[1];
-            Dr[2] = Pj[2] - Po[2];
-            return Dr;
-        }
-
+    int i, j, k, q;
+    Vector(int i_v, int j_v, int k_v){
+        i = i_v;
+        j = j_v;
+        k = k_v;
+        q = 0;
+    }
 };
 
-vector<int> substrai(int p1[3], int p2[3]){
-    vector<int> sub[3];
-    sub[0] = p1[0] - p2[0];
-    sub[1] = p1[1] - p2[1];
-    sub[2] = p1[2] - p2[2];
+// class Esfera{
+//     public:
+//     Vector centro;
+//     int raio;
+//     Esfera(Vector& centro_esf, int& raio_esf)
+//         : centro(centro_esf), raio(raio_esf) {}
+
+//     Vector getCentro() { return centro; }
+//     int getRaio() { return raio; }
+// };
+
+
+Vector subtrai_vetores(Vector&  p1, Vector&  p2){
+    Vector sub(p1.i - p2.i, p1.j - p2.j, p1.k - p2.k);
     return sub;
 }
+
+Vector calcula_dr(Vector& Po, Vector& Pj){
+    Vector Dr = subtrai_vetores(Pj, Po);
+    int drNorma = calcula_norma(Dr);
+    Vector dr(Dr.i/drNorma, Dr.j/drNorma, Dr.k/drNorma);
+    return dr;
+}
+
+int calcula_norma(Vector& v){
+    return sqrt(v.i*v.i + v.j*v.j + v.k*v.k);
+}
+
+
