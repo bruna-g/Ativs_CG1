@@ -1,2 +1,2 @@
-Para compilar: g++ ativ1.cpp -o esfera -lnetpbm
+Para compilar: g++ ativ1.cpp -o esfera
 Para executar: ./esfera

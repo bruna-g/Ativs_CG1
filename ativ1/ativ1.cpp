@@ -1,7 +1,6 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
-#include <netpbm/pam.h>
 #include <iostream>
 #include <fstream>
 using namespace std;
@@ -57,7 +56,7 @@ int main(){
 
     Point Po(0,0,0);
 
-    float rEsfera = 1.0;
+    float rEsfera = 5.0;
     Point centroEsfera(0,0,-(dJanela));
     int nCol = 500;
     int nLin = 500;
@@ -68,9 +67,8 @@ int main(){
 
     float z = -dJanela;
 
-    pixval maxval = 255;
-    pm_init("esfera", 0);
-    pixel **pixels = ppm_allocarray(nCol, nLin);
+    std::ofstream img("esfera.ppm");
+    img << "P3\n" << nCol << " " << nLin << "\n255\n";
     
     for (int l=0; l<nLin; l++){ 
         float y = hJanela/2 -Dy/2 -l*Dy; 
@@ -89,18 +87,14 @@ int main(){
             float delta = b_delta*b_delta - 4*a_delta*c_delta;
 
             if (delta >= 0) {
-                PPM_ASSIGN(pixels[l][c], 255, 0, 0);
+                img << "255 0 0 ";
             } else {
-                PPM_ASSIGN(pixels[l][c], 100,100,100);
+                img << "100 100 100 ";
             }
         }
+        img << "\n";
     }
-    FILE *fp = fopen("esfera.ppm", "wb");
-    ppm_writeppm(fp, pixels, nCol, nLin, maxval, 0);
-    fclose(fp);
-
-    ppm_freearray(pixels, nLin);
-
+    img.close();
     std::cout << "Imagem gerada: esfera.ppm\n";
     return 0;
 }
