@@ -47,43 +47,49 @@ public:
 
 float wJanela = 60.0f;
 float hJanela = 60.0f;
-int dJanela = 30;
-
-Point Po(0.f, 0.f, 0.f);
-
-float rEsfera = 40.0f;
-Point centroEsfera(0.f, 0.f, -100.f);
 int nCol = 500;
 int nLin = 500;
 
-
-float Dx = wJanela / nCol;
-float Dy = hJanela / nLin;
-
+float dJanela = 30.0f;
 float z = -dJanela;
 
-Color I_F(0.7f, 0.7f, 0.7f); // Intensidade da luz (branca)
-Point P_F(0.f, 60.f, -30.f);    // Posição da fonte de luz
+float rEsfera = 40.0f;
+Point centroEsfera(0.f, 0.f, -100.f);
+
+//esfera
 Color K_e(0.7f, 0.2f, 0.2f);  // Material com canal vermelho
 float m_e = 10.0f;            // Expoente especular
 
-Point P_pi_chao(0, -(rEsfera), 0);
-Vector n_chao(0, 1, 0);
+//chão
+Point P_pi_chao(0.f, -(rEsfera), 0.f);
+Vector n_chao(0.f, 1.0f, 0.f);
 Plano plano_chao(P_pi_chao, n_chao);
 
 Color KC_d(0.2f, 0.7f, 0.2f);
 Color KC_e(0.0f, 0.0f, 0.0f);
 float m_c = 1.0f;
 
-Point P_pi_fundo(0, 0, -200.f);
-Vector n_fundo(0, 0, 1);
+//fundo
+Point P_pi_fundo(0.f, 0.f, -200.f);
+Vector n_fundo(0.f, 0.f, 1.0f);
 Plano plano_fundo(P_pi_fundo, n_fundo);
 
 Color KF_d(0.3f, 0.3f, 0.7f);
 Color KF_e(0.0f, 0.0f, 0.0f);
 float m_f = 1.0f;
 
+//fonte luminosa
+Color I_F(0.7f, 0.7f, 0.7f); // Intensidade da luz (branca)
+Point P_F(0.f, 60.f, -30.f);    // Posição da fonte de luz
+
+//luz ambiente
 Color I_A(0.3f, 0.3f, 0.3f); // Intensidade da luz ambiente
+
+float Dx = wJanela / nCol;
+float Dy = hJanela / nLin;
+
+Point Po(0.f, 0.f, 0.f);
+
 
 // Utilitário simples para limitar valores no intervalo [0,1]
 static inline float lidarExcecao(float v) {
@@ -244,6 +250,7 @@ int main() {
     for (int l = 0; l < nLin; l++) {
         float y = hJanela / 2 - Dy / 2 - l * Dy;
         for (int c = 0; c < nCol; c++) {
+            //Verifica interseção com a esfera
             float x = -wJanela / 2 + Dx / 2 + c * Dx;
             Point Pj(x, y, z);
 
@@ -266,6 +273,7 @@ int main() {
             else if (t1 > 0.0f) t = t1;
             else if (t2 > 0.0f) t = t2;
 
+            // Verifica interseção com os planos
             Vector dr_p = calcula_dr(Po, Pj);
             Vector w_p_c = subtrai_pontos(Po, plano_chao.p_pi);
             float ti_c = calcula_prod_esc(calcula_esc_por_vetor(-1, w_p_c), plano_chao.n) / calcula_prod_esc(dr_p, plano_chao.n);
