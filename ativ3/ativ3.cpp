@@ -143,38 +143,45 @@ Point calcula_eq_ray(Point Po, float t, Vector dr) {
     return Pi;
 }
 
-Color calculaPlano_chao(Point Pj) {
-    Vector dr_p = calcula_dr(Po, Pj);
-    Vector w_p = subtrai_pontos(Po, plano_chao.p_pi);
-    float ti = calcula_prod_esc(calcula_esc_por_vetor(-1, w_p), plano_chao.n) / calcula_prod_esc(dr_p, plano_chao.n);
-    Point Pi = calcula_eq_ray(Po, ti, dr_p);
+float calcula_t_plano(Vector w, Vector n, Vector dr){
+    float result = calcula_prod_esc(calcula_esc_por_vetor(-1, w), n)/calcula_prod_esc(dr,n);
+    return result; 
+}
+
+Color calcula_Plano(Plano P, Vector dr, Color K_e, Color K_d){
+    bool naSombra = false;
+    
+    // descobrir ponto Pi no plano a partir do raio que sai do olho do observador
+    Vector w = subtrai_pontos(Po, P.p_pi);
+    float ti = calcula_t_plano(w, P.n, dr);
+    Point Pi = calcula_eq_ray(Po, ti, dr);
 
     // Verifica sombra: lança um raio de Pi em direção à fonte de luz e checa interseção com a esfera
-    Vector l_p = calcula_l(P_F, Pi);
+    Vector l = calcula_l(P_F, Pi);
     // origem levemente deslocada para evitar auto-interseção
-    Point shadowOrigin(Pi.x + l_p.i * 1e-4f, Pi.y + l_p.j * 1e-4f, Pi.z + l_p.k * 1e-4f);
-    Vector shadowDir = l_p;
-    // coeficientes da equação quadrática para interseção shadowOrigin + s*shadowDir com a esfera
-    Vector wo = subtrai_pontos(shadowOrigin, centroEsfera);
-    float a_s = calcula_prod_esc(shadowDir, shadowDir);
-    float b_s = 2.0f * calcula_prod_esc(shadowDir, wo);
-    float c_s = calcula_prod_esc(wo, wo) - rEsfera * rEsfera;
-    float delta_s = b_s * b_s - 4.0f * a_s * c_s;
-    bool inShadow = false;
-    if (delta_s > 0.0f) {
-        float s1 = (-b_s - sqrt(delta_s)) / (2.0f * a_s);
-        float s2 = (-b_s + sqrt(delta_s)) / (2.0f * a_s);
+    Point Pi_mod(Pi.x + l.i * 1e-4f, Pi.y + l.j * 1e-4f, Pi.z + l.k * 1e-4f); 
+
+    Vector w_sombra = subtrai_pontos(Pi_mod, centroEsfera);
+    float a_delta = calcula_prod_esc(l, l);
+    float b_delta = 2.0f * calcula_prod_esc(l, w_sombra);
+    float c_delta = calcula_prod_esc(w_sombra, w_sombra) - rEsfera * rEsfera;
+
+    float delta = b_delta * b_delta - 4.0f * a_delta * c_delta;
+    
+    if (delta > 0.f){
+        float s1 = (-b_delta - sqrt(delta)) / (2.0f * a_delta);
+        float s2 = (-b_delta + sqrt(delta)) / (2.0f * a_delta);
         // se houver interseção positiva antes da fonte (s entre 0 e distância até a luz), ponto está em sombra
-        float distToLight = calcula_norma(subtrai_pontos(P_F, shadowOrigin));
-        if ((s1 > 1e-6f && s1 < distToLight) || (s2 > 1e-6f && s2 < distToLight)) inShadow = true;
+        float dist_Pi_Luz = calcula_norma(subtrai_pontos(P_F, Pi_mod));
+        if ((s1 > 1e-4f && s1 < dist_Pi_Luz) || (s2 > 1e-4f && s2 < dist_Pi_Luz)) naSombra = true;
     }
+    
+    Vector v = Vector(-dr.i, -dr.j, -dr.k);
+    Vector r1 = calcula_esc_por_vetor(2.0f, calcula_esc_por_vetor(calcula_prod_esc(P.n, l), P.n));
+    Vector r(r1.i - l.i, r1.j - l.j, r1.k - l.k);
 
-    Vector v = Vector(-dr_p.i, -dr_p.j, -dr_p.k);
-    Vector r1 = calcula_esc_por_vetor(2.0f, calcula_esc_por_vetor(calcula_prod_esc(plano_chao.n, l_p), plano_chao.n));
-    Vector r(r1.i - l_p.i, r1.j - l_p.j, r1.k - l_p.k);
-
-    Color Ia(I_A.r * KC_d.r, I_A.g * KC_d.g, I_A.b * KC_d.b);
-    if (inShadow) {
+    Color Ia(I_A.r * K_d.r, I_A.g * K_d.g, I_A.b * K_d.b);
+    if (naSombra) {
         // Apenas componente ambiente
         Color I(lidarExcecao(Ia.r), lidarExcecao(Ia.g), lidarExcecao(Ia.b));
         int R = static_cast<int>(roundf(I.r * 255.0f));
@@ -183,65 +190,19 @@ Color calculaPlano_chao(Point Pj) {
         return Color(R, G, B);
     }
 
-    float fd = lidarExcecao(calcula_prod_esc(plano_chao.n, l_p));
+    float fd = lidarExcecao(calcula_prod_esc(P.n, l));
     float cosAlpha = lidarExcecao(calcula_prod_esc(r, v));
     float fe = pow(cosAlpha, m_c);
-    Color Id(I_F.r * KC_d.r * fd, I_F.g * KC_d.g * fd, I_F.b * KC_d.b * fd);
-    Color Ie(I_F.r * KC_e.r * fe, I_F.g * KC_e.g * fe, I_F.b * KC_e.b * fe);
+    Color Id(I_F.r * K_d.r * fd, I_F.g * K_d.g * fd, I_F.b * K_d.b * fd);
+    Color Ie(I_F.r * K_e.r * fe, I_F.g * K_e.g * fe, I_F.b * K_e.b * fe);
     Color I(lidarExcecao(Id.r + Ie.r + Ia.r), lidarExcecao(Id.g + Ie.g + Ia.g), lidarExcecao(Id.b + Ie.b + Ia.b));
     int R = static_cast<int>(roundf(I.r * 255.0f));
     int G = static_cast<int>(roundf(I.g * 255.0f));
     int B = static_cast<int>(roundf(I.b * 255.0f));
     return Color(R, G, B);
+
 }
 
-Color calculaPlano_fundo(Point Pj) {
-    Vector dr_p = calcula_dr(Po, Pj);
-    Vector w_p = subtrai_pontos(Po, plano_fundo.p_pi);
-    float ti = calcula_prod_esc(calcula_esc_por_vetor(-1, w_p), plano_fundo.n) / calcula_prod_esc(dr_p, plano_fundo.n);
-    Point Pi = calcula_eq_ray(Po, ti, dr_p);
-
-    // Verifica sombra: lança um raio de Pi em direção à fonte de luz e checa interseção com a esfera
-    Vector l_p = calcula_l(P_F, Pi);
-    Point shadowOrigin(Pi.x + l_p.i * 1e-4f, Pi.y + l_p.j * 1e-4f, Pi.z + l_p.k * 1e-4f);
-    Vector shadowDir = l_p;
-    Vector wo = subtrai_pontos(shadowOrigin, centroEsfera);
-    float a_s = calcula_prod_esc(shadowDir, shadowDir);
-    float b_s = 2.0f * calcula_prod_esc(shadowDir, wo);
-    float c_s = calcula_prod_esc(wo, wo) - rEsfera * rEsfera;
-    float delta_s = b_s * b_s - 4.0f * a_s * c_s;
-    bool inShadow = false;
-    if (delta_s > 0.0f) {
-        float s1 = (-b_s - sqrt(delta_s)) / (2.0f * a_s);
-        float s2 = (-b_s + sqrt(delta_s)) / (2.0f * a_s);
-        float distToLight = calcula_norma(subtrai_pontos(P_F, shadowOrigin));
-        if ((s1 > 1e-6f && s1 < distToLight) || (s2 > 1e-6f && s2 < distToLight)) inShadow = true;
-    }
-
-    Vector v = Vector(-dr_p.i, -dr_p.j, -dr_p.k);
-    Vector r1 = calcula_esc_por_vetor(2.0f, calcula_esc_por_vetor(calcula_prod_esc(plano_fundo.n, l_p), plano_fundo.n));
-    Vector r(r1.i - l_p.i, r1.j - l_p.j, r1.k - l_p.k);
-
-    Color Ia(I_A.r * KF_d.r, I_A.g * KF_d.g, I_A.b * KF_d.b);
-    if (inShadow) {
-        Color I(lidarExcecao(Ia.r), lidarExcecao(Ia.g), lidarExcecao(Ia.b));
-        int R = static_cast<int>(roundf(I.r * 255.0f));
-        int G = static_cast<int>(roundf(I.g * 255.0f));
-        int B = static_cast<int>(roundf(I.b * 255.0f));
-        return Color(R, G, B);
-    }
-
-    float fd = lidarExcecao(calcula_prod_esc(plano_fundo.n, l_p));
-    float cosAlpha = lidarExcecao(calcula_prod_esc(r, v));
-    float fe = std::max(pow(cosAlpha, m_f), 0.0f);
-    Color Id(I_F.r * KF_d.r * fd, I_F.g * KF_d.g * fd, I_F.b * KF_d.b * fd);
-    Color Ie(I_F.r * KF_e.r * fe, I_F.g * KF_e.g * fe, I_F.b * KF_e.b * fe);
-    Color I(lidarExcecao(Id.r + Ie.r + Ia.r), lidarExcecao(Id.g + Ie.g + Ia.g), lidarExcecao(Id.b + Ie.b + Ia.b));
-    int R = static_cast<int>(roundf(I.r * 255.0f));
-    int G = static_cast<int>(roundf(I.g * 255.0f));
-    int B = static_cast<int>(roundf(I.b * 255.0f));
-    return Color(R, G, B);
-}
 
 int main() {
     std::ofstream img("esfera.ppm");
@@ -250,7 +211,6 @@ int main() {
     for (int l = 0; l < nLin; l++) {
         float y = hJanela / 2 - Dy / 2 - l * Dy;
         for (int c = 0; c < nCol; c++) {
-            //Verifica interseção com a esfera
             float x = -wJanela / 2 + Dx / 2 + c * Dx;
             Point Pj(x, y, z);
 
@@ -274,22 +234,25 @@ int main() {
             else if (t2 > 0.0f) t = t2;
 
             // Verifica interseção com os planos
-            Vector dr_p = calcula_dr(Po, Pj);
-            Vector w_p_c = subtrai_pontos(Po, plano_chao.p_pi);
-            float ti_c = calcula_prod_esc(calcula_esc_por_vetor(-1, w_p_c), plano_chao.n) / calcula_prod_esc(dr_p, plano_chao.n);
-            Vector w_p_f = subtrai_pontos(Po, plano_fundo.p_pi);
-            float ti_f = calcula_prod_esc(calcula_esc_por_vetor(-1, w_p_f), plano_fundo.n) / calcula_prod_esc(dr_p, plano_fundo.n);
+            Vector w_p_c = subtrai_pontos(Po, plano_chao.p_pi); // w do chão
+            float ti_c = calcula_t_plano(w_p_c, plano_chao.n, dr_e); // ti do chão
+            
+            Vector w_p_f = subtrai_pontos(Po, plano_fundo.p_pi); // w do plano de fundo
+            float ti_f = calcula_t_plano(w_p_f, plano_fundo.n, dr_e); // ti do plano de fundo
+
             if (ti_c > 0.0f && (ti_c < t || t < 0.0f)) t = ti_c;
             if (ti_f > 0.0f && (ti_f < t || t < 0.0f)) t = ti_f;
 
-
+            //se interceptar fundo primeiro
             if (ti_f == t) {
-                Color cor_plano = calculaPlano_fundo(Pj);
+                //Color cor_plano = calculaPlano_fundo(Pj);
+                Color cor_plano = calcula_Plano(plano_fundo, dr_e, KF_e, KF_d);
                 img << static_cast<int>(cor_plano.r) << ' ' << static_cast<int>(cor_plano.g) << ' ' << static_cast<int>(cor_plano.b) << ' ';
                 continue;
-            }
+            } //se interceptar o chão primeiro
             else if (ti_c == t) {
-                Color cor_plano = calculaPlano_chao(Pj);
+                //Color cor_plano = calculaPlano_chao(Pj);
+                Color cor_plano = calcula_Plano(plano_chao, dr_e, KC_e, KC_d);
                 img << static_cast<int>(cor_plano.r) << ' ' << static_cast<int>(cor_plano.g) << ' ' << static_cast<int>(cor_plano.b) << ' ';
                 continue;
             }
@@ -298,7 +261,7 @@ int main() {
                 continue;
             }
 
-
+            // esfera
             Point Pi = calcula_eq_ray(Po, t, dr_e);
             Vector n = calcula_n(Pi, centroEsfera, rEsfera);
             Vector X(-dr_e.i, -dr_e.j, -dr_e.k);
