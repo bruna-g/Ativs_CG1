@@ -100,14 +100,15 @@ Point P_F(0.f, 60.f, -30.f);    // Posição da fonte de luz
 Color I_A(0.3f, 0.3f, 0.3f); // Intensidade da luz ambiente
 
 //cilindro
-float raio_cil = rEsfera/3;
-float altura_cil = 3*rEsfera;
-Vector dc(1/sqrt(3), 1/sqrt(3), -1/sqrt(3));
-Cilindro cilindro(centroEsfera, raio_cil, altura_cil, dc);
+Point centroCilindro = centroEsfera;
+float raio_cil = rEsfera/3.0f;
+float altura_cil = 3.0f*rEsfera;
+Vector dc(-1.0f/sqrt(3.0f), 1.0f/sqrt(3.0f), -1.0f/sqrt(3.0f));
+Cilindro cilindro(centroCilindro, raio_cil, altura_cil, dc);
 
-Color KCil_d(0.2, 0.3, 0.8);
-Color KCil_e(0.2, 0.3, 0.8);
-Color KCil_a(0.2, 0.3, 0.8);
+Color KCil_d(0.2f, 0.3f, 0.8f);
+Color KCil_e(0.2f, 0.3f, 0.8f);
+Color KCil_a(0.2f, 0.3f, 0.8f);
 
 
 // Utilitário simples para limitar valores no intervalo [0,1]
@@ -120,6 +121,11 @@ static inline float lidarExcecao(float v) {
 
 Vector subtrai_pontos(Point& p1, Point& p2) {
     Vector sub(p1.x - p2.x, p1.y - p2.y, p1.z - p2.z);
+    return sub;
+}
+
+Vector subtrai_vetores(Vector& v1, Vector& v2){
+    Vector sub(v1.i - v2.i, v1.j - v2.j, v1.k - v2.k);
     return sub;
 }
 
@@ -162,13 +168,61 @@ Point calcula_eq_ray(Point Po, float t, Vector dr) {
     return Pi;
 }
 
+Vector calcula_n_cilindro(Point P, Cilindro cilindro) {
+    Vector P_B = subtrai_pontos(P, cilindro.cb);
+    float P_B_u = calcula_prod_esc(P_B, cilindro.dc);
+    Vector P_B_u_u = calcula_esc_por_vetor(P_B_u, cilindro.dc);
+    Vector n = subtrai_vetores(P_B, P_B_u_u);
+    float norma = calcula_norma(n);
+    return Vector(n.i/norma, n.j/norma, n.k/norma);
+}
+
 float calcula_t_plano(Vector w, Vector n, Vector dr){
     float result = calcula_prod_esc(calcula_esc_por_vetor(-1, w), n)/calcula_prod_esc(dr,n);
     return result; 
 }
 
+float calcula_t_Cilindro(Cilindro cilindro, Vector dr, Point Po){
+    Vector Po_B = subtrai_pontos(Po, cilindro.cb);
+    Vector Po_B_u_u = calcula_esc_por_vetor(calcula_prod_esc(Po_B, cilindro.dc),cilindro.dc);
+    Vector v = subtrai_vetores(Po_B, Po_B_u_u);
+
+    Vector d_u_u = calcula_esc_por_vetor(calcula_prod_esc(dr, cilindro.dc), cilindro.dc);
+    Vector w = subtrai_vetores(dr, d_u_u);
+
+    float a_delta = calcula_prod_esc(w,w);
+    float b_delta = calcula_prod_esc(v,w);
+    float c_delta = calcula_prod_esc(v,v) - cilindro.raio*cilindro.raio;
+
+    float delta = b_delta*b_delta - a_delta*c_delta;
+    if(delta >= 0){
+        float t1 = (-b_delta + sqrt(delta))/(a_delta);
+        float t2 = (-b_delta - sqrt(delta))/(a_delta);
+
+        Point P1 = calcula_eq_ray(Po, t1, dr);
+        Point P2 = calcula_eq_ray(Po, t2, dr);
+    
+        float P1_B_u = calcula_prod_esc(subtrai_pontos(P1, cilindro.cb), cilindro.dc);
+        float P2_B_u = calcula_prod_esc(subtrai_pontos(P2, cilindro.cb), cilindro.dc);
+
+
+        float t = -1.0f;
+        if ((P1_B_u >= 0 && P1_B_u <= cilindro.altura && t1 > 0) &&
+        (P2_B_u >= 0 && P2_B_u <= cilindro.altura && t2 > 0))
+        t = min(t1, t2);
+        else if (P1_B_u >= 0 && P1_B_u <= cilindro.altura && t1 > 0)
+            t = t1;
+        else if (P2_B_u >= 0 && P2_B_u <= cilindro.altura && t2 > 0)
+            t = t2;
+        return t;
+    }else{
+        return INFINITY;
+    }
+}
+
 Color calcula_Plano(Plano P, Vector dr, Color K_e, Color K_d){
-    bool naSombra = false;
+    bool naSombraEsf = false;
+    bool naSombraCil = false;
     
     // descobrir ponto Pi no plano a partir do raio que sai do olho do observador
     Vector w = subtrai_pontos(Po, P.p_pi);
@@ -180,26 +234,66 @@ Color calcula_Plano(Plano P, Vector dr, Color K_e, Color K_d){
     // origem levemente deslocada para evitar auto-interseção
     Point Pi_mod(Pi.x + l.i * 1e-4f, Pi.y + l.j * 1e-4f, Pi.z + l.k * 1e-4f); 
 
+    float dist_Pi_Luz = calcula_norma(subtrai_pontos(P_F, Pi_mod));
+
+    //interseção com a esfera
     Vector w_sombra = subtrai_pontos(Pi_mod, centroEsfera);
     float a_delta = calcula_prod_esc(l, l);
     float b_delta = 2.0f * calcula_prod_esc(l, w_sombra);
     float c_delta = calcula_prod_esc(w_sombra, w_sombra) - rEsfera * rEsfera;
-
+    
     float delta = b_delta * b_delta - 4.0f * a_delta * c_delta;
+    float s1 = INFINITY;
+    float s2 = INFINITY;
     
     if (delta > 0.f){
-        float s1 = (-b_delta - sqrt(delta)) / (2.0f * a_delta);
-        float s2 = (-b_delta + sqrt(delta)) / (2.0f * a_delta);
+        s1 = (-b_delta - sqrt(delta)) / (2.0f * a_delta);
+        s2 = (-b_delta + sqrt(delta)) / (2.0f * a_delta);
         // se houver interseção positiva antes da fonte (s entre 0 e distância até a luz), ponto está em sombra
-        float dist_Pi_Luz = calcula_norma(subtrai_pontos(P_F, Pi_mod));
-        if ((s1 > 1e-4f && s1 < dist_Pi_Luz) || (s2 > 1e-4f && s2 < dist_Pi_Luz)) naSombra = true;
     }
+    if ((s1 > 1e-4f && s1 < dist_Pi_Luz) || (s2 > 1e-4f && s2 < dist_Pi_Luz)) naSombraEsf = true;
     
+    float t_cil = calcula_t_Cilindro(cilindro, l, Pi_mod);
+    if (t_cil > 1e-4f && t_cil < dist_Pi_Luz) naSombraCil=true;
+
+    Color Ia(I_A.r * K_d.r, I_A.g * K_d.g, I_A.b * K_d.b);
+    if (naSombraEsf || naSombraCil) {
+        // Apenas componente ambiente
+        Color I(lidarExcecao(Ia.r), lidarExcecao(Ia.g), lidarExcecao(Ia.b));
+        int R = static_cast<int>(roundf(I.r * 255.0f));
+        int G = static_cast<int>(roundf(I.g * 255.0f));
+        int B = static_cast<int>(roundf(I.b * 255.0f));
+        return Color(R, G, B);
+    }
+
     Vector v = Vector(-dr.i, -dr.j, -dr.k);
     Vector r1 = calcula_esc_por_vetor(2.0f, calcula_esc_por_vetor(calcula_prod_esc(P.n, l), P.n));
     Vector r(r1.i - l.i, r1.j - l.j, r1.k - l.k);
 
-    Color Ia(I_A.r * K_d.r, I_A.g * K_d.g, I_A.b * K_d.b);
+    float fd = lidarExcecao(calcula_prod_esc(P.n, l));
+    float cosAlpha = lidarExcecao(calcula_prod_esc(r, v));
+    float fe = pow(cosAlpha, m_c);
+    Color Id(I_F.r * K_d.r * fd, I_F.g * K_d.g * fd, I_F.b * K_d.b * fd);
+    Color Ie(I_F.r * K_e.r * fe, I_F.g * K_e.g * fe, I_F.b * K_e.b * fe);
+    Color I(lidarExcecao(Id.r + Ie.r + Ia.r), lidarExcecao(Id.g + Ie.g + Ia.g), lidarExcecao(Id.b + Ie.b + Ia.b));
+    int R = static_cast<int>(roundf(I.r * 255.0f));
+    int G = static_cast<int>(roundf(I.g * 255.0f));
+    int B = static_cast<int>(roundf(I.b * 255.0f));
+    return Color(R, G, B);
+
+}
+
+
+
+Color calcula_color_cil(Cilindro cilindro, float t_cil, Vector dr){
+    Point P = calcula_eq_ray(Po, t_cil, dr);
+
+    bool naSombra = false;
+    float dist_Pi_Luz = calcula_norma(subtrai_pontos(P_F, P));
+    if (t_cil < dist_Pi_Luz) naSombra = true;
+
+    Color Ia(I_A.r * KCil_a.r, I_A.g * KCil_a.g, I_A.b * KCil_a.b);
+
     if (naSombra) {
         // Apenas componente ambiente
         Color I(lidarExcecao(Ia.r), lidarExcecao(Ia.g), lidarExcecao(Ia.b));
@@ -209,12 +303,20 @@ Color calcula_Plano(Plano P, Vector dr, Color K_e, Color K_d){
         return Color(R, G, B);
     }
 
-    float fd = lidarExcecao(calcula_prod_esc(P.n, l));
+    Vector n = calcula_n_cilindro(P, cilindro);
+    Vector l = calcula_l(P_F, P);
+    Vector v(-dr.i, -dr.j, -dr.k);
+    Vector r1 = calcula_esc_por_vetor(2.0f, calcula_esc_por_vetor(calcula_prod_esc(n, l), n));
+    Vector r(r1.i - l.i, r1.j - l.j, r1.k - l.k);
+
+    float fd = lidarExcecao(calcula_prod_esc(n, l));
     float cosAlpha = lidarExcecao(calcula_prod_esc(r, v));
-    float fe = pow(cosAlpha, m_c);
-    Color Id(I_F.r * K_d.r * fd, I_F.g * K_d.g * fd, I_F.b * K_d.b * fd);
-    Color Ie(I_F.r * K_e.r * fe, I_F.g * K_e.g * fe, I_F.b * K_e.b * fe);
+    float fe = pow(cosAlpha, m_e);
+
+    Color Id(I_F.r * KCil_d.r * fd, I_F.g * KCil_d.g * fd, I_F.b * KCil_d.b * fd);
+    Color Ie(I_F.r * KCil_e.r * fe, I_F.g * KCil_e.g * fe, I_F.b * KCil_e.b * fe);
     Color I(lidarExcecao(Id.r + Ie.r + Ia.r), lidarExcecao(Id.g + Ie.g + Ia.g), lidarExcecao(Id.b + Ie.b + Ia.b));
+
     int R = static_cast<int>(roundf(I.r * 255.0f));
     int G = static_cast<int>(roundf(I.g * 255.0f));
     int B = static_cast<int>(roundf(I.b * 255.0f));
@@ -243,14 +345,15 @@ int main() {
 
             float delta = b_delta * b_delta - 4.0f * a_delta * c_delta;
 
-            float t1 = (-b_delta + sqrt(delta)) / (2.0f * a_delta);
-            float t2 = (-b_delta - sqrt(delta)) / (2.0f * a_delta);
-
-            // Escolhe o menor t positivo
             float t = -1.0f;
-            if (t1 > 0.0f && t2 > 0.0f) t = min(t1, t2);
-            else if (t1 > 0.0f) t = t1;
-            else if (t2 > 0.0f) t = t2;
+            if (delta >= 0) {
+                float t1 = (-b_delta + sqrt(delta)) / (2.0f * a_delta);
+                float t2 = (-b_delta - sqrt(delta)) / (2.0f * a_delta);
+                
+                if (t1 > 0.0f && t2 > 0.0f) t = min(t1, t2);
+                else if (t1 > 0.0f) t = t1;
+                else if (t2 > 0.0f) t = t2;
+            }
 
             // Verifica interseção com os planos
             Vector w_p_c = subtrai_pontos(Po, plano_chao.p_pi); // w do chão
@@ -258,26 +361,36 @@ int main() {
             
             Vector w_p_f = subtrai_pontos(Po, plano_fundo.p_pi); // w do plano de fundo
             float ti_f = calcula_t_plano(w_p_f, plano_fundo.n, dr_e); // ti do plano de fundo
+            
+            //cilindro
+            float t_cil = calcula_t_Cilindro(cilindro, dr_e, Po);
 
+            
+            // Depois compara com as outras interseções
             if (ti_c > 0.0f && (ti_c < t || t < 0.0f)) t = ti_c;
             if (ti_f > 0.0f && (ti_f < t || t < 0.0f)) t = ti_f;
+            if (t_cil > 0.0f && (t_cil < t || t < 0.0f)) t = t_cil;
 
+            // Se não houver interseção válida, pinta o fundo
+            if (t <= 0.0f) {
+                img << "100 100 100 ";
+                continue;
+            }
+            
             //se interceptar fundo primeiro
             if (ti_f == t) {
-                //Color cor_plano = calculaPlano_fundo(Pj);
                 Color cor_plano = calcula_Plano(plano_fundo, dr_e, KF_e, KF_d);
                 img << static_cast<int>(cor_plano.r) << ' ' << static_cast<int>(cor_plano.g) << ' ' << static_cast<int>(cor_plano.b) << ' ';
                 continue;
             } //se interceptar o chão primeiro
             else if (ti_c == t) {
-                //Color cor_plano = calculaPlano_chao(Pj);
                 Color cor_plano = calcula_Plano(plano_chao, dr_e, KC_e, KC_d);
                 img << static_cast<int>(cor_plano.r) << ' ' << static_cast<int>(cor_plano.g) << ' ' << static_cast<int>(cor_plano.b) << ' ';
                 continue;
-            }
-            else if (t <= 0.0f || delta < 0.0f) {
-                img << "100 100 100 ";
-                continue;
+            } else if (t_cil == t) {  
+                Color color_Cil = calcula_color_cil(cilindro, t, dr_e);
+                img << static_cast<int>(color_Cil.r) << ' ' << static_cast<int>(color_Cil.g) << ' ' << static_cast<int>(color_Cil.b) << ' ';
+            continue;
             }
 
             // esfera
