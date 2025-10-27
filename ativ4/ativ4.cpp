@@ -126,9 +126,9 @@ Color I_A(0.3f, 0.3f, 0.3f); // Intensidade da luz ambiente
 
 //cilindro
 Point centroCilindro = centroEsfera;
-float raio_cil = rEsfera/3.0f;
-float altura_cil = 3.0f*rEsfera;
-Vector dc(-1.0f/sqrt(3.0f), 1.0f/sqrt(3.0f), -1.0f/sqrt(3.0f));
+float raio_cil = rEsfera / 3.0f;
+float altura_cil = 3.0f * rEsfera;
+Vector dc(-1.0f / sqrt(3.0f), 1.0f / sqrt(3.0f), -1.0f / sqrt(3.0f));
 Cilindro cilindro(centroCilindro, raio_cil, altura_cil, dc);
 
 Color KCil_d(0.2f, 0.3f, 0.8f);
@@ -237,7 +237,7 @@ Vector subtrai_pontos(Point& p1, Point& p2) {
     return sub;
 }
 
-Vector subtrai_vetores(Vector& v1, Vector& v2){
+Vector subtrai_vetores(Vector& v1, Vector& v2) {
     Vector sub(v1.i - v2.i, v1.j - v2.j, v1.k - v2.k);
     return sub;
 }
@@ -287,7 +287,7 @@ Vector calcula_n_cilindro(Point P, Cilindro cilindro) {
     Vector P_B_u_u = calcula_esc_por_vetor(P_B_u, cilindro.dc);
     Vector n = subtrai_vetores(P_B, P_B_u_u);
     float norma = calcula_norma(n);
-    return Vector(n.i/norma, n.j/norma, n.k/norma);
+    return Vector(n.i / norma, n.j / norma, n.k / norma);
 }
 
 float calcula_t_plano(Vector w, Vector n, Vector dr) {
@@ -295,48 +295,49 @@ float calcula_t_plano(Vector w, Vector n, Vector dr) {
     return result;
 }
 
-float calcula_t_Cilindro(Cilindro cilindro, Vector dr, Point Po){
+float calcula_t_Cilindro(Cilindro cilindro, Vector dr, Point Po) {
     Vector Po_B = subtrai_pontos(Po, cilindro.cb);
-    Vector Po_B_u_u = calcula_esc_por_vetor(calcula_prod_esc(Po_B, cilindro.dc),cilindro.dc);
+    Vector Po_B_u_u = calcula_esc_por_vetor(calcula_prod_esc(Po_B, cilindro.dc), cilindro.dc);
     Vector v = subtrai_vetores(Po_B, Po_B_u_u);
 
     Vector d_u_u = calcula_esc_por_vetor(calcula_prod_esc(dr, cilindro.dc), cilindro.dc);
     Vector w = subtrai_vetores(dr, d_u_u);
 
-    float a_delta = calcula_prod_esc(w,w);
-    float b_delta = calcula_prod_esc(v,w);
-    float c_delta = calcula_prod_esc(v,v) - cilindro.raio*cilindro.raio;
+    float a_delta = calcula_prod_esc(w, w);
+    float b_delta = calcula_prod_esc(v, w);
+    float c_delta = calcula_prod_esc(v, v) - cilindro.raio * cilindro.raio;
 
-    float delta = b_delta*b_delta - a_delta*c_delta;
-    if(delta >= 0){
-        float t1 = (-b_delta + sqrt(delta))/(a_delta);
-        float t2 = (-b_delta - sqrt(delta))/(a_delta);
+    float delta = b_delta * b_delta - a_delta * c_delta;
+    if (delta >= 0) {
+        float t1 = (-b_delta + sqrt(delta)) / (a_delta);
+        float t2 = (-b_delta - sqrt(delta)) / (a_delta);
 
         Point P1 = calcula_eq_ray(Po, t1, dr);
         Point P2 = calcula_eq_ray(Po, t2, dr);
-    
+
         float P1_B_u = calcula_prod_esc(subtrai_pontos(P1, cilindro.cb), cilindro.dc);
         float P2_B_u = calcula_prod_esc(subtrai_pontos(P2, cilindro.cb), cilindro.dc);
 
 
         float t = -1.0f;
         if ((P1_B_u >= 0 && P1_B_u <= cilindro.altura && t1 > 0) &&
-        (P2_B_u >= 0 && P2_B_u <= cilindro.altura && t2 > 0))
-        t = min(t1, t2);
+            (P2_B_u >= 0 && P2_B_u <= cilindro.altura && t2 > 0))
+            t = min(t1, t2);
         else if (P1_B_u >= 0 && P1_B_u <= cilindro.altura && t1 > 0)
             t = t1;
         else if (P2_B_u >= 0 && P2_B_u <= cilindro.altura && t2 > 0)
             t = t2;
         return t;
-    }else{
+    }
+    else {
         return INFINITY;
     }
 }
 
-Color calcula_Plano(Plano P, Vector dr, Color K_e, Color K_d){
+Color calcula_Plano(Plano P, Vector dr, Color K_e, Color K_d) {
     bool naSombraEsf = false;
     bool naSombraCil = false;
-    
+
     // descobrir ponto Pi no plano a partir do raio que sai do olho do observador
     Vector w = subtrai_pontos(Po, P.p_pi);
     float ti = calcula_t_plano(w, P.n, dr);
@@ -354,12 +355,12 @@ Color calcula_Plano(Plano P, Vector dr, Color K_e, Color K_d){
     float a_delta = calcula_prod_esc(l, l);
     float b_delta = 2.0f * calcula_prod_esc(l, w_sombra);
     float c_delta = calcula_prod_esc(w_sombra, w_sombra) - rEsfera * rEsfera;
-    
+
     float delta = b_delta * b_delta - 4.0f * a_delta * c_delta;
     float s1 = INFINITY;
     float s2 = INFINITY;
-    
-    if (delta > 0.f){
+
+    if (delta > 0.f) {
         s1 = (-b_delta - sqrt(delta)) / (2.0f * a_delta);
         s2 = (-b_delta + sqrt(delta)) / (2.0f * a_delta);
         // se houver interseção positiva antes da fonte (s entre 0 e distância até a luz), ponto está em sombra
@@ -407,7 +408,7 @@ Color calcula_Plano(Plano P, Vector dr, Color K_e, Color K_d){
 
 
 
-Color calcula_color_cil(Cilindro cilindro, float t_cil, Vector dr){
+Color calcula_color_cil(Cilindro cilindro, float t_cil, Vector dr) {
     Point P = calcula_eq_ray(Po, t_cil, dr);
 
     bool naSombra = false;
@@ -471,7 +472,7 @@ int main() {
             if (delta >= 0) {
                 float t1 = (-b_delta + sqrt(delta)) / (2.0f * a_delta);
                 float t2 = (-b_delta - sqrt(delta)) / (2.0f * a_delta);
-                
+
                 if (t1 > 0.0f && t2 > 0.0f) t = min(t1, t2);
                 else if (t1 > 0.0f) t = t1;
                 else if (t2 > 0.0f) t = t2;
@@ -480,7 +481,7 @@ int main() {
             // Verifica interseção com os planos
             Vector w_p_c = subtrai_pontos(Po, plano_chao.p_pi); // w do chão
             float ti_c = calcula_t_plano(w_p_c, plano_chao.n, dr_e); // ti do chão
-            
+
             Vector w_p_f = subtrai_pontos(Po, plano_fundo.p_pi); // w do plano de fundo
             float ti_f = calcula_t_plano(w_p_f, plano_fundo.n, dr_e); // ti do plano de fundo
             //cilindro
@@ -503,10 +504,10 @@ int main() {
                 img << static_cast<int>(cor_plano.r) << ' ' << static_cast<int>(cor_plano.g) << ' ' << static_cast<int>(cor_plano.b) << ' ';
                 continue;
             }
-            else if (t_cil == t) {  
+            else if (t_cil == t) {
                 Color color_Cil = calcula_color_cil(cilindro, t, dr_e);
                 img << static_cast<int>(color_Cil.r) << ' ' << static_cast<int>(color_Cil.g) << ' ' << static_cast<int>(color_Cil.b) << ' ';
-            continue;
+                continue;
             }
             else if (ti_cone == t) {
                 Color cor_cone = calculaCone(t, Pj);
@@ -602,6 +603,8 @@ float calcula_t_cone(Point& Pj) {
 
 
 Color calculaCone(float t, Point p) {
+    bool naSombraEsf = false;
+    bool naSombraCil = false;
     Vector dr = calcula_dr(Po, p);
     // calcula o ponto de interseção correto (Pi) a partir de t e do vetor dr
     Point Pi = calcula_eq_ray(Po, t, dr);
@@ -626,12 +629,52 @@ Color calculaCone(float t, Point p) {
     Vector v(-dr.i, -dr.j, -dr.k);
     Vector r1 = calcula_esc_por_vetor(2.0f, calcula_esc_por_vetor(calcula_prod_esc(n, l), n));
     Vector r(r1.i - l.i, r1.j - l.j, r1.k - l.k);
+    Color Ia(I_A.r * KCone.r, I_A.g * KCone.g, I_A.b * KCone.b);
 
+    // origem levemente deslocada para evitar auto-interseção
+    Point Pi_mod(Pi.x + l.i * 1e-4f, Pi.y + l.j * 1e-4f, Pi.z + l.k * 1e-4f);
+
+    float dist_Pi_Luz = calcula_norma(subtrai_pontos(P_F, Pi_mod));
+
+    //interseção com a esfera
+    Vector w_sombra = subtrai_pontos(Pi_mod, centroEsfera);
+    float a_delta = calcula_prod_esc(l, l);
+    float b_delta = 2.0f * calcula_prod_esc(l, w_sombra);
+    float c_delta = calcula_prod_esc(w_sombra, w_sombra) - rEsfera * rEsfera;
+
+    float delta = b_delta * b_delta - 4.0f * a_delta * c_delta;
+    float s1 = INFINITY;
+    float s2 = INFINITY;
+
+    if (delta > 0.f) {
+        s1 = (-b_delta - sqrt(delta)) / (2.0f * a_delta);
+        s2 = (-b_delta + sqrt(delta)) / (2.0f * a_delta);
+        // se houver interseção positiva antes da fonte (s entre 0 e distância até a luz), ponto está em sombra
+    }
+    if ((s1 > 1e-4f && s1 < dist_Pi_Luz) || (s2 > 1e-4f && s2 < dist_Pi_Luz)) naSombraEsf = true;
+
+    // Verificar sombra do cilindro
+    if (!naSombraEsf) {
+        // Lança um raio de Pi_mod em direção à luz e verifica interseção com o cilindro
+        float t_cil_shadow = calcula_t_Cilindro(cilindro, l, Pi_mod);
+        if (t_cil_shadow > 1e-4f && t_cil_shadow < dist_Pi_Luz) {
+            naSombraCil = true;
+        }
+    }
+
+    if (naSombraCil || naSombraEsf) {
+        // Apenas componente ambiente
+        Color I(lidarExcecao(Ia.r), lidarExcecao(Ia.g), lidarExcecao(Ia.b));
+        int R = static_cast<int>(roundf(I.r * 255.0f));
+        int G = static_cast<int>(roundf(I.g * 255.0f));
+        int B = static_cast<int>(roundf(I.b * 255.0f));
+        return Color(R, G, B);
+    }
 
     float fd = lidarExcecao(calcula_prod_esc(n, l));
     float cosAlpha = lidarExcecao(calcula_prod_esc(r, v));
     float fe = pow(cosAlpha, m_c);
-    Color Ia(I_A.r * KCone.r, I_A.g * KCone.g, I_A.b * KCone.b);
+
     Color Id(I_F.r * KCone.r * fd, I_F.g * KCone.g * fd, I_F.b * KCone.b * fd);
     Color Ie(I_F.r * KCone.r * fe, I_F.g * KCone.g * fe, I_F.b * KCone.b * fe);
     Color I(lidarExcecao(Id.r + Ie.r + Ia.r), lidarExcecao(Id.g + Ie.g + Ia.g), lidarExcecao(Id.b + Ie.b + Ia.b));
