@@ -52,8 +52,33 @@ public:
     float raio;
     float altura;
     Vector dc;
-    Cilindro(const Point& cb_c, const float raio_c, const float altura_c, const Vector& dc_c): cb(cb_c),raio(raio_c),altura(altura_c),dc(dc_c) {}
+    Cilindro(const Point& cb_c, const float raio_c, const float altura_c, const Vector& dc_c) : cb(cb_c), raio(raio_c), altura(altura_c), dc(dc_c) {}
 };
+
+class Cone {
+public:
+    Point cb;
+    Point v;
+    float raio;
+    Cone(const Point& cb_c, const Point& v_c, const float raio_c) : cb(cb_c), v(v_c), raio(raio_c) {}
+};
+
+class Matriz3x3 {
+public:
+    float m[3][3];
+    Matriz3x3(float m00, float m01, float m02,
+        float m10, float m11, float m12,
+        float m20, float m21, float m22) {
+        m[0][0] = m00; m[0][1] = m01; m[0][2] = m02;
+        m[1][0] = m10; m[1][1] = m11; m[1][2] = m12;
+        m[2][0] = m20; m[2][1] = m21; m[2][2] = m22;
+    }
+};
+
+Vector subtrai_pontos(Point& p1, Point& p2);
+float calcula_prod_esc(const Vector& v1, const Vector& v2);
+Vector calcula_dr(Point& Po, Point& Pj);
+Color calculaCone(float t, Point p);
 
 float wJanela = 60.0f;
 float hJanela = 60.0f;
@@ -110,7 +135,95 @@ Color KCil_d(0.2f, 0.3f, 0.8f);
 Color KCil_e(0.2f, 0.3f, 0.8f);
 Color KCil_a(0.2f, 0.3f, 0.8f);
 
+//cone
+Point aux(altura_cil* dc.i, altura_cil* dc.j, altura_cil* dc.k);
+Point c_topo_cilindro(cilindro.cb.x + aux.x, cilindro.cb.y + aux.y, cilindro.cb.z + aux.z);
+Point cb_cone = c_topo_cilindro;
+float raio_cone = 1.5 * rEsfera;
+float altura_cone = raio_cone / 3;
+Point aux_v(altura_cone* dc.i, altura_cone* dc.j, altura_cone* dc.k);
+Point v_cone(cb_cone.x + aux_v.x, cb_cone.y + aux_v.y, cb_cone.z + aux_v.z);
+Cone cone(cb_cone, v_cone, raio_cone);
+float calcula_t_cone(Point& Pj);
+float teta = atan(raio_cone / altura_cone);
 
+Color KCone(0.8, 0.3, 0.2);
+
+Matriz3x3 M_id(1.0f, 0.0f, 0.0f,
+    0.0f, 1.0f, 0.0f,
+    0.0f, 0.0f, 1.0f);
+
+Matriz3x3 outerProduto(const Vector& d) {
+    Matriz3x3 M(0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f);
+    M.m[0][0] = d.i * d.i;
+    M.m[0][1] = d.i * d.j;
+    M.m[0][2] = d.i * d.k;
+
+    M.m[1][0] = d.j * d.i;
+    M.m[1][1] = d.j * d.j;
+    M.m[1][2] = d.j * d.k;
+
+    M.m[2][0] = d.k * d.i;
+    M.m[2][1] = d.k * d.j;
+    M.m[2][2] = d.k * d.k;
+    return M;
+}
+
+Matriz3x3 matrizSubtrai(const Matriz3x3& A, const Matriz3x3& B) {
+    Matriz3x3 R(0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f);
+    for (int r = 0; r < 3; ++r)
+        for (int c = 0; c < 3; ++c)
+            R.m[r][c] = A.m[r][c] - B.m[r][c];
+    return R;
+}
+
+Matriz3x3 escalarMatriz(const float s, const Matriz3x3& M) {
+    Matriz3x3 R(0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f);
+    for (int r = 0; r < 3; ++r)
+        for (int c = 0; c < 3; ++c)
+            R.m[r][c] = s * M.m[r][c];
+    return R;
+}
+
+Vector matrizVetorProduto(const Matriz3x3& M, const Vector& v) {
+    float i_res = M.m[0][0] * v.i + M.m[0][1] * v.j + M.m[0][2] * v.k;
+    float j_res = M.m[1][0] * v.i + M.m[1][1] * v.j + M.m[1][2] * v.k;
+    float k_res = M.m[2][0] * v.i + M.m[2][1] * v.j + M.m[2][2] * v.k;
+    return Vector(i_res, j_res, k_res);
+}
+
+Matriz3x3 transpostaVetor(const Vector& v) {
+    Matriz3x3 M(0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f);
+    M.m[0][0] = v.i;
+    M.m[1][0] = v.j;
+    M.m[2][0] = v.k;
+    return M;
+}
+
+Vector matrizPorMatriz(const Matriz3x3& A, const Matriz3x3& B) {
+    float i_res = A.m[0][0] * B.m[0][0] + A.m[0][1] * B.m[1][0] + A.m[0][2] * B.m[2][0];
+    float j_res = A.m[1][0] * B.m[0][0] + A.m[1][1] * B.m[1][0] + A.m[1][2] * B.m[2][0];
+    float k_res = A.m[2][0] * B.m[0][0] + A.m[2][1] * B.m[1][0] + A.m[2][2] * B.m[2][0];
+    return Vector(i_res, j_res, k_res);
+}
+
+float transpostoPorVetor(const Matriz3x3& M, const Vector& v) {
+    float res = M.m[0][0] * v.i + M.m[1][0] * v.j + M.m[2][0] * v.k;
+    return res;
+}
+
+Matriz3x3 dc_transposto = transpostaVetor(dc);
+Matriz3x3 M = matrizSubtrai(M_id, outerProduto(dc));
+Matriz3x3 M_conjugada = outerProduto(dc);
+Matriz3x3 M_estrela = matrizSubtrai(M_conjugada, escalarMatriz(pow((altura_cone / raio_cone), 2), M));
 // Utilitário simples para limitar valores no intervalo [0,1]
 static inline float lidarExcecao(float v) {
     if (v < 0.0f) return 0.0f;
@@ -177,9 +290,9 @@ Vector calcula_n_cilindro(Point P, Cilindro cilindro) {
     return Vector(n.i/norma, n.j/norma, n.k/norma);
 }
 
-float calcula_t_plano(Vector w, Vector n, Vector dr){
-    float result = calcula_prod_esc(calcula_esc_por_vetor(-1, w), n)/calcula_prod_esc(dr,n);
-    return result; 
+float calcula_t_plano(Vector w, Vector n, Vector dr) {
+    float result = calcula_prod_esc(calcula_esc_por_vetor(-1, w), n) / calcula_prod_esc(dr, n);
+    return result;
 }
 
 float calcula_t_Cilindro(Cilindro cilindro, Vector dr, Point Po){
@@ -229,10 +342,10 @@ Color calcula_Plano(Plano P, Vector dr, Color K_e, Color K_d){
     float ti = calcula_t_plano(w, P.n, dr);
     Point Pi = calcula_eq_ray(Po, ti, dr);
 
-    // Verifica sombra: lança um raio de Pi em direção à fonte de luz e checa interseção com a esfera
+    // Verifica sombra: lança um raio de Pi em direção à fonte de luz e checa interseção com a esfera e o cone
     Vector l = calcula_l(P_F, Pi);
     // origem levemente deslocada para evitar auto-interseção
-    Point Pi_mod(Pi.x + l.i * 1e-4f, Pi.y + l.j * 1e-4f, Pi.z + l.k * 1e-4f); 
+    Point Pi_mod(Pi.x + l.i * 1e-4f, Pi.y + l.j * 1e-4f, Pi.z + l.k * 1e-4f);
 
     float dist_Pi_Luz = calcula_norma(subtrai_pontos(P_F, Pi_mod));
 
@@ -252,9 +365,18 @@ Color calcula_Plano(Plano P, Vector dr, Color K_e, Color K_d){
         // se houver interseção positiva antes da fonte (s entre 0 e distância até a luz), ponto está em sombra
     }
     if ((s1 > 1e-4f && s1 < dist_Pi_Luz) || (s2 > 1e-4f && s2 < dist_Pi_Luz)) naSombraEsf = true;
-    
-    float t_cil = calcula_t_Cilindro(cilindro, l, Pi_mod);
-    if (t_cil > 1e-4f && t_cil < dist_Pi_Luz) naSombraCil=true;
+
+    // Verificar sombra do cone
+    if (!naSombraEsf) {
+        Point Po_original = Po;  // salva a posição original do observador
+        Po = Pi_mod;  // temporariamente muda Po para o ponto de interseção
+        float t_cone = calcula_t_cone(P_F);  // verifica interseção com o cone
+        Po = Po_original;  // restaura Po para a posição original
+
+        if (t_cone > 1e-4f && t_cone < calcula_norma(subtrai_pontos(P_F, Pi_mod))) {
+            naSombraEsf = true;
+        }
+    }
 
     Color Ia(I_A.r * K_d.r, I_A.g * K_d.g, I_A.b * K_d.b);
     if (naSombraEsf || naSombraCil) {
@@ -361,22 +483,15 @@ int main() {
             
             Vector w_p_f = subtrai_pontos(Po, plano_fundo.p_pi); // w do plano de fundo
             float ti_f = calcula_t_plano(w_p_f, plano_fundo.n, dr_e); // ti do plano de fundo
-            
             //cilindro
             float t_cil = calcula_t_Cilindro(cilindro, dr_e, Po);
+            float ti_cone = calcula_t_cone(Pj);
 
-            
-            // Depois compara com as outras interseções
             if (ti_c > 0.0f && (ti_c < t || t < 0.0f)) t = ti_c;
             if (ti_f > 0.0f && (ti_f < t || t < 0.0f)) t = ti_f;
             if (t_cil > 0.0f && (t_cil < t || t < 0.0f)) t = t_cil;
+            if (ti_cone > 0.0f && (ti_cone < t || t < 0.0f))  t = ti_cone;
 
-            // Se não houver interseção válida, pinta o fundo
-            if (t <= 0.0f) {
-                img << "100 100 100 ";
-                continue;
-            }
-            
             //se interceptar fundo primeiro
             if (ti_f == t) {
                 Color cor_plano = calcula_Plano(plano_fundo, dr_e, KF_e, KF_d);
@@ -387,10 +502,20 @@ int main() {
                 Color cor_plano = calcula_Plano(plano_chao, dr_e, KC_e, KC_d);
                 img << static_cast<int>(cor_plano.r) << ' ' << static_cast<int>(cor_plano.g) << ' ' << static_cast<int>(cor_plano.b) << ' ';
                 continue;
-            } else if (t_cil == t) {  
+            }
+            else if (t_cil == t) {  
                 Color color_Cil = calcula_color_cil(cilindro, t, dr_e);
                 img << static_cast<int>(color_Cil.r) << ' ' << static_cast<int>(color_Cil.g) << ' ' << static_cast<int>(color_Cil.b) << ' ';
             continue;
+            }
+            else if (ti_cone == t) {
+                Color cor_cone = calculaCone(t, Pj);
+                img << static_cast<int>(cor_cone.r) << ' ' << static_cast<int>(cor_cone.g) << ' ' << static_cast<int>(cor_cone.b) << ' ';
+                continue;
+            }
+            else if (t <= 0.0f || delta < 0.0f) {
+                img << "100 100 100 ";
+                continue;
             }
 
             // esfera
@@ -420,4 +545,98 @@ int main() {
     img.close();
     std::cout << "Imagem gerada: esfera.ppm\n";
     return 0;
+}
+
+float calcula_t_cone(Point& Pj) {
+    Vector w_cone = subtrai_pontos(Po, cone.cb);
+    Matriz3x3 w_cone_transposto = transpostaVetor(w_cone);
+    Vector dr = calcula_dr(Po, Pj);
+    Matriz3x3 dr_transposto = transpostaVetor(dr);
+    Vector v(cone.v.x - Po.x, cone.v.y - Po.y, cone.v.z - Po.z);
+
+    // float a = calcula_prod_esc(matrizPorMatriz(dr_transposto, M_estrela), dr);
+    // float b = 2.0f * calcula_prod_esc(matrizPorMatriz(w_cone_transposto, M_estrela), dr)
+    //     - 2.0f * altura_cone * transpostoPorVetor(dr_transposto, dc);
+    // float c = calcula_prod_esc(matrizPorMatriz(w_cone_transposto, M_estrela), w_cone)
+    //     - 2.0f * altura_cone * transpostoPorVetor(w_cone_transposto, dc)
+    //     + altura_cone * altura_cone;
+
+    float a = pow((calcula_prod_esc(dr, dc)), 2) - pow(cos(teta), 2) * calcula_prod_esc(dr, dr);
+    float b = pow(cos(teta), 2) * calcula_prod_esc(v, dr) - calcula_prod_esc(v, dc) * calcula_prod_esc(dr, dc);
+    float c = pow(calcula_prod_esc(v, dc), 2) - pow(cos(teta), 2) * calcula_prod_esc(v, v);
+
+    float delta = b * b - a * c;
+
+    if (delta < 0.0f) return -1.0f;
+
+    if (delta == 0.0f) {
+        float t = -c / (2 * b);
+        return t;
+    }
+
+    float t1 = (-b - sqrt(delta)) / (a);
+    float t2 = (-b + sqrt(delta)) / (a);
+
+    // Função auxiliar para verificar se t está nos limites do cone
+    auto validarT = [&](float t) -> bool {
+        if (t <= 0.0f) return false;
+
+        Point Pi = calcula_eq_ray(Po, t, dr);
+        Vector w_pi = subtrai_pontos(Pi, cone.cb);
+        float h = calcula_prod_esc(w_pi, dc);
+
+        // Verifica se está entre a base (h=0) e o vértice (h=altura_cone)
+        return (h >= 0.0f && h <= altura_cone);
+        };
+
+    // Testa t1 e t2 na ordem correta
+    bool t1_valido = validarT(t1);
+    bool t2_valido = validarT(t2);
+
+    if (t1_valido && t2_valido) return min(t1, t2);
+    if (t1_valido) return t1;
+    if (t2_valido) return t2;
+
+    return -1.0f;
+}
+
+
+Color calculaCone(float t, Point p) {
+    Vector dr = calcula_dr(Po, p);
+    // calcula o ponto de interseção correto (Pi) a partir de t e do vetor dr
+    Point Pi = calcula_eq_ray(Po, t, dr);
+
+    // inicializa sombra
+    bool naSombra_local = false;
+
+    Vector V = subtrai_pontos(cone.v, Pi);
+    float vNorma = calcula_norma(V);
+    Vector s_conjugado(V.i / vNorma, V.j / vNorma, V.k / vNorma);
+    Matriz3x3 M_e = matrizSubtrai(M_id, outerProduto(s_conjugado));
+    Vector N = matrizVetorProduto(M_e, dc);
+    float N_norma = calcula_norma(N);
+    Vector n(N.i / N_norma, N.j / N_norma, N.k / N_norma);
+    // Vector view = Vector(-dr.i, -dr.j, -dr.k);
+    // if (view.i * n.i + view.j * n.j + view.k * n.k < 0) {
+    //     n.i = -n.i;
+    //     n.j = -n.j;
+    //     n.k = -n.k;
+    // }
+    Vector l = calcula_l(P_F, Pi);
+    Vector v(-dr.i, -dr.j, -dr.k);
+    Vector r1 = calcula_esc_por_vetor(2.0f, calcula_esc_por_vetor(calcula_prod_esc(n, l), n));
+    Vector r(r1.i - l.i, r1.j - l.j, r1.k - l.k);
+
+
+    float fd = lidarExcecao(calcula_prod_esc(n, l));
+    float cosAlpha = lidarExcecao(calcula_prod_esc(r, v));
+    float fe = pow(cosAlpha, m_c);
+    Color Ia(I_A.r * KCone.r, I_A.g * KCone.g, I_A.b * KCone.b);
+    Color Id(I_F.r * KCone.r * fd, I_F.g * KCone.g * fd, I_F.b * KCone.b * fd);
+    Color Ie(I_F.r * KCone.r * fe, I_F.g * KCone.g * fe, I_F.b * KCone.b * fe);
+    Color I(lidarExcecao(Id.r + Ie.r + Ia.r), lidarExcecao(Id.g + Ie.g + Ia.g), lidarExcecao(Id.b + Ie.b + Ia.b));
+    int R = static_cast<int>(roundf(I.r * 255.0f));
+    int G = static_cast<int>(roundf(I.g * 255.0f));
+    int B = static_cast<int>(roundf(I.b * 255.0f));
+    return Color(R, G, B);
 }
