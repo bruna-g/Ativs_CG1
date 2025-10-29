@@ -566,37 +566,80 @@ float calcula_t_cone(Point& Pj) {
     float b = pow(cos(teta), 2) * calcula_prod_esc(v, dr) - calcula_prod_esc(v, dc) * calcula_prod_esc(dr, dc);
     float c = pow(calcula_prod_esc(v, dc), 2) - pow(cos(teta), 2) * calcula_prod_esc(v, v);
 
+    float dn = calcula_prod_esc(dc, dr);
+    float tEscolhido = 1000000.0f;
+    bool temIntersecao = false;
+
+    if (a == 0 && b != 0) {
+        float t = -c / (2.0f * b);
+
+        if (t > 0.0001f) {
+            Point Pi = calcula_eq_ray(Po, t, dr);
+            Vector w_pi = subtrai_pontos(cone.v, Pi);
+            float h = calcula_prod_esc(w_pi, dc);
+            if (h >= 0 && h <= altura_cone) {
+                tEscolhido = min(tEscolhido, t);
+                temIntersecao = true;
+            }
+        }
+    }
+
+    if (dn != 0) {
+        Vector v_base = w_cone;
+        float t_base = -(calcula_prod_esc(v_base, dc) / dn);
+
+        if (t_base > 0.0001f) {
+            Point p_base = calcula_eq_ray(Po, t_base, dr);
+            Vector dist_centro = subtrai_pontos(p_base, cone.cb);
+            float dist_quadrada = calcula_prod_esc(dist_centro, dist_centro);
+
+            if (dist_quadrada <= cone.raio * cone.raio) {
+                tEscolhido = min(tEscolhido, t_base);
+                temIntersecao = true;
+            }
+        }
+    }
+
     float delta = b * b - a * c;
+
+    if (delta > 0) {
+        float t1 = (-b - sqrt(delta)) / (a);
+        float t2 = (-b + sqrt(delta)) / (a);
+
+        // Função auxiliar para verificar se t está nos limites do cone
+        auto validarT = [&](float t) -> bool {
+            if (t <= 0.0f) return false;
+
+            Point Pi = calcula_eq_ray(Po, t, dr);
+            Vector w_pi = subtrai_pontos(cone.v, Pi);
+            float h = calcula_prod_esc(w_pi, dc);
+
+            // Verifica se está entre a base (h=0) e o vértice (h=altura_cone)
+            return (h >= 0.0f && h <= altura_cone);
+            };
+
+        // Testa t1 e t2 na ordem correta
+        bool t1_valido = validarT(t1);
+        bool t2_valido = validarT(t2);
+
+        if (t1_valido && t2_valido) {
+            float t_menor = min(t1, t2);
+            tEscolhido = min(tEscolhido, t_menor);
+            temIntersecao = true;
+        }
+        if (t1_valido) {
+            tEscolhido = min(tEscolhido, t1);
+            temIntersecao = true;
+        }
+        if (t2_valido) {
+            tEscolhido = min(tEscolhido, t2);
+            temIntersecao = true;
+        }
+    }
 
     if (delta < 0.0f) return -1.0f;
 
-    if (delta == 0.0f) {
-        float t = -c / (2 * b);
-        return t;
-    }
-
-    float t1 = (-b - sqrt(delta)) / (a);
-    float t2 = (-b + sqrt(delta)) / (a);
-
-    // Função auxiliar para verificar se t está nos limites do cone
-    auto validarT = [&](float t) -> bool {
-        if (t <= 0.0f) return false;
-
-        Point Pi = calcula_eq_ray(Po, t, dr);
-        Vector w_pi = subtrai_pontos(Pi, cone.cb);
-        float h = calcula_prod_esc(w_pi, dc);
-
-        // Verifica se está entre a base (h=0) e o vértice (h=altura_cone)
-        return (h >= 0.0f && h <= altura_cone);
-        };
-
-    // Testa t1 e t2 na ordem correta
-    bool t1_valido = validarT(t1);
-    bool t2_valido = validarT(t2);
-
-    if (t1_valido && t2_valido) return min(t1, t2);
-    if (t1_valido) return t1;
-    if (t2_valido) return t2;
+    if (temIntersecao) return tEscolhido;
 
     return -1.0f;
 }
@@ -606,37 +649,37 @@ Color calculaCone(float t, Point p) {
     bool naSombraEsf = false;
     bool naSombraCil = false;
     Vector dr = calcula_dr(Po, p);
-    // calcula o ponto de interseção correto (Pi) a partir de t e do vetor dr
     Point Pi = calcula_eq_ray(Po, t, dr);
 
-    // inicializa sombra
-    bool naSombra_local = false;
+    // Verificar se a interseção está na base do cone
+    Vector dist_centro = subtrai_pontos(Pi, cone.cb);
+    float dist_quadrada = calcula_prod_esc(dist_centro, dist_centro);
+    bool na_base = fabs(dist_quadrada - cone.raio * cone.raio) < 1e-2f || dist_quadrada < cone.raio * cone.raio + 1e-2f;
 
-    Vector V = subtrai_pontos(cone.v, Pi);
-    float vNorma = calcula_norma(V);
-    Vector s_conjugado(V.i / vNorma, V.j / vNorma, V.k / vNorma);
-    Matriz3x3 M_e = matrizSubtrai(M_id, outerProduto(s_conjugado));
-    Vector N = matrizVetorProduto(M_e, dc);
-    float N_norma = calcula_norma(N);
-    Vector n(N.i / N_norma, N.j / N_norma, N.k / N_norma);
-    // Vector view = Vector(-dr.i, -dr.j, -dr.k);
-    // if (view.i * n.i + view.j * n.j + view.k * n.k < 0) {
-    //     n.i = -n.i;
-    //     n.j = -n.j;
-    //     n.k = -n.k;
-    // }
+    Vector n = na_base
+        ? Vector(
+            (calcula_prod_esc(dc, dr) > 0 ? -dc.i : dc.i),
+            (calcula_prod_esc(dc, dr) > 0 ? -dc.j : dc.j),
+            (calcula_prod_esc(dc, dr) > 0 ? -dc.k : dc.k))
+        : [&]() {
+        Vector V = subtrai_pontos(cone.v, Pi);
+        float vNorma = calcula_norma(V);
+        Vector s_conjugado(V.i / vNorma, V.j / vNorma, V.k / vNorma);
+        Matriz3x3 M_e = matrizSubtrai(M_id, outerProduto(s_conjugado));
+        Vector N = matrizVetorProduto(M_e, dc);
+        float N_norma = calcula_norma(N);
+        return Vector(N.i / N_norma, N.j / N_norma, N.k / N_norma);
+        }();
+
     Vector l = calcula_l(P_F, Pi);
     Vector v(-dr.i, -dr.j, -dr.k);
     Vector r1 = calcula_esc_por_vetor(2.0f, calcula_esc_por_vetor(calcula_prod_esc(n, l), n));
     Vector r(r1.i - l.i, r1.j - l.j, r1.k - l.k);
     Color Ia(I_A.r * KCone.r, I_A.g * KCone.g, I_A.b * KCone.b);
 
-    // origem levemente deslocada para evitar auto-interseção
     Point Pi_mod(Pi.x + l.i * 1e-4f, Pi.y + l.j * 1e-4f, Pi.z + l.k * 1e-4f);
-
     float dist_Pi_Luz = calcula_norma(subtrai_pontos(P_F, Pi_mod));
 
-    //interseção com a esfera
     Vector w_sombra = subtrai_pontos(Pi_mod, centroEsfera);
     float a_delta = calcula_prod_esc(l, l);
     float b_delta = 2.0f * calcula_prod_esc(l, w_sombra);
@@ -649,13 +692,10 @@ Color calculaCone(float t, Point p) {
     if (delta > 0.f) {
         s1 = (-b_delta - sqrt(delta)) / (2.0f * a_delta);
         s2 = (-b_delta + sqrt(delta)) / (2.0f * a_delta);
-        // se houver interseção positiva antes da fonte (s entre 0 e distância até a luz), ponto está em sombra
     }
     if ((s1 > 1e-4f && s1 < dist_Pi_Luz) || (s2 > 1e-4f && s2 < dist_Pi_Luz)) naSombraEsf = true;
 
-    // Verificar sombra do cilindro
     if (!naSombraEsf) {
-        // Lança um raio de Pi_mod em direção à luz e verifica interseção com o cilindro
         float t_cil_shadow = calcula_t_Cilindro(cilindro, l, Pi_mod);
         if (t_cil_shadow > 1e-4f && t_cil_shadow < dist_Pi_Luz) {
             naSombraCil = true;
@@ -663,7 +703,6 @@ Color calculaCone(float t, Point p) {
     }
 
     if (naSombraCil || naSombraEsf) {
-        // Apenas componente ambiente
         Color I(lidarExcecao(Ia.r), lidarExcecao(Ia.g), lidarExcecao(Ia.b));
         int R = static_cast<int>(roundf(I.r * 255.0f));
         int G = static_cast<int>(roundf(I.g * 255.0f));
