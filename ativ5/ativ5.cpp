@@ -94,13 +94,13 @@ float Dy = hJanela / nLin;
 Point Po(0.f, 0.f, 0.f);
 
 //esfera
-float rEsfera = 40.0f;
-Point centroEsfera(0.f, 0.f, -100.f);
-Color K_e(0.7f, 0.2f, 0.2f);  // Material com canal vermelho
+float rEsfera = 5.0f;
+Point centroEsfera(0.f, 95.f, -200.f);
+Color K_e(0.854f, 0.647f, 0.125f);  // Material com canal vermelho
 float m_e = 10.0f;            // Expoente especular
 
 //chão
-Point P_pi_chao(0.f, -(rEsfera), 0.f);
+Point P_pi_chao(0.f, -150.f, 0.f);
 Vector n_chao(0.f, 1.0f, 0.f);
 Plano plano_chao(P_pi_chao, n_chao);
 
@@ -109,17 +109,41 @@ Color KC_e(0.0f, 0.0f, 0.0f);
 float m_c = 1.0f;
 
 //fundo
-Point P_pi_fundo(0.f, 0.f, -200.f);
-Vector n_fundo(0.f, 0.f, 1.0f);
+Point P_pi_fundo(200.f, -150.f, -400.f);
+Vector n_fundo(0.f, 0.f, 1.f);
 Plano plano_fundo(P_pi_fundo, n_fundo);
 
-Color KF_d(0.3f, 0.3f, 0.7f);
-Color KF_e(0.0f, 0.0f, 0.0f);
+Color KF_d(0.686f, 0.933f, 0.933f);
+Color KF_e(0.686f, 0.933f, 0.933f);
 float m_f = 1.0f;
+
+//parede esquerda
+Point P_pi_esq(-200.f, -150.f, 0.f);
+Vector n_esq(1.f, 0.f, 0.f);
+Plano plano_esq(P_pi_esq, n_esq);
+
+Color KE_d(0.686f, 0.933f, 0.933f);
+Color KE_e(0.686f, 0.933f, 0.933f);
+
+//parede direita
+Point P_pi_dir(200.f, -150.f, 0.f);
+Vector n_dir(-1.f, 0.f, 0.f);
+Plano plano_dir(P_pi_dir, n_dir);
+
+Color KD_d(0.686f, 0.933f, 0.933f);
+Color KD_e(0.686f, 0.933f, 0.933f);
+
+//teto
+Point P_pi_teto(0.f, 150.f, 0.f);
+Vector n_teto(0.f, -1.f, 0.f);
+Plano plano_teto(P_pi_teto, n_teto);
+
+Color KT_d(0.933f, 0.933f, 0.933f);
+Color KT_e(0.933f, 0.933f, 0.933f);
 
 //fonte luminosa
 Color I_F(0.7f, 0.7f, 0.7f); // Intensidade da luz (branca)
-Point P_F(0.f, 60.f, -30.f);    // Posição da fonte de luz
+Point P_F(-100.f, 140.f, -20.f);    // Posição da fonte de luz
 
 //luz ambiente
 Color I_A(0.3f, 0.3f, 0.3f); // Intensidade da luz ambiente
@@ -138,16 +162,16 @@ Color KCil_a(0.824f, 0.706f, 0.549f);
 //cone
 Point aux(altura_cil* dc.i, altura_cil* dc.j, altura_cil* dc.k);
 Point c_topo_cilindro(cilindro.cb.x + aux.x, cilindro.cb.y + aux.y, cilindro.cb.z + aux.z);
-Point cb_cone = c_topo_cilindro;
-float raio_cone = 1.5 * rEsfera;
-float altura_cone = raio_cone / 3;
+Point cb_cone(0.f,-60.f,-200.f);
+float raio_cone = 90.f;
+float altura_cone = 150.f;
 Point aux_v(altura_cone* dc.i, altura_cone* dc.j, altura_cone* dc.k);
 Point v_cone(cb_cone.x + aux_v.x, cb_cone.y + aux_v.y, cb_cone.z + aux_v.z);
 Cone cone(cb_cone, v_cone, raio_cone);
 float calcula_t_cone(Point& Pj);
 float teta = atan(raio_cone / altura_cone);
 
-Color KCone(0.8, 0.3, 0.2);
+Color KCone(0.f, 1.f, 0.498f);
 
 Matriz3x3 M_id(1.0f, 0.0f, 0.0f,
     0.0f, 1.0f, 0.0f,
@@ -484,12 +508,25 @@ int main() {
 
             Vector w_p_f = subtrai_pontos(Po, plano_fundo.p_pi); // w do plano de fundo
             float ti_f = calcula_t_plano(w_p_f, plano_fundo.n, dr_e); // ti do plano de fundo
+
+            Vector w_p_e = subtrai_pontos(Po, plano_esq.p_pi); // w da parede esquerda
+            float ti_e = calcula_t_plano(w_p_e, plano_esq.n, dr_e); // ti da parede esquerda
+
+            Vector w_p_d = subtrai_pontos(Po, plano_dir.p_pi); // w da parede direita
+            float ti_d = calcula_t_plano(w_p_d, plano_dir.n, dr_e); // ti da parede direita
+
+            Vector w_p_t = subtrai_pontos(Po, plano_teto.p_pi); // w do teto
+            float ti_t = calcula_t_plano(w_p_t, plano_teto.n, dr_e); // ti do teto
+
             //cilindro
             float t_cil = calcula_t_Cilindro(cilindro, dr_e, Po);
             float ti_cone = calcula_t_cone(Pj);
 
             if (ti_c > 0.0f && (ti_c < t || t < 0.0f)) t = ti_c;
             if (ti_f > 0.0f && (ti_f < t || t < 0.0f)) t = ti_f;
+            if (ti_e > 0.0f && (ti_e < t || t < 0.0f)) t = ti_e;
+            if (ti_d > 0.0f && (ti_d < t || t < 0.0f)) t = ti_d;
+            if (ti_t > 0.0f && (ti_t < t || t < 0.0f)) t = ti_t;
             if (t_cil > 0.0f && (t_cil < t || t < 0.0f)) t = t_cil;
             if (ti_cone > 0.0f && (ti_cone < t || t < 0.0f))  t = ti_cone;
 
@@ -501,6 +538,21 @@ int main() {
             } //se interceptar o chão primeiro
             else if (ti_c == t) {
                 Color cor_plano = calcula_Plano(plano_chao, dr_e, KC_e, KC_d);
+                img << static_cast<int>(cor_plano.r) << ' ' << static_cast<int>(cor_plano.g) << ' ' << static_cast<int>(cor_plano.b) << ' ';
+                continue;
+            }
+            else if (ti_e == t) {
+                Color cor_plano = calcula_Plano(plano_esq, dr_e, KE_e, KE_d);
+                img << static_cast<int>(cor_plano.r) << ' ' << static_cast<int>(cor_plano.g) << ' ' << static_cast<int>(cor_plano.b) << ' ';
+                continue;
+            }
+            else if (ti_d == t) {
+                Color cor_plano = calcula_Plano(plano_dir, dr_e, KD_e, KD_d);
+                img << static_cast<int>(cor_plano.r) << ' ' << static_cast<int>(cor_plano.g) << ' ' << static_cast<int>(cor_plano.b) << ' ';
+                continue;
+            }
+            else if (ti_t == t) {
+                Color cor_plano = calcula_Plano(plano_teto, dr_e, KT_e, KT_d);
                 img << static_cast<int>(cor_plano.r) << ' ' << static_cast<int>(cor_plano.g) << ' ' << static_cast<int>(cor_plano.b) << ' ';
                 continue;
             }
