@@ -653,8 +653,8 @@ Color calculaCone(float t, Point p) {
 
     // Verificar se a interseção está na base do cone
     Vector dist_centro = subtrai_pontos(Pi, cone.cb);
-    float dist_quadrada = calcula_prod_esc(dist_centro, dist_centro);
-    bool na_base = fabs(dist_quadrada - cone.raio * cone.raio) < 1e-2f || dist_quadrada < cone.raio * cone.raio + 1e-2f;
+    float altura_Pi = calcula_prod_esc(dist_centro, dc);  // projeção no eixo do cone
+    bool na_base = fabs(altura_Pi) < 1e-3f;
 
     Vector n = na_base
         ? Vector(

@@ -149,7 +149,7 @@ Point P_F(-100.f, 140.f, -20.f);    // Posição da fonte de luz
 Color I_A(0.3f, 0.3f, 0.3f); // Intensidade da luz ambiente
 
 //cilindro
-Point centroCilindro(0.f, -150.f,-200.f);
+Point centroCilindro(0.f, -150.f, -200.f);
 float raio_cil = 5.f;
 float altura_cil = 90.f;
 Vector dc(0.f, 1.0f, 0.f);
@@ -162,7 +162,7 @@ Color KCil_a(0.824f, 0.706f, 0.549f);
 //cone
 Point aux(altura_cil* dc.i, altura_cil* dc.j, altura_cil* dc.k);
 Point c_topo_cilindro(cilindro.cb.x + aux.x, cilindro.cb.y + aux.y, cilindro.cb.z + aux.z);
-Point cb_cone(0.f,-60.f,-200.f);
+Point cb_cone(0.f, -60.f, -200.f);
 float raio_cone = 90.f;
 float altura_cone = 150.f;
 Point aux_v(altura_cone* dc.i, altura_cone* dc.j, altura_cone* dc.k);
@@ -705,8 +705,8 @@ Color calculaCone(float t, Point p) {
 
     // Verificar se a interseção está na base do cone
     Vector dist_centro = subtrai_pontos(Pi, cone.cb);
-    float dist_quadrada = calcula_prod_esc(dist_centro, dist_centro);
-    bool na_base = fabs(dist_quadrada - cone.raio * cone.raio) < 1e-2f || dist_quadrada < cone.raio * cone.raio + 1e-2f;
+    float altura_Pi = calcula_prod_esc(dist_centro, dc);  // projeção no eixo do cone
+    bool na_base = fabs(altura_Pi) < 1e-3f;
 
     Vector n = na_base
         ? Vector(
@@ -768,7 +768,7 @@ Color calculaCone(float t, Point p) {
 
     Color Id(I_F.r * KCone.r * fd, I_F.g * KCone.g * fd, I_F.b * KCone.b * fd);
     Color Ie(I_F.r * KCone.r * fe, I_F.g * KCone.g * fe, I_F.b * KCone.b * fe);
-    Color I(lidarExcecao(Id.r + Ie.r + Ia.r), lidarExcecao(Id.g + Ie.g + Ia.g), lidarExcecao(Id.b + Ie.b + Ia.b));
+    Color I(lidarExcecao(Id.r + Ie.r + Ia.r), lidarExcecao(Id.g + Ie.g + Ia.g), lidarExcecao(Id.b + Ie.b + 1.b));
     int R = static_cast<int>(roundf(I.r * 255.0f));
     int G = static_cast<int>(roundf(I.g * 255.0f));
     int B = static_cast<int>(roundf(I.b * 255.0f));
