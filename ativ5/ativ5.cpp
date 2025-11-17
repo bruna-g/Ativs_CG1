@@ -419,7 +419,7 @@ Color calcula_Plano(Plano P, Vector dr, Color K_e, Color K_d) {
 
     float fd = lidarExcecao(calcula_prod_esc(P.n, l));
     float cosAlpha = lidarExcecao(calcula_prod_esc(r, v));
-    float fe = pow(cosAlpha, m_c);
+    float fe = pow(cosAlpha, m_e);
     Color Id(I_F.r * K_d.r * fd, I_F.g * K_d.g * fd, I_F.b * K_d.b * fd);
     Color Ie(I_F.r * K_e.r * fe, I_F.g * K_e.g * fe, I_F.b * K_e.b * fe);
     Color I(lidarExcecao(Id.r + Ie.r + Ia.r), lidarExcecao(Id.g + Ie.g + Ia.g), lidarExcecao(Id.b + Ie.b + Ia.b));
@@ -764,11 +764,11 @@ Color calculaCone(float t, Point p) {
 
     float fd = lidarExcecao(calcula_prod_esc(n, l));
     float cosAlpha = lidarExcecao(calcula_prod_esc(r, v));
-    float fe = pow(cosAlpha, m_c);
+    float fe = pow(cosAlpha, m_e);
 
     Color Id(I_F.r * KCone.r * fd, I_F.g * KCone.g * fd, I_F.b * KCone.b * fd);
     Color Ie(I_F.r * KCone.r * fe, I_F.g * KCone.g * fe, I_F.b * KCone.b * fe);
-    Color I(lidarExcecao(Id.r + Ie.r + Ia.r), lidarExcecao(Id.g + Ie.g + Ia.g), lidarExcecao(Id.b + Ie.b + 1.b));
+    Color I(lidarExcecao(Id.r + Ie.r + Ia.r), lidarExcecao(Id.g + Ie.g + Ia.g), lidarExcecao(Id.b + Ie.b + Ia.b));
     int R = static_cast<int>(roundf(I.r * 255.0f));
     int G = static_cast<int>(roundf(I.g * 255.0f));
     int B = static_cast<int>(roundf(I.b * 255.0f));
