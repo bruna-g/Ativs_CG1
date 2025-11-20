@@ -4,6 +4,8 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
+#include <SDL2/SDL.h>
+#include "Textura.hpp"
 using namespace std;
 
 
@@ -43,7 +45,8 @@ class Plano {
 public:
     Point p_pi;
     Vector n;
-    Plano(const Point& p_pi_p, const Vector& n_v) : p_pi(p_pi_p), n(n_v) {}
+    bool tem_textura;
+    Plano(const Point& p_pi_p, const Vector& n_v, bool tem_textura_p = false) : p_pi(p_pi_p), n(n_v), tem_textura(tem_textura_p) {}
 };
 
 class Cilindro {
@@ -99,10 +102,14 @@ Point centroEsfera(0.f, 95.f, -200.f);
 Color K_e(0.854f, 0.647f, 0.125f);  // Material com canal vermelho
 float m_e = 10.0f;            // Expoente especular
 
+
+//textura de madeira
+Textura* texturaMadeira = nullptr;
+
 //chão
 Point P_pi_chao(0.f, -150.f, 0.f);
 Vector n_chao(0.f, 1.0f, 0.f);
-Plano plano_chao(P_pi_chao, n_chao);
+Plano plano_chao(P_pi_chao, n_chao, true);
 
 Color KC_d(0.2f, 0.7f, 0.2f);
 Color KC_e(0.0f, 0.0f, 0.0f);
@@ -172,6 +179,12 @@ float calcula_t_cone(Point& Pj);
 float teta = atan(raio_cone / altura_cone);
 
 Color KCone(0.f, 1.f, 0.498f);
+
+Vector cross(const Vector& a, const Vector& b) {
+    return Vector(a.j * b.k - a.k * b.j,
+                  a.k * b.i - a.i * b.k,
+                  a.i * b.j - a.j * b.i);
+}
 
 Matriz3x3 M_id(1.0f, 0.0f, 0.0f,
     0.0f, 1.0f, 0.0f,
@@ -372,6 +385,33 @@ Color calcula_Plano(Plano P, Vector dr, Color K_e, Color K_d) {
     // origem levemente deslocada para evitar auto-interseção
     Point Pi_mod(Pi.x + l.i * 1e-4f, Pi.y + l.j * 1e-4f, Pi.z + l.k * 1e-4f);
 
+    Color Kd_textured = K_d; // fallback: sem textura
+    if (P.tem_textura) {
+        Vector n = P.n;
+        Vector arbitrary = (fabs(n.i) < 0.9f) ? Vector(1.0f,0.0f,0.0f) : Vector(0.0f,1.0f,0.0f);
+        Vector u_axis = cross(arbitrary, n);
+        float nu = calcula_norma(u_axis);
+        if (nu == 0.0f) nu = 1.0f;
+        u_axis = calcula_esc_por_vetor(1.0f/nu, u_axis);
+        Vector v_axis = cross(n, u_axis);
+
+        Vector vecPi = subtrai_pontos(Pi, P.p_pi);
+        float texScale = 0.02f; // ajuste para controlar tamanho do padrão
+        float u = calcula_prod_esc(vecPi, u_axis) * texScale;
+        float v = calcula_prod_esc(vecPi, v_axis) * texScale;
+        u = u - floor(u); if (u < 0) u += 1.0f;
+        v = v - floor(v); if (v < 0) v += 1.0f;
+
+        size_t tx = static_cast<size_t>(u * texturaMadeira->get_largura_pixels()) % texturaMadeira->get_largura_pixels();
+        size_t ty = static_cast<size_t>(v * texturaMadeira->get_altura_pixels()) % texturaMadeira->get_altura_pixels();
+
+        // Textura::get_cor_pixel(x,y) retorna pixels[linha][coluna], então passamos (ty, tx)
+        rgb px = texturaMadeira->get_cor_pixel(ty, tx);
+        Color texCol(px[0] / 255.0f, px[1] / 255.0f, px[2] / 255.0f);
+
+        Kd_textured = Color(texCol.r, texCol.g, texCol.b);
+    }
+
     float dist_Pi_Luz = calcula_norma(subtrai_pontos(P_F, Pi_mod));
 
     //interseção com a esfera
@@ -403,7 +443,7 @@ Color calcula_Plano(Plano P, Vector dr, Color K_e, Color K_d) {
         }
     }
 
-    Color Ia(I_A.r * K_d.r, I_A.g * K_d.g, I_A.b * K_d.b);
+    Color Ia(I_A.r * Kd_textured.r, I_A.g * Kd_textured.g, I_A.b * Kd_textured.b);
     if (naSombraEsf || naSombraCil) {
         // Apenas componente ambiente
         Color I(lidarExcecao(Ia.r), lidarExcecao(Ia.g), lidarExcecao(Ia.b));
@@ -420,7 +460,7 @@ Color calcula_Plano(Plano P, Vector dr, Color K_e, Color K_d) {
     float fd = lidarExcecao(calcula_prod_esc(P.n, l));
     float cosAlpha = lidarExcecao(calcula_prod_esc(r, v));
     float fe = pow(cosAlpha, m_e);
-    Color Id(I_F.r * K_d.r * fd, I_F.g * K_d.g * fd, I_F.b * K_d.b * fd);
+    Color Id(I_F.r * Kd_textured.r * fd, I_F.g * Kd_textured.g * fd, I_F.b * Kd_textured.b * fd);
     Color Ie(I_F.r * K_e.r * fe, I_F.g * K_e.g * fe, I_F.b * K_e.b * fe);
     Color I(lidarExcecao(Id.r + Ie.r + Ia.r), lidarExcecao(Id.g + Ie.g + Ia.g), lidarExcecao(Id.b + Ie.b + Ia.b));
     int R = static_cast<int>(roundf(I.r * 255.0f));
@@ -475,6 +515,7 @@ Color calcula_color_cil(Cilindro cilindro, float t_cil, Vector dr) {
 int main() {
     std::ofstream img("esfera.ppm");
     img << "P3\n" << nCol << " " << nLin << "\n255\n";
+    texturaMadeira = new Textura("madeira","madeira.bmp");
 
     for (int l = 0; l < nLin; l++) {
         float y = hJanela / 2 - Dy / 2 - l * Dy;
@@ -596,6 +637,10 @@ int main() {
         img << "\n";
     }
     img.close();
+
+    delete texturaMadeira;
+    SDL_Quit();
+
     std::cout << "Imagem gerada: esfera.ppm\n";
     return 0;
 }
