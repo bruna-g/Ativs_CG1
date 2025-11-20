@@ -513,7 +513,7 @@ Color calcula_color_cil(Cilindro cilindro, float t_cil, Vector dr) {
 
 
 int main() {
-    std::ofstream img("esfera.ppm");
+    std::ofstream img("ativ5.ppm");
     img << "P3\n" << nCol << " " << nLin << "\n255\n";
     texturaMadeira = new Textura("madeira","madeira.bmp");
 
@@ -641,7 +641,7 @@ int main() {
     delete texturaMadeira;
     SDL_Quit();
 
-    std::cout << "Imagem gerada: esfera.ppm\n";
+    std::cout << "Imagem gerada: ativ5.ppm\n";
     return 0;
 }
 
