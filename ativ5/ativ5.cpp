@@ -78,6 +78,13 @@ public:
     }
 };
 
+class Cubo {
+public:
+    Point centro_base;
+    float aresta;
+    Cubo(const Point& centro_c, const float aresta_c) : centro_base(centro_c), aresta(aresta_c) {}
+};
+
 Vector subtrai_pontos(Point& p1, Point& p2);
 float calcula_prod_esc(const Vector& v1, const Vector& v2);
 Vector calcula_dr(Point& Po, Point& Pj);
@@ -179,6 +186,11 @@ float calcula_t_cone(Point& Pj);
 float teta = atan(raio_cone / altura_cone);
 
 Color KCone(0.f, 1.f, 0.498f);
+
+//cubo
+Cubo cubo(Point(0.f, -150.f, -165.f), 40.f);
+
+
 
 Vector cross(const Vector& a, const Vector& b) {
     return Vector(a.j * b.k - a.k * b.j,
@@ -511,6 +523,74 @@ Color calcula_color_cil(Cilindro cilindro, float t_cil, Vector dr) {
 
 }
 
+struct Face {
+        Point p;
+        Vector n;
+    };
+struct IntersecaoCubo {
+    bool intercepta;
+    float t;
+    Vector normal;
+    Point ponto;
+};
+
+
+IntersecaoCubo calcula_intersecao_cubo_completa(const Cubo& cubo, const Vector& dr, Point& Po) {
+    IntersecaoCubo resultado = {false, INFINITY, Vector(0, 0, 0), Point(0, 0, 0)};
+    
+    float half = cubo.aresta / 2.0f;
+    
+    // Define as 6 faces do cubo
+    Face faces[6] = {
+        // Face frontal (z = centro.z - half)
+        {Point(cubo.centro_base.x, cubo.centro_base.y, cubo.centro_base.z - half), Vector(0, 0, -1)},
+        // Face traseira (z = centro.z + half)
+        {Point(cubo.centro_base.x, cubo.centro_base.y, cubo.centro_base.z + half), Vector(0, 0, 1)},
+        // Face esquerda (x = centro.x - half)
+        {Point(cubo.centro_base.x - half, cubo.centro_base.y, cubo.centro_base.z), Vector(-1, 0, 0)},
+        // Face direita (x = centro.x + half)
+        {Point(cubo.centro_base.x + half, cubo.centro_base.y, cubo.centro_base.z), Vector(1, 0, 0)},
+        // Face inferior (y = centro.y)
+        {Point(cubo.centro_base.x, cubo.centro_base.y, cubo.centro_base.z), Vector(0, -1, 0)},
+        // Face superior (y = centro.y + aresta)
+        {Point(cubo.centro_base.x, cubo.centro_base.y + cubo.aresta, cubo.centro_base.z), Vector(0, 1, 0)}
+    };
+    
+    // Testa interseção com cada face
+    for (int i = 0; i < 6; i++) {
+        float denom = calcula_prod_esc(dr, faces[i].n);
+        
+        // Se o denominador for próximo de zero, o raio é paralelo ao plano
+        if (fabs(denom) < 1e-6f) continue;
+        
+        Vector w = subtrai_pontos(Po, faces[i].p);
+        float t_aux = calcula_t_plano(w, faces[i].n, dr);
+        
+        // Verifica se t é positivo e menor que o melhor t encontrado
+        if (t_aux <= 1e-4f || t_aux >= resultado.t) continue;
+        
+        // Calcula o ponto de interseção
+        Point Pi = calcula_eq_ray(Po, t_aux, dr);
+        
+        // Verifica se o ponto está dentro dos limites do cubo
+        bool dentro_x = (Pi.x >= cubo.centro_base.x - half - 1e-4f) && 
+                       (Pi.x <= cubo.centro_base.x + half + 1e-4f);
+        bool dentro_y = (Pi.y >= cubo.centro_base.y - 1e-4f) && 
+                       (Pi.y <= cubo.centro_base.y + cubo.aresta + 1e-4f);
+        bool dentro_z = (Pi.z >= cubo.centro_base.z - half - 1e-4f) && 
+                       (Pi.z <= cubo.centro_base.z + half + 1e-4f);
+        
+        if (dentro_x && dentro_y && dentro_z) {
+            resultado.intercepta = true;
+            resultado.t = t_aux;
+            resultado.normal = faces[i].n;
+            resultado.ponto = Pi;
+        }
+    }
+    
+    return resultado;
+}
+
 
 int main() {
     std::ofstream img("ativ5.ppm");
@@ -563,6 +643,9 @@ int main() {
             float t_cil = calcula_t_Cilindro(cilindro, dr_e, Po);
             float ti_cone = calcula_t_cone(Pj);
 
+            IntersecaoCubo inter_cubo = calcula_intersecao_cubo_completa(cubo, dr_e, Po);
+            float t_cubo = inter_cubo.intercepta ? inter_cubo.t : -1.0f;
+
             if (ti_c > 0.0f && (ti_c < t || t < 0.0f)) t = ti_c;
             if (ti_f > 0.0f && (ti_f < t || t < 0.0f)) t = ti_f;
             if (ti_e > 0.0f && (ti_e < t || t < 0.0f)) t = ti_e;
@@ -570,6 +653,7 @@ int main() {
             if (ti_t > 0.0f && (ti_t < t || t < 0.0f)) t = ti_t;
             if (t_cil > 0.0f && (t_cil < t || t < 0.0f)) t = t_cil;
             if (ti_cone > 0.0f && (ti_cone < t || t < 0.0f))  t = ti_cone;
+            if (t_cubo > 0.0f && (t_cubo < t || t < 0.0f))  t = t_cubo;
 
             //se interceptar fundo primeiro
             if (ti_f == t) {
@@ -605,6 +689,14 @@ int main() {
             else if (ti_cone == t) {
                 Color cor_cone = calculaCone(t, Pj);
                 img << static_cast<int>(cor_cone.r) << ' ' << static_cast<int>(cor_cone.g) << ' ' << static_cast<int>(cor_cone.b) << ' ';
+                continue;
+            }
+            else if (t_cubo == t) {
+                // Renderiza o cubo (você pode criar uma função similar a calcula_Plano)
+                Color K_cubo(1.f, 0.078f, 0.576f); // Cor vermelha para o cubo
+                Plano plano_cubo(inter_cubo.ponto, inter_cubo.normal);
+                Color cor_cubo = calcula_Plano(plano_cubo, dr_e, K_cubo, K_cubo);
+                img << static_cast<int>(cor_cubo.r) << ' ' << static_cast<int>(cor_cubo.g) << ' ' << static_cast<int>(cor_cubo.b) << ' ';
                 continue;
             }
             else if (t <= 0.0f || delta < 0.0f) {
