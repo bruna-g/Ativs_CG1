@@ -1,16 +1,26 @@
 #include "Cone.h"
+#include "Cena.h"
+#include "Color.h"
+#include "Cilindro.h"
+#include "Matriz3x3.h"
+#include "Vector.h"
 #include "Utils.h"
 #include <cmath>
 #include <algorithm>
 
 Cone::Cone(const Point& cb_c, const Point& v_c, const float raio_c)
-    : cb(cb_c), v(v_c), raio(raio_c), dc(0.0f, 1.0f, 0.0f), altura(0.0f), teta(0.0f) {
+    : cb(cb_c), v(v_c), raio(raio_c), material(), dc(0.0f, 1.0f, 0.0f), altura(0.0f), teta(0.0f) {
     Vector cbv = subtrai_pontos(v, cb);
     altura = calcula_norma(cbv);
     if (altura > 0.0f) {
         dc = Vector(cbv.i / altura, cbv.j / altura, cbv.k / altura);
     }
     teta = atan(raio / (altura > 0.0f ? altura : 1.0f));
+}
+
+Cone::Cone(const Point& cb_c, const Point& v_c, const float raio_c, const Material& material_p)
+    : Cone(cb_c, v_c, raio_c) {
+    material = material_p;
 }
 
 float Cone::CalcularIntersecao(const Point& origem, const Vector& dir) const {
@@ -100,6 +110,178 @@ float Cone::CalcularIntersecao(const Point& origem, const Vector& dir) const {
 float Cone::CalcularIntersecao(const Point& origem, const Point& pontoJanela) const {
     Vector dir = calcula_dr(origem, pontoJanela);
     return CalcularIntersecao(origem, dir);
+}
+
+Color Cone::CalcularCor(const Cena& cena, float t, const Vector& dir, const Color& K) const {
+    bool naSombraEsf = false;
+    bool naSombraCil = false;
+
+    Point Pi = calcula_eq_ray(cena.observador, t, dir);
+
+    // Base do cone: plano em cb com normal dc
+    Vector dist_centro = subtrai_pontos(Pi, cb);
+    float altura_Pi = calcula_prod_esc(dist_centro, dc);
+    bool na_base = fabs(altura_Pi) < 1e-3f;
+
+    Vector n = na_base
+        ? Vector(
+            (calcula_prod_esc(dc, dir) > 0 ? -dc.i : dc.i),
+            (calcula_prod_esc(dc, dir) > 0 ? -dc.j : dc.j),
+            (calcula_prod_esc(dc, dir) > 0 ? -dc.k : dc.k))
+        : [&]() {
+        Vector V = subtrai_pontos(v, Pi);
+        float vNorma = calcula_norma(V);
+        if (vNorma == 0.0f) vNorma = 1.0f;
+        Vector s_conjugado(V.i / vNorma, V.j / vNorma, V.k / vNorma);
+        Matriz3x3 M_id(1.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 1.0f);
+        Matriz3x3 M_e = matrizSubtrai(M_id, outerProduto(s_conjugado));
+        Vector N = matrizVetorProduto(M_e, dc);
+        float N_norma = calcula_norma(N);
+        if (N_norma == 0.0f) N_norma = 1.0f;
+        return Vector(N.i / N_norma, N.j / N_norma, N.k / N_norma);
+        }();
+
+    Vector l = calcula_l(cena.luz.pos, Pi);
+    Vector vdir(-dir.i, -dir.j, -dir.k);
+    Vector r1 = calcula_esc_por_vetor(2.0f, calcula_esc_por_vetor(calcula_prod_esc(n, l), n));
+    Vector r(r1.i - l.i, r1.j - l.j, r1.k - l.k);
+    Color Ia(cena.luzAmbiente.r * K.r, cena.luzAmbiente.g * K.g, cena.luzAmbiente.b * K.b);
+
+    Point Pi_mod(Pi.x + l.i * 1e-4f, Pi.y + l.j * 1e-4f, Pi.z + l.k * 1e-4f);
+    float dist_Pi_Luz = calcula_norma(subtrai_pontos(cena.luz.pos, Pi_mod));
+
+    // Sombra da esfera
+    Vector w_sombra = subtrai_pontos(Pi_mod, cena.centroEsfera);
+    float a_delta = calcula_prod_esc(l, l);
+    float b_delta = 2.0f * calcula_prod_esc(l, w_sombra);
+    float c_delta = calcula_prod_esc(w_sombra, w_sombra) - cena.raioEsfera * cena.raioEsfera;
+    float delta = b_delta * b_delta - 4.0f * a_delta * c_delta;
+    float s1 = INFINITY;
+    float s2 = INFINITY;
+    if (delta > 0.f) {
+        s1 = (-b_delta - sqrt(delta)) / (2.0f * a_delta);
+        s2 = (-b_delta + sqrt(delta)) / (2.0f * a_delta);
+    }
+    if ((s1 > 1e-4f && s1 < dist_Pi_Luz) || (s2 > 1e-4f && s2 < dist_Pi_Luz)) naSombraEsf = true;
+
+    // Sombra do cilindro
+    if (!naSombraEsf && cena.cilindro != nullptr) {
+        float t_cil_shadow = cena.cilindro->CalcularIntersecao(Pi_mod, l);
+        if (t_cil_shadow > 1e-4f && t_cil_shadow < dist_Pi_Luz) naSombraCil = true;
+    }
+
+    if (naSombraCil || naSombraEsf) {
+        Color I(lidarExcecao(Ia.r), lidarExcecao(Ia.g), lidarExcecao(Ia.b));
+        int R = static_cast<int>(roundf(I.r * 255.0f));
+        int G = static_cast<int>(roundf(I.g * 255.0f));
+        int B = static_cast<int>(roundf(I.b * 255.0f));
+        return Color(R, G, B);
+    }
+
+    float fd = lidarExcecao(calcula_prod_esc(n, l));
+    float cosAlpha = lidarExcecao(calcula_prod_esc(r, vdir));
+    float fe = pow(cosAlpha, cena.expoenteEspecular);
+
+    Color Id(cena.luz.intensidade.r * K.r * fd,
+        cena.luz.intensidade.g * K.g * fd,
+        cena.luz.intensidade.b * K.b * fd);
+    Color Ie(cena.luz.intensidade.r * K.r * fe,
+        cena.luz.intensidade.g * K.g * fe,
+        cena.luz.intensidade.b * K.b * fe);
+    Color I(lidarExcecao(Id.r + Ie.r + Ia.r), lidarExcecao(Id.g + Ie.g + Ia.g), lidarExcecao(Id.b + Ie.b + Ia.b));
+
+    int R = static_cast<int>(roundf(I.r * 255.0f));
+    int G = static_cast<int>(roundf(I.g * 255.0f));
+    int B = static_cast<int>(roundf(I.b * 255.0f));
+    return Color(R, G, B);
+}
+
+Color Cone::CalcularCor(const Cena& cena, float t, const Vector& dir) const {
+    bool naSombraEsf = false;
+    bool naSombraCil = false;
+
+    Point Pi = calcula_eq_ray(cena.observador, t, dir);
+
+    // Base do cone: plano em cb com normal dc
+    Vector dist_centro = subtrai_pontos(Pi, cb);
+    float altura_Pi = calcula_prod_esc(dist_centro, dc);
+    bool na_base = fabs(altura_Pi) < 1e-3f;
+
+    Vector n = na_base
+        ? Vector(
+            (calcula_prod_esc(dc, dir) > 0 ? -dc.i : dc.i),
+            (calcula_prod_esc(dc, dir) > 0 ? -dc.j : dc.j),
+            (calcula_prod_esc(dc, dir) > 0 ? -dc.k : dc.k))
+        : [&]() {
+        Vector V = subtrai_pontos(v, Pi);
+        float vNorma = calcula_norma(V);
+        if (vNorma == 0.0f) vNorma = 1.0f;
+        Vector s_conjugado(V.i / vNorma, V.j / vNorma, V.k / vNorma);
+        Matriz3x3 M_id(1.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 1.0f);
+        Matriz3x3 M_e = matrizSubtrai(M_id, outerProduto(s_conjugado));
+        Vector N = matrizVetorProduto(M_e, dc);
+        float N_norma = calcula_norma(N);
+        if (N_norma == 0.0f) N_norma = 1.0f;
+        return Vector(N.i / N_norma, N.j / N_norma, N.k / N_norma);
+        }();
+
+    Vector l = calcula_l(cena.luz.pos, Pi);
+    Vector vdir(-dir.i, -dir.j, -dir.k);
+    Vector r1 = calcula_esc_por_vetor(2.0f, calcula_esc_por_vetor(calcula_prod_esc(n, l), n));
+    Vector r(r1.i - l.i, r1.j - l.j, r1.k - l.k);
+    Color Ia(cena.luzAmbiente.r * material.Ka.r, cena.luzAmbiente.g * material.Ka.g, cena.luzAmbiente.b * material.Ka.b);
+
+    Point Pi_mod(Pi.x + l.i * 1e-4f, Pi.y + l.j * 1e-4f, Pi.z + l.k * 1e-4f);
+    float dist_Pi_Luz = calcula_norma(subtrai_pontos(cena.luz.pos, Pi_mod));
+
+    // Sombra da esfera
+    Vector w_sombra = subtrai_pontos(Pi_mod, cena.centroEsfera);
+    float a_delta = calcula_prod_esc(l, l);
+    float b_delta = 2.0f * calcula_prod_esc(l, w_sombra);
+    float c_delta = calcula_prod_esc(w_sombra, w_sombra) - cena.raioEsfera * cena.raioEsfera;
+    float delta = b_delta * b_delta - 4.0f * a_delta * c_delta;
+    float s1 = INFINITY;
+    float s2 = INFINITY;
+    if (delta > 0.f) {
+        s1 = (-b_delta - sqrt(delta)) / (2.0f * a_delta);
+        s2 = (-b_delta + sqrt(delta)) / (2.0f * a_delta);
+    }
+    if ((s1 > 1e-4f && s1 < dist_Pi_Luz) || (s2 > 1e-4f && s2 < dist_Pi_Luz)) naSombraEsf = true;
+
+    // Sombra do cilindro
+    if (!naSombraEsf && cena.cilindro != nullptr) {
+        float t_cil_shadow = cena.cilindro->CalcularIntersecao(Pi_mod, l);
+        if (t_cil_shadow > 1e-4f && t_cil_shadow < dist_Pi_Luz) naSombraCil = true;
+    }
+
+    if (naSombraCil || naSombraEsf) {
+        Color I(lidarExcecao(Ia.r), lidarExcecao(Ia.g), lidarExcecao(Ia.b));
+        int R = static_cast<int>(roundf(I.r * 255.0f));
+        int G = static_cast<int>(roundf(I.g * 255.0f));
+        int B = static_cast<int>(roundf(I.b * 255.0f));
+        return Color(R, G, B);
+    }
+
+    float fd = lidarExcecao(calcula_prod_esc(n, l));
+    float cosAlpha = lidarExcecao(calcula_prod_esc(r, vdir));
+    float fe = pow(cosAlpha, material.m);
+
+    Color Id(cena.luz.intensidade.r * material.Kd.r * fd,
+        cena.luz.intensidade.g * material.Kd.g * fd,
+        cena.luz.intensidade.b * material.Kd.b * fd);
+    Color Ie(cena.luz.intensidade.r * material.Ke.r * fe,
+        cena.luz.intensidade.g * material.Ke.g * fe,
+        cena.luz.intensidade.b * material.Ke.b * fe);
+    Color I(lidarExcecao(Id.r + Ie.r + Ia.r), lidarExcecao(Id.g + Ie.g + Ia.g), lidarExcecao(Id.b + Ie.b + Ia.b));
+
+    int R = static_cast<int>(roundf(I.r * 255.0f));
+    int G = static_cast<int>(roundf(I.g * 255.0f));
+    int B = static_cast<int>(roundf(I.b * 255.0f));
+    return Color(R, G, B);
 }
 
 // Wrapper legado (mantido para compatibilidade com código antigo)

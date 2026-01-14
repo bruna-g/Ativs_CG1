@@ -15,6 +15,8 @@
 #include "Cilindro.h"
 #include "Utils.h"
 #include "Matriz3x3.h"
+#include "Cena.h"
+#include "Material.h"
 using namespace std;
 
 
@@ -41,14 +43,18 @@ float m_e = 10.0f;            // Expoente especular
 //textura de madeira
 Textura* texturaMadeira = nullptr;
 
+static Cena* gCena = nullptr;
+
 //chão
 Point P_pi_chao(0.f, -150.f, 0.f);
 Vector n_chao(0.f, 1.0f, 0.f);
-Plano plano_chao(P_pi_chao, n_chao, true);
 
 Color KC_d(0.2f, 0.7f, 0.2f);
 Color KC_e(0.0f, 0.0f, 0.0f);
 float m_c = 1.0f;
+
+Material mat_chao;
+Plano plano_chao(P_pi_chao, n_chao, mat_chao);
 
 //fundo
 Point P_pi_fundo(200.f, -150.f, -400.f);
@@ -59,6 +65,8 @@ Color KF_d(0.686f, 0.933f, 0.933f);
 Color KF_e(0.686f, 0.933f, 0.933f);
 float m_f = 1.0f;
 
+Material mat_fundo;
+
 //parede esquerda
 Point P_pi_esq(-200.f, -150.f, 0.f);
 Vector n_esq(1.f, 0.f, 0.f);
@@ -66,6 +74,8 @@ Plano plano_esq(P_pi_esq, n_esq);
 
 Color KE_d(0.686f, 0.933f, 0.933f);
 Color KE_e(0.686f, 0.933f, 0.933f);
+
+Material mat_esq;
 
 //parede direita
 Point P_pi_dir(200.f, -150.f, 0.f);
@@ -75,6 +85,8 @@ Plano plano_dir(P_pi_dir, n_dir);
 Color KD_d(0.686f, 0.933f, 0.933f);
 Color KD_e(0.686f, 0.933f, 0.933f);
 
+Material mat_dir;
+
 //teto
 Point P_pi_teto(0.f, 150.f, 0.f);
 Vector n_teto(0.f, -1.f, 0.f);
@@ -82,6 +94,8 @@ Plano plano_teto(P_pi_teto, n_teto);
 
 Color KT_d(0.933f, 0.933f, 0.933f);
 Color KT_e(0.933f, 0.933f, 0.933f);
+
+Material mat_teto;
 
 //fonte luminosa
 Color I_F(0.7f, 0.7f, 0.7f); // Intensidade da luz (branca)
@@ -101,6 +115,8 @@ Color KCil_d(0.824f, 0.706f, 0.549f);
 Color KCil_e(0.824f, 0.706f, 0.549f);
 Color KCil_a(0.824f, 0.706f, 0.549f);
 
+Material mat_cil;
+
 //cone
 Point aux(altura_cil* dc.i, altura_cil* dc.j, altura_cil* dc.k);
 Point c_topo_cilindro(cilindro.cb.x + aux.x, cilindro.cb.y + aux.y, cilindro.cb.z + aux.z);
@@ -114,6 +130,8 @@ float calcula_t_cone(Point& Pj);
 float teta = atan(raio_cone / altura_cone);
 
 Color KCone(0.f, 1.f, 0.498f);
+
+Material mat_cone;
 
 //cubo
 Cubo cubo(Point(0.f, -150.f, -165.f), 40.f);
@@ -138,136 +156,18 @@ Matriz3x3 M_conjugada = outerProduto(dc);
 Matriz3x3 M_estrela = matrizSubtrai(M_conjugada, escalarMatriz(pow((altura_cone / raio_cone), 2), M));
 
 Color calcula_Plano(Plano P, Vector dr, Color K_e, Color K_d) {
-    bool naSombraEsf = false;
-    bool naSombraCil = false;
-    bool naSombraCone = false;
-
-    // descobrir ponto Pi no plano a partir do raio que sai do olho do observador
-    float ti = P.CalcularIntersecao(Po, dr);
-    Point Pi = calcula_eq_ray(Po, ti, dr);
-
-    // Verifica sombra: lança um raio de Pi em direção à fonte de luz e checa interseção com a esfera e o cone
-    Vector l = calcula_l(P_F, Pi);
-    // origem levemente deslocada para evitar auto-interseção
-    Point Pi_mod(Pi.x + l.i * 1e-4f, Pi.y + l.j * 1e-4f, Pi.z + l.k * 1e-4f);
-
-    Color Kd_textured = K_d; // fallback: sem textura
-    if (P.tem_textura) {
-        Vector n = P.n;
-        Vector arbitrary = (fabs(n.i) < 0.9f) ? Vector(1.0f, 0.0f, 0.0f) : Vector(0.0f, 1.0f, 0.0f);
-        Vector u_axis = cross(arbitrary, n);
-        float nu = calcula_norma(u_axis);
-        if (nu == 0.0f) nu = 1.0f;
-        u_axis = calcula_esc_por_vetor(1.0f / nu, u_axis);
-        Vector v_axis = cross(n, u_axis);
-
-        Vector vecPi = subtrai_pontos(Pi, P.p_pi);
-        float texScale = 0.02f; // ajuste para controlar tamanho do padrão
-        float u = calcula_prod_esc(vecPi, u_axis) * texScale;
-        float v = calcula_prod_esc(vecPi, v_axis) * texScale;
-        u = u - floor(u); if (u < 0) u += 1.0f;
-        v = v - floor(v); if (v < 0) v += 1.0f;
-
-        size_t tx = static_cast<size_t>(u * texturaMadeira->get_largura_pixels()) % texturaMadeira->get_largura_pixels();
-        size_t ty = static_cast<size_t>(v * texturaMadeira->get_altura_pixels()) % texturaMadeira->get_altura_pixels();
-
-        // Textura::get_cor_pixel(x,y) retorna pixels[linha][coluna], então passamos (ty, tx)
-        rgb px = texturaMadeira->get_cor_pixel(ty, tx);
-        Color texCol(px[0] / 255.0f, px[1] / 255.0f, px[2] / 255.0f);
-
-        Kd_textured = Color(texCol.r, texCol.g, texCol.b);
-    }
-
-    float dist_Pi_Luz = calcula_norma(subtrai_pontos(P_F, Pi_mod));
-
-    //interseção com a esfera
-    Vector w_sombra = subtrai_pontos(Pi_mod, centroEsfera);
-    float a_delta = calcula_prod_esc(l, l);
-    float b_delta = 2.0f * calcula_prod_esc(l, w_sombra);
-    float c_delta = calcula_prod_esc(w_sombra, w_sombra) - rEsfera * rEsfera;
-
-    float delta = b_delta * b_delta - 4.0f * a_delta * c_delta;
-    float s1 = INFINITY;
-    float s2 = INFINITY;
-
-    if (delta > 0.f) {
-        s1 = (-b_delta - sqrt(delta)) / (2.0f * a_delta);
-        s2 = (-b_delta + sqrt(delta)) / (2.0f * a_delta);
-        // se houver interseção positiva antes da fonte (s entre 0 e distância até a luz), ponto está em sombra
-    }
-    if ((s1 > 1e-4f && s1 < dist_Pi_Luz) || (s2 > 1e-4f && s2 < dist_Pi_Luz)) naSombraEsf = true;
-
-    // Verificar sombra do cone
-    if (!naSombraEsf) {
-        float t_cone = cone.CalcularIntersecao(Pi_mod, l);
-        if (t_cone > 1e-4f && t_cone < calcula_norma(subtrai_pontos(P_F, Pi_mod))) naSombraCone = true;
-    }
-
-    Color Ia(I_A.r * Kd_textured.r, I_A.g * Kd_textured.g, I_A.b * Kd_textured.b);
-    if (naSombraEsf || naSombraCil || naSombraCone) {
-        // Apenas componente ambiente
-        Color I(lidarExcecao(Ia.r), lidarExcecao(Ia.g), lidarExcecao(Ia.b));
-        int R = static_cast<int>(roundf(I.r * 255.0f));
-        int G = static_cast<int>(roundf(I.g * 255.0f));
-        int B = static_cast<int>(roundf(I.b * 255.0f));
-        return Color(R, G, B);
-    }
-
-    Vector v = Vector(-dr.i, -dr.j, -dr.k);
-    Vector r1 = calcula_esc_por_vetor(2.0f, calcula_esc_por_vetor(calcula_prod_esc(P.n, l), P.n));
-    Vector r(r1.i - l.i, r1.j - l.j, r1.k - l.k);
-
-    float fd = lidarExcecao(calcula_prod_esc(P.n, l));
-    float cosAlpha = lidarExcecao(calcula_prod_esc(r, v));
-    float fe = pow(cosAlpha, m_e);
-    Color Id(I_F.r * Kd_textured.r * fd, I_F.g * Kd_textured.g * fd, I_F.b * Kd_textured.b * fd);
-    Color Ie(I_F.r * K_e.r * fe, I_F.g * K_e.g * fe, I_F.b * K_e.b * fe);
-    Color I(lidarExcecao(Id.r + Ie.r + Ia.r), lidarExcecao(Id.g + Ie.g + Ia.g), lidarExcecao(Id.b + Ie.b + Ia.b));
-    int R = static_cast<int>(roundf(I.r * 255.0f));
-    int G = static_cast<int>(roundf(I.g * 255.0f));
-    int B = static_cast<int>(roundf(I.b * 255.0f));
-    return Color(R, G, B);
+    if (gCena == nullptr) return Color(0, 0, 0);
+    (void)K_e;
+    (void)K_d;
+    return P.CalcularCor(*gCena, dr);
 
 }
 
 
 
 Color calcula_color_cil(Cilindro cilindro, float t_cil, Vector dr) {
-    Point P = calcula_eq_ray(Po, t_cil, dr);
-
-    bool naSombra = false;
-    float dist_Pi_Luz = calcula_norma(subtrai_pontos(P_F, P));
-    if (t_cil < dist_Pi_Luz) naSombra = true;
-
-    Color Ia(I_A.r * KCil_a.r, I_A.g * KCil_a.g, I_A.b * KCil_a.b);
-
-    if (naSombra) {
-        // Apenas componente ambiente
-        Color I(lidarExcecao(Ia.r), lidarExcecao(Ia.g), lidarExcecao(Ia.b));
-        int R = static_cast<int>(roundf(I.r * 255.0f));
-        int G = static_cast<int>(roundf(I.g * 255.0f));
-        int B = static_cast<int>(roundf(I.b * 255.0f));
-        return Color(R, G, B);
-    }
-
-    Vector n = calcula_n_cilindro(P, cilindro);
-    Vector l = calcula_l(P_F, P);
-    Vector v(-dr.i, -dr.j, -dr.k);
-    Vector r1 = calcula_esc_por_vetor(2.0f, calcula_esc_por_vetor(calcula_prod_esc(n, l), n));
-    Vector r(r1.i - l.i, r1.j - l.j, r1.k - l.k);
-
-    float fd = lidarExcecao(calcula_prod_esc(n, l));
-    float cosAlpha = lidarExcecao(calcula_prod_esc(r, v));
-    float fe = pow(cosAlpha, m_e);
-
-    Color Id(I_F.r * KCil_d.r * fd, I_F.g * KCil_d.g * fd, I_F.b * KCil_d.b * fd);
-    Color Ie(I_F.r * KCil_e.r * fe, I_F.g * KCil_e.g * fe, I_F.b * KCil_e.b * fe);
-    Color I(lidarExcecao(Id.r + Ie.r + Ia.r), lidarExcecao(Id.g + Ie.g + Ia.g), lidarExcecao(Id.b + Ie.b + Ia.b));
-
-    int R = static_cast<int>(roundf(I.r * 255.0f));
-    int G = static_cast<int>(roundf(I.g * 255.0f));
-    int B = static_cast<int>(roundf(I.b * 255.0f));
-    return Color(R, G, B);
+    if (gCena == nullptr) return Color(0, 0, 0);
+    return cilindro.CalcularCor(*gCena, t_cil, dr);
 
 }
 
@@ -276,6 +176,62 @@ int main() {
     std::ofstream img("ativ5.ppm");
     img << "P3\n" << nCol << " " << nLin << "\n255\n";
     texturaMadeira = new Textura("madeira", "madeira.bmp");
+
+    // Materiais (inicializa aqui para poder apontar para a textura carregada)
+    mat_chao.Ka = KC_d;
+    mat_chao.Kd = KC_d;
+    mat_chao.Ke = KC_e;
+    mat_chao.m = m_e;
+    mat_chao.usarTextura = true;
+    mat_chao.textura = texturaMadeira;
+
+    mat_fundo.Ka = KF_d;
+    mat_fundo.Kd = KF_d;
+    mat_fundo.Ke = KF_e;
+    mat_fundo.m = m_f;
+
+    mat_esq.Ka = KE_d;
+    mat_esq.Kd = KE_d;
+    mat_esq.Ke = KE_e;
+    mat_esq.m = m_e;
+
+    mat_dir.Ka = KD_d;
+    mat_dir.Kd = KD_d;
+    mat_dir.Ke = KD_e;
+    mat_dir.m = m_e;
+
+    mat_teto.Ka = KT_d;
+    mat_teto.Kd = KT_d;
+    mat_teto.Ke = KT_e;
+    mat_teto.m = m_e;
+
+    mat_cil.Ka = KCil_a;
+    mat_cil.Kd = KCil_d;
+    mat_cil.Ke = KCil_e;
+    mat_cil.m = m_e;
+
+    mat_cone = Material::Solido(KCone, m_e);
+
+    // Aplica os materiais nos objetos globais (já instanciados)
+    plano_chao.material = mat_chao;
+    plano_fundo.material = mat_fundo;
+    plano_esq.material = mat_esq;
+    plano_dir.material = mat_dir;
+    plano_teto.material = mat_teto;
+    cilindro.material = mat_cil;
+    cone.material = mat_cone;
+
+    Cena cena;
+    cena.observador = Po;
+    cena.luz = LuzPontual{ P_F, I_F };
+    cena.luzAmbiente = I_A;
+    cena.centroEsfera = centroEsfera;
+    cena.raioEsfera = rEsfera;
+    cena.cone = &cone;
+    cena.cilindro = &cilindro;
+    cena.texturaMadeira = texturaMadeira;
+    cena.expoenteEspecular = m_e;
+    gCena = &cena;
 
     for (int l = 0; l < nLin; l++) {
         float y = hJanela / 2 - Dy / 2 - l * Dy;
@@ -328,45 +284,45 @@ int main() {
 
             //se interceptar fundo primeiro
             if (ti_f == t) {
-                Color cor_plano = calcula_Plano(plano_fundo, dr_e, KF_e, KF_d);
+                Color cor_plano = plano_fundo.CalcularCor(cena, dr_e);
                 img << static_cast<int>(cor_plano.r) << ' ' << static_cast<int>(cor_plano.g) << ' ' << static_cast<int>(cor_plano.b) << ' ';
                 continue;
             } //se interceptar o chão primeiro
             else if (ti_c == t) {
-                Color cor_plano = calcula_Plano(plano_chao, dr_e, KC_e, KC_d);
+                Color cor_plano = plano_chao.CalcularCor(cena, dr_e);
                 img << static_cast<int>(cor_plano.r) << ' ' << static_cast<int>(cor_plano.g) << ' ' << static_cast<int>(cor_plano.b) << ' ';
                 continue;
             }
             else if (ti_e == t) {
-                Color cor_plano = calcula_Plano(plano_esq, dr_e, KE_e, KE_d);
+                Color cor_plano = plano_esq.CalcularCor(cena, dr_e);
                 img << static_cast<int>(cor_plano.r) << ' ' << static_cast<int>(cor_plano.g) << ' ' << static_cast<int>(cor_plano.b) << ' ';
                 continue;
             }
             else if (ti_d == t) {
-                Color cor_plano = calcula_Plano(plano_dir, dr_e, KD_e, KD_d);
+                Color cor_plano = plano_dir.CalcularCor(cena, dr_e);
                 img << static_cast<int>(cor_plano.r) << ' ' << static_cast<int>(cor_plano.g) << ' ' << static_cast<int>(cor_plano.b) << ' ';
                 continue;
             }
             else if (ti_t == t) {
-                Color cor_plano = calcula_Plano(plano_teto, dr_e, KT_e, KT_d);
+                Color cor_plano = plano_teto.CalcularCor(cena, dr_e);
                 img << static_cast<int>(cor_plano.r) << ' ' << static_cast<int>(cor_plano.g) << ' ' << static_cast<int>(cor_plano.b) << ' ';
                 continue;
             }
             else if (t_cil == t) {
-                Color color_Cil = calcula_color_cil(cilindro, t, dr_e);
+                Color color_Cil = cilindro.CalcularCor(cena, t, dr_e);
                 img << static_cast<int>(color_Cil.r) << ' ' << static_cast<int>(color_Cil.g) << ' ' << static_cast<int>(color_Cil.b) << ' ';
                 continue;
             }
             else if (ti_cone == t) {
-                Color cor_cone = calculaCone(t, Pj);
+                Color cor_cone = cone.CalcularCor(cena, t, dr_e);
                 img << static_cast<int>(cor_cone.r) << ' ' << static_cast<int>(cor_cone.g) << ' ' << static_cast<int>(cor_cone.b) << ' ';
                 continue;
             }
             else if (t_cubo == t) {
                 // Renderiza o cubo (você pode criar uma função similar a calcula_Plano)
                 Color K_cubo(1.f, 0.078f, 0.576f); // Cor vermelha para o cubo
-                Plano plano_cubo(inter_cubo.ponto, inter_cubo.normal);
-                Color cor_cubo = calcula_Plano(plano_cubo, dr_e, K_cubo, K_cubo);
+                Plano plano_cubo(inter_cubo.ponto, inter_cubo.normal, Material::Solido(K_cubo, m_e));
+                Color cor_cubo = plano_cubo.CalcularCor(cena, dr_e);
                 img << static_cast<int>(cor_cubo.r) << ' ' << static_cast<int>(cor_cubo.g) << ' ' << static_cast<int>(cor_cubo.b) << ' ';
                 continue;
             }
@@ -409,80 +365,8 @@ int main() {
 }
 
 Color calculaCone(float t, Point p) {
-    bool naSombraEsf = false;
-    bool naSombraCil = false;
+    if (gCena == nullptr) return Color(0, 0, 0);
     Vector dr = calcula_dr(Po, p);
-    Point Pi = calcula_eq_ray(Po, t, dr);
-
-    // Verificar se a interseção está na base do cone
-    Vector dist_centro = subtrai_pontos(Pi, cone.cb);
-    float altura_Pi = calcula_prod_esc(dist_centro, dc);  // projeção no eixo do cone
-    bool na_base = fabs(altura_Pi) < 1e-3f;
-
-    Vector n = na_base
-        ? Vector(
-            (calcula_prod_esc(dc, dr) > 0 ? -dc.i : dc.i),
-            (calcula_prod_esc(dc, dr) > 0 ? -dc.j : dc.j),
-            (calcula_prod_esc(dc, dr) > 0 ? -dc.k : dc.k))
-        : [&]() {
-        Vector V = subtrai_pontos(cone.v, Pi);
-        float vNorma = calcula_norma(V);
-        Vector s_conjugado(V.i / vNorma, V.j / vNorma, V.k / vNorma);
-        Matriz3x3 M_e = matrizSubtrai(M_id, outerProduto(s_conjugado));
-        Vector N = matrizVetorProduto(M_e, dc);
-        float N_norma = calcula_norma(N);
-        return Vector(N.i / N_norma, N.j / N_norma, N.k / N_norma);
-        }();
-
-    Vector l = calcula_l(P_F, Pi);
-    Vector v(-dr.i, -dr.j, -dr.k);
-    Vector r1 = calcula_esc_por_vetor(2.0f, calcula_esc_por_vetor(calcula_prod_esc(n, l), n));
-    Vector r(r1.i - l.i, r1.j - l.j, r1.k - l.k);
-    Color Ia(I_A.r * KCone.r, I_A.g * KCone.g, I_A.b * KCone.b);
-
-    Point Pi_mod(Pi.x + l.i * 1e-4f, Pi.y + l.j * 1e-4f, Pi.z + l.k * 1e-4f);
-    float dist_Pi_Luz = calcula_norma(subtrai_pontos(P_F, Pi_mod));
-
-    Vector w_sombra = subtrai_pontos(Pi_mod, centroEsfera);
-    float a_delta = calcula_prod_esc(l, l);
-    float b_delta = 2.0f * calcula_prod_esc(l, w_sombra);
-    float c_delta = calcula_prod_esc(w_sombra, w_sombra) - rEsfera * rEsfera;
-
-    float delta = b_delta * b_delta - 4.0f * a_delta * c_delta;
-    float s1 = INFINITY;
-    float s2 = INFINITY;
-
-    if (delta > 0.f) {
-        s1 = (-b_delta - sqrt(delta)) / (2.0f * a_delta);
-        s2 = (-b_delta + sqrt(delta)) / (2.0f * a_delta);
-    }
-    if ((s1 > 1e-4f && s1 < dist_Pi_Luz) || (s2 > 1e-4f && s2 < dist_Pi_Luz)) naSombraEsf = true;
-
-    if (!naSombraEsf) {
-        float t_cil_shadow = cilindro.CalcularIntersecao(Pi_mod, l);
-        if (t_cil_shadow > 1e-4f && t_cil_shadow < dist_Pi_Luz) {
-            naSombraCil = true;
-        }
-    }
-
-    if (naSombraCil || naSombraEsf) {
-        Color I(lidarExcecao(Ia.r), lidarExcecao(Ia.g), lidarExcecao(Ia.b));
-        int R = static_cast<int>(roundf(I.r * 255.0f));
-        int G = static_cast<int>(roundf(I.g * 255.0f));
-        int B = static_cast<int>(roundf(I.b * 255.0f));
-        return Color(R, G, B);
-    }
-
-    float fd = lidarExcecao(calcula_prod_esc(n, l));
-    float cosAlpha = lidarExcecao(calcula_prod_esc(r, v));
-    float fe = pow(cosAlpha, m_e);
-
-    Color Id(I_F.r * KCone.r * fd, I_F.g * KCone.g * fd, I_F.b * KCone.b * fd);
-    Color Ie(I_F.r * KCone.r * fe, I_F.g * KCone.g * fe, I_F.b * KCone.b * fe);
-    Color I(lidarExcecao(Id.r + Ie.r + Ia.r), lidarExcecao(Id.g + Ie.g + Ia.g), lidarExcecao(Id.b + Ie.b + Ia.b));
-    int R = static_cast<int>(roundf(I.r * 255.0f));
-    int G = static_cast<int>(roundf(I.g * 255.0f));
-    int B = static_cast<int>(roundf(I.b * 255.0f));
-    return Color(R, G, B);
+    return cone.CalcularCor(*gCena, t, dr);
 }
 
