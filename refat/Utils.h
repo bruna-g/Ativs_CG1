@@ -15,4 +15,9 @@ Vector calcula_n(Point Pi, Point C, float R);
 Point calcula_eq_ray(Point Po, float t, Vector dr);
 float lidarExcecao(float v);
 
+// Overloads const-friendly (mantém compatibilidade com as assinaturas antigas)
+Vector subtrai_pontos(const Point& p1, const Point& p2);
+Vector subtrai_vetores(const Vector& v1, const Vector& v2);
+Vector calcula_dr(const Point& Po, const Point& Pj);
+
 #endif // UTILS_H

@@ -140,10 +140,10 @@ Matriz3x3 M_estrela = matrizSubtrai(M_conjugada, escalarMatriz(pow((altura_cone 
 Color calcula_Plano(Plano P, Vector dr, Color K_e, Color K_d) {
     bool naSombraEsf = false;
     bool naSombraCil = false;
+    bool naSombraCone = false;
 
     // descobrir ponto Pi no plano a partir do raio que sai do olho do observador
-    Vector w = subtrai_pontos(Po, P.p_pi);
-    float ti = calcula_t_plano(w, P.n, dr);
+    float ti = P.CalcularIntersecao(Po, dr);
     Point Pi = calcula_eq_ray(Po, ti, dr);
 
     // Verifica sombra: lança um raio de Pi em direção à fonte de luz e checa interseção com a esfera e o cone
@@ -154,11 +154,11 @@ Color calcula_Plano(Plano P, Vector dr, Color K_e, Color K_d) {
     Color Kd_textured = K_d; // fallback: sem textura
     if (P.tem_textura) {
         Vector n = P.n;
-        Vector arbitrary = (fabs(n.i) < 0.9f) ? Vector(1.0f,0.0f,0.0f) : Vector(0.0f,1.0f,0.0f);
+        Vector arbitrary = (fabs(n.i) < 0.9f) ? Vector(1.0f, 0.0f, 0.0f) : Vector(0.0f, 1.0f, 0.0f);
         Vector u_axis = cross(arbitrary, n);
         float nu = calcula_norma(u_axis);
         if (nu == 0.0f) nu = 1.0f;
-        u_axis = calcula_esc_por_vetor(1.0f/nu, u_axis);
+        u_axis = calcula_esc_por_vetor(1.0f / nu, u_axis);
         Vector v_axis = cross(n, u_axis);
 
         Vector vecPi = subtrai_pontos(Pi, P.p_pi);
@@ -199,18 +199,12 @@ Color calcula_Plano(Plano P, Vector dr, Color K_e, Color K_d) {
 
     // Verificar sombra do cone
     if (!naSombraEsf) {
-        Point Po_original = Po;  // salva a posição original do observador
-        Po = Pi_mod;  // temporariamente muda Po para o ponto de interseção
-        float t_cone = calcula_t_cone(P_F);  // verifica interseção com o cone
-        Po = Po_original;  // restaura Po para a posição original
-
-        if (t_cone > 1e-4f && t_cone < calcula_norma(subtrai_pontos(P_F, Pi_mod))) {
-            naSombraEsf = true;
-        }
+        float t_cone = cone.CalcularIntersecao(Pi_mod, l);
+        if (t_cone > 1e-4f && t_cone < calcula_norma(subtrai_pontos(P_F, Pi_mod))) naSombraCone = true;
     }
 
     Color Ia(I_A.r * Kd_textured.r, I_A.g * Kd_textured.g, I_A.b * Kd_textured.b);
-    if (naSombraEsf || naSombraCil) {
+    if (naSombraEsf || naSombraCil || naSombraCone) {
         // Apenas componente ambiente
         Color I(lidarExcecao(Ia.r), lidarExcecao(Ia.g), lidarExcecao(Ia.b));
         int R = static_cast<int>(roundf(I.r * 255.0f));
@@ -281,7 +275,7 @@ Color calcula_color_cil(Cilindro cilindro, float t_cil, Vector dr) {
 int main() {
     std::ofstream img("ativ5.ppm");
     img << "P3\n" << nCol << " " << nLin << "\n255\n";
-    texturaMadeira = new Textura("madeira","madeira.bmp");
+    texturaMadeira = new Textura("madeira", "madeira.bmp");
 
     for (int l = 0; l < nLin; l++) {
         float y = hJanela / 2 - Dy / 2 - l * Dy;
@@ -309,27 +303,18 @@ int main() {
                 else if (t2 > 0.0f) t = t2;
             }
 
-            // Verifica interseção com os planos
-            Vector w_p_c = subtrai_pontos(Po, plano_chao.p_pi); // w do chão
-            float ti_c = calcula_t_plano(w_p_c, plano_chao.n, dr_e); // ti do chão
+            // Interseção com os planos
+            float ti_c = plano_chao.CalcularIntersecao(Po, dr_e);
+            float ti_f = plano_fundo.CalcularIntersecao(Po, dr_e);
+            float ti_e = plano_esq.CalcularIntersecao(Po, dr_e);
+            float ti_d = plano_dir.CalcularIntersecao(Po, dr_e);
+            float ti_t = plano_teto.CalcularIntersecao(Po, dr_e);
 
-            Vector w_p_f = subtrai_pontos(Po, plano_fundo.p_pi); // w do plano de fundo
-            float ti_f = calcula_t_plano(w_p_f, plano_fundo.n, dr_e); // ti do plano de fundo
+            // Objetos
+            float t_cil = cilindro.CalcularIntersecao(Po, dr_e);
+            float ti_cone = cone.CalcularIntersecao(Po, Pj);
 
-            Vector w_p_e = subtrai_pontos(Po, plano_esq.p_pi); // w da parede esquerda
-            float ti_e = calcula_t_plano(w_p_e, plano_esq.n, dr_e); // ti da parede esquerda
-
-            Vector w_p_d = subtrai_pontos(Po, plano_dir.p_pi); // w da parede direita
-            float ti_d = calcula_t_plano(w_p_d, plano_dir.n, dr_e); // ti da parede direita
-
-            Vector w_p_t = subtrai_pontos(Po, plano_teto.p_pi); // w do teto
-            float ti_t = calcula_t_plano(w_p_t, plano_teto.n, dr_e); // ti do teto
-
-            //cilindro
-            float t_cil = calcula_t_Cilindro(cilindro, dr_e, Po);
-            float ti_cone = calcula_t_cone(Pj);
-
-            IntersecaoCubo inter_cubo = calcula_intersecao_cubo_completa(cubo, dr_e, Po);
+            IntersecaoCubo inter_cubo = cubo.CalcularIntersecaoCompleta(Po, dr_e);
             float t_cubo = inter_cubo.intercepta ? inter_cubo.t : -1.0f;
 
             if (ti_c > 0.0f && (ti_c < t || t < 0.0f)) t = ti_c;
@@ -474,7 +459,7 @@ Color calculaCone(float t, Point p) {
     if ((s1 > 1e-4f && s1 < dist_Pi_Luz) || (s2 > 1e-4f && s2 < dist_Pi_Luz)) naSombraEsf = true;
 
     if (!naSombraEsf) {
-        float t_cil_shadow = calcula_t_Cilindro(cilindro, l, Pi_mod);
+        float t_cil_shadow = cilindro.CalcularIntersecao(Pi_mod, l);
         if (t_cil_shadow > 1e-4f && t_cil_shadow < dist_Pi_Luz) {
             naSombraCil = true;
         }

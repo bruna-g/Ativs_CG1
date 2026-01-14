@@ -18,12 +18,29 @@ Vector subtrai_pontos(Point& p1, Point& p2) {
     return sub;
 }
 
+Vector subtrai_pontos(const Point& p1, const Point& p2) {
+    Vector sub(p1.x - p2.x, p1.y - p2.y, p1.z - p2.z);
+    return sub;
+}
+
 Vector subtrai_vetores(Vector& v1, Vector& v2) {
     Vector sub(v1.i - v2.i, v1.j - v2.j, v1.k - v2.k);
     return sub;
 }
 
+Vector subtrai_vetores(const Vector& v1, const Vector& v2) {
+    Vector sub(v1.i - v2.i, v1.j - v2.j, v1.k - v2.k);
+    return sub;
+}
+
 Vector calcula_dr(Point& Po, Point& Pj) {
+    Vector Dr = subtrai_pontos(Pj, Po);
+    float drNorma = calcula_norma(Dr);
+    Vector dr(Dr.i / drNorma, Dr.j / drNorma, Dr.k / drNorma);
+    return dr;
+}
+
+Vector calcula_dr(const Point& Po, const Point& Pj) {
     Vector Dr = subtrai_pontos(Pj, Po);
     float drNorma = calcula_norma(Dr);
     Vector dr(Dr.i / drNorma, Dr.j / drNorma, Dr.k / drNorma);
