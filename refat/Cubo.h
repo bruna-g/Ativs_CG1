@@ -4,12 +4,16 @@
 #include "Point.h"
 #include "Vector.h"
 
+struct IntersecaoCubo;
+
 class Cubo {
 public:
     Point centro_base;
     float aresta;
-    
+
     Cubo(const Point& centro_c, const float aresta_c);
+
+    IntersecaoCubo CalcularIntersecaoCompleta(const Point& origem, const Vector& dir) const;
 };
 
 struct IntersecaoCubo {
