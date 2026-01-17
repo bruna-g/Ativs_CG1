@@ -1,9 +1,12 @@
 #include "../include/Esfera.h"
+
 #include "../include/Cena.h"
 #include "../include/Color.h"
 #include "../include/Utils.h"
-#include <cmath>
+
 #include <algorithm>
+#include <cmath>
+#include <limits>
 
 Esfera::Esfera(const Point& centro_e, const float raio_e)
     : centro(centro_e), raio(raio_e), material() {
@@ -16,32 +19,28 @@ Esfera::Esfera(const Point& centro_e, const float raio_e, const Material& materi
 Vector Esfera::CalcularNormal(const Point& P) const {
     Vector n = subtrai_pontos(P, centro);
     float norma = calcula_norma(n);
+    if (norma <= 1e-8f) return Vector(0.0f, 0.0f, 0.0f);
     return Vector(n.i / norma, n.j / norma, n.k / norma);
 }
 
 float Esfera::CalcularIntersecao(const Point& origem, const Vector& dir) const {
-    Point origemCopy = origem;
-    Point centroCopy = centro;
-    Vector w = subtrai_pontos(origemCopy, centroCopy);
+    // Mantém a assinatura antiga (Vector) e retorna INFINITY quando não houver interseção.
+    Vector w = subtrai_pontos(origem, centro);
 
-    float a_delta = calcula_prod_esc(dir, dir);
-    float b_delta = 2.0f * calcula_prod_esc(dir, w);
-    float c_delta = calcula_prod_esc(w, w) - raio * raio;
+    float a = calcula_prod_esc(dir, dir);
+    float b = 2.0f * calcula_prod_esc(dir, w);
+    float c = calcula_prod_esc(w, w) - raio * raio;
 
-    float delta = b_delta * b_delta - 4.0f * a_delta * c_delta;
-    if (delta < 0) return -1.0f;
+    float delta = b * b - 4.0f * a * c;
+    if (delta < 0.0f) return std::numeric_limits<float>::infinity();
 
-    float t1 = (-b_delta + sqrt(delta)) / (2.0f * a_delta);
-    float t2 = (-b_delta - sqrt(delta)) / (2.0f * a_delta);
+    float sqrtD = std::sqrt(delta);
+    float t1 = (-b - sqrtD) / (2.0f * a);
+    float t2 = (-b + sqrtD) / (2.0f * a);
 
-    float t = -1.0f;
-    if (t1 > 0.0f && t2 > 0.0f)
-        t = std::min(t1, t2);
-    else if (t1 > 0.0f)
-        t = t1;
-    else if (t2 > 0.0f)
-        t = t2;
-
+    float t = std::numeric_limits<float>::infinity();
+    if (t1 > 1e-4f) t = t1;
+    if (t2 > 1e-4f) t = std::min(t, t2);
     return t;
 }
 
@@ -93,7 +92,14 @@ Color Esfera::CalcularCor(const Cena& cena, float t, const Vector& dir) const {
     float dist_Pi_Luz = calcula_norma(subtrai_pontos(cena.luz.pos, P));
     if (t < dist_Pi_Luz) naSombra = true;
 
-    Color Ia(cena.luzAmbiente.r * material.Ka.r, cena.luzAmbiente.g * material.Ka.g, cena.luzAmbiente.b * material.Ka.b);
+    Vetor kaV = getKa();
+    Vetor kdV = getKd();
+    Vetor keV = getKe();
+    Color Ka(kaV.i, kaV.j, kaV.k);
+    Color Kd(kdV.i, kdV.j, kdV.k);
+    Color Ke(keV.i, keV.j, keV.k);
+
+    Color Ia(cena.luzAmbiente.r * Ka.r, cena.luzAmbiente.g * Ka.g, cena.luzAmbiente.b * Ka.b);
     if (naSombra) {
         Color I(lidarExcecao(Ia.r), lidarExcecao(Ia.g), lidarExcecao(Ia.b));
         int R = static_cast<int>(roundf(I.r * 255.0f));
@@ -110,20 +116,45 @@ Color Esfera::CalcularCor(const Cena& cena, float t, const Vector& dir) const {
 
     float fd = lidarExcecao(calcula_prod_esc(n, l));
     float cosAlpha = lidarExcecao(calcula_prod_esc(r, v));
-    float fe = pow(cosAlpha, material.m);
+    float fe = pow(cosAlpha, static_cast<float>(getShininess()));
 
-    Color Id(cena.luz.intensidade.r * material.Kd.r * fd,
-        cena.luz.intensidade.g * material.Kd.g * fd,
-        cena.luz.intensidade.b * material.Kd.b * fd);
-    Color Ie(cena.luz.intensidade.r * material.Ke.r * fe,
-        cena.luz.intensidade.g * material.Ke.g * fe,
-        cena.luz.intensidade.b * material.Ke.b * fe);
+    Color Id(cena.luz.intensidade.r * Kd.r * fd,
+        cena.luz.intensidade.g * Kd.g * fd,
+        cena.luz.intensidade.b * Kd.b * fd);
+    Color Ie(cena.luz.intensidade.r * Ke.r * fe,
+        cena.luz.intensidade.g * Ke.g * fe,
+        cena.luz.intensidade.b * Ke.b * fe);
     Color I(lidarExcecao(Id.r + Ie.r + Ia.r), lidarExcecao(Id.g + Ie.g + Ia.g), lidarExcecao(Id.b + Ie.b + Ia.b));
 
     int R = static_cast<int>(roundf(I.r * 255.0f));
     int G = static_cast<int>(roundf(I.g * 255.0f));
     int B = static_cast<int>(roundf(I.b * 255.0f));
     return Color(R, G, B);
+}
+
+bool Esfera::verificarIntersecao(Vetor p0, Vetor dr) {
+    Point origem(p0.i, p0.j, p0.k);
+    float t = CalcularIntersecao(origem, Vector(dr.i, dr.j, dr.k));
+
+    if (!(t > 1e-4f) || !std::isfinite(t)) {
+        setTemIntersecao(false);
+        setDistancia(std::numeric_limits<double>::infinity());
+        return false;
+    }
+
+    Point Pi = calcula_eq_ray(origem, t, Vector(dr.i, dr.j, dr.k));
+    setTemIntersecao(true);
+    setDistancia(static_cast<double>(t));
+    setPontoIntersecao(Vetor(Pi.x, Pi.y, Pi.z));
+    return true;
+}
+
+Vetor Esfera::calcularNormal(Vetor posicao) {
+    Point P(posicao.i, posicao.j, posicao.k);
+    Vector n = subtrai_pontos(P, centro);
+    float nn = calcula_norma(n);
+    if (nn <= 1e-8f) return Vetor(0.0f, 0.0f, 0.0f);
+    return Vetor(n.i / nn, n.j / nn, n.k / nn);
 }
 
 Vector calcula_n_esfera(Point P, Esfera esfera) {

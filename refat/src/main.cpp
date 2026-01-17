@@ -3,6 +3,7 @@
 #include <cmath>
 #include <fstream>
 #include <algorithm>
+#include <limits>
 #include <SDL2/SDL.h>
 #include "../include/Textura.hpp"
 #include "../include/Color.h"
@@ -114,65 +115,77 @@ Cone cone(cb_cone, v_cone, raio_cone);
 Color KCone(0.f, 1.f, 0.498f);
 Material mat_cone;
 
-// Cubo
-Cubo cubo(Point(0.f, -150.f, -165.f), 40.f);
+// Cubo (como malha)
+Malha cuboMalha;
 
 Matriz3x3 M_id(1.0f, 0.0f, 0.0f,
     0.0f, 1.0f, 0.0f,
     0.0f, 0.0f, 1.0f);
 
 int main() {
-    SDL_Window *window = nullptr;
-    SDL_Renderer *renderer = nullptr;
-    
+    SDL_Window* window = nullptr;
+    SDL_Renderer* renderer = nullptr;
+
     SDL_Init(SDL_INIT_VIDEO);
     SDL_CreateWindowAndRenderer(nCol, nLin, 0, &window, &renderer);
     SDL_SetWindowTitle(window, "Ray Casting - Cena 3D");
     texturaMadeira = new Textura("madeira", "madeira.bmp");
 
+    // Materiais / propriedades via Objeto (Ka/Kd/Ke/shininess)
+    esfera.setKa(Vetor(K_e.r, K_e.g, K_e.b));
+    esfera.setKd(Vetor(K_e.r, K_e.g, K_e.b));
+    esfera.setKe(Vetor(K_e.r, K_e.g, K_e.b));
+    esfera.setShininess(m_e);
 
-    // Inicializar materiais
-    mat_chao.Ka = KC_d;
-    mat_chao.Kd = KC_d;
-    mat_chao.Ke = KC_e;
-    mat_chao.m = m_e;
+    // Chão com textura
     mat_chao.usarTextura = true;
     mat_chao.textura = texturaMadeira;
-
-    mat_fundo.Ka = KF_d;
-    mat_fundo.Kd = KF_d;
-    mat_fundo.Ke = KF_e;
-    mat_fundo.m = m_f;
-
-    mat_esq.Ka = KE_d;
-    mat_esq.Kd = KE_d;
-    mat_esq.Ke = KE_e;
-    mat_esq.m = m_e;
-
-    mat_dir.Ka = KD_d;
-    mat_dir.Kd = KD_d;
-    mat_dir.Ke = KD_e;
-    mat_dir.m = m_e;
-
-    mat_teto.Ka = KT_d;
-    mat_teto.Kd = KT_d;
-    mat_teto.Ke = KT_e;
-    mat_teto.m = m_e;
-
-    mat_cil.Ka = KCil_a;
-    mat_cil.Kd = KCil_d;
-    mat_cil.Ke = KCil_e;
-    mat_cil.m = m_e;
-
-    mat_cone = Material::Solido(KCone, m_e);
-
     plano_chao.material = mat_chao;
-    plano_fundo.material = mat_fundo;
-    plano_esq.material = mat_esq;
-    plano_dir.material = mat_dir;
-    plano_teto.material = mat_teto;
-    cilindro.material = mat_cil;
-    cone.material = mat_cone;
+    plano_chao.setKa(Vetor(KC_d.r, KC_d.g, KC_d.b));
+    plano_chao.setKd(Vetor(KC_d.r, KC_d.g, KC_d.b));
+    plano_chao.setKe(Vetor(KC_e.r, KC_e.g, KC_e.b));
+    plano_chao.setShininess(m_e);
+
+    plano_fundo.setKa(Vetor(KF_d.r, KF_d.g, KF_d.b));
+    plano_fundo.setKd(Vetor(KF_d.r, KF_d.g, KF_d.b));
+    plano_fundo.setKe(Vetor(KF_e.r, KF_e.g, KF_e.b));
+    plano_fundo.setShininess(m_e);
+
+    plano_esq.setKa(Vetor(KE_d.r, KE_d.g, KE_d.b));
+    plano_esq.setKd(Vetor(KE_d.r, KE_d.g, KE_d.b));
+    plano_esq.setKe(Vetor(KE_e.r, KE_e.g, KE_e.b));
+    plano_esq.setShininess(m_e);
+
+    plano_dir.setKa(Vetor(KD_d.r, KD_d.g, KD_d.b));
+    plano_dir.setKd(Vetor(KD_d.r, KD_d.g, KD_d.b));
+    plano_dir.setKe(Vetor(KD_e.r, KD_e.g, KD_e.b));
+    plano_dir.setShininess(m_e);
+
+    plano_teto.setKa(Vetor(KT_d.r, KT_d.g, KT_d.b));
+    plano_teto.setKd(Vetor(KT_d.r, KT_d.g, KT_d.b));
+    plano_teto.setKe(Vetor(KT_e.r, KT_e.g, KT_e.b));
+    plano_teto.setShininess(m_e);
+
+    cilindro.setKa(Vetor(KCil_a.r, KCil_a.g, KCil_a.b));
+    cilindro.setKd(Vetor(KCil_d.r, KCil_d.g, KCil_d.b));
+    cilindro.setKe(Vetor(KCil_e.r, KCil_e.g, KCil_e.b));
+    cilindro.setShininess(m_e);
+
+    cone.setKa(Vetor(KCone.r, KCone.g, KCone.b));
+    cone.setKd(Vetor(KCone.r, KCone.g, KCone.b));
+    cone.setKe(Vetor(KCone.r, KCone.g, KCone.b));
+    cone.setShininess(m_e);
+
+    // Cubo como malha
+    Color K_cubo(1.f, 0.078f, 0.576f);
+    cuboMalha = Cubo::criarCubo(
+        Vetor(0.f, -150.f, -165.f, 0.0f),
+        40.0,
+        Vetor(K_cubo.r, K_cubo.g, K_cubo.b, 0.0f),
+        Vetor(K_cubo.r, K_cubo.g, K_cubo.b, 0.0f),
+        Vetor(K_cubo.r, K_cubo.g, K_cubo.b, 0.0f),
+        m_e
+    );
 
     Cena cena;
     cena.observador = Po;
@@ -182,7 +195,7 @@ int main() {
     cena.raioEsfera = rEsfera;
     cena.cone = &cone;
     cena.cilindro = &cilindro;
-    cena.texturaMadeira = nullptr;
+    cena.texturaMadeira = texturaMadeira;
     cena.expoenteEspecular = m_e;
     gCena = &cena;
 
@@ -198,23 +211,27 @@ int main() {
 
             Vector dr_e = calcula_dr(Po, Pj);
 
-            Vector w_e = subtrai_pontos(Po, centroEsfera);
+            float t_best = std::numeric_limits<float>::infinity();
+            enum class Hit {
+                None,
+                Fundo,
+                Chao,
+                Esq,
+                Dir,
+                Teto,
+                Cilindro,
+                Cone,
+                Cubo,
+                Esfera
+            };
+            Hit hit = Hit::None;
 
-            float a_delta = calcula_prod_esc(dr_e, dr_e);
-            float b_delta = 2.0f * calcula_prod_esc(dr_e, w_e);
-            float c_delta = calcula_prod_esc(w_e, w_e) - rEsfera * rEsfera;
-
-            float delta = b_delta * b_delta - 4.0f * a_delta * c_delta;
-
-            float t = -1.0f;
-            if (delta >= 0) {
-                float t1 = (-b_delta + sqrt(delta)) / (2.0f * a_delta);
-                float t2 = (-b_delta - sqrt(delta)) / (2.0f * a_delta);
-
-                if (t1 > 0.0f && t2 > 0.0f) t = min(t1, t2);
-                else if (t1 > 0.0f) t = t1;
-                else if (t2 > 0.0f) t = t2;
-            }
+            auto considerar = [&](float t, Hit h) {
+                if (t > 1e-4f && std::isfinite(t) && t < t_best) {
+                    t_best = t;
+                    hit = h;
+                }
+                };
 
             // Interseção com os planos
             float ti_c = plano_chao.CalcularIntersecao(Po, dr_e);
@@ -226,60 +243,76 @@ int main() {
             // Objetos
             float t_cil = cilindro.CalcularIntersecao(Po, dr_e);
             float ti_cone = cone.CalcularIntersecao(Po, Pj);
-            float ti_esf = esfera.CalcularIntersecao(Po,dr_e);
+            float ti_esf = esfera.CalcularIntersecao(Po, dr_e);
 
-            IntersecaoCubo inter_cubo = cubo.CalcularIntersecaoCompleta(Po, dr_e);
-            float t_cubo = inter_cubo.intercepta ? inter_cubo.t : -1.0f;
+            float t_cubo = std::numeric_limits<float>::infinity();
+            if (cuboMalha.verificarIntersecao(
+                Vetor(Po.x, Po.y, Po.z, 0.0f),
+                Vetor(dr_e.i, dr_e.j, dr_e.k, 0.0f))) {
+                t_cubo = static_cast<float>(cuboMalha.getDistancia());
+            }
 
-            if (ti_c > 0.0f && (ti_c < t || t < 0.0f)) t = ti_c;
-            if (ti_f > 0.0f && (ti_f < t || t < 0.0f)) t = ti_f;
-            if (ti_e > 0.0f && (ti_e < t || t < 0.0f)) t = ti_e;
-            if (ti_d > 0.0f && (ti_d < t || t < 0.0f)) t = ti_d;
-            if (ti_t > 0.0f && (ti_t < t || t < 0.0f)) t = ti_t;
-            if (t_cil > 0.0f && (t_cil < t || t < 0.0f)) t = t_cil;
-            if (ti_cone > 0.0f && (ti_cone < t || t < 0.0f)) t = ti_cone;
-            if (t_cubo > 0.0f && (t_cubo < t || t < 0.0f)) t = t_cubo;
-            if (ti_esf > 0.0f && (ti_esf < t || t < 0.0f)) t = ti_esf;
+            considerar(ti_f, Hit::Fundo);
+            considerar(ti_c, Hit::Chao);
+            considerar(ti_e, Hit::Esq);
+            considerar(ti_d, Hit::Dir);
+            considerar(ti_t, Hit::Teto);
+            considerar(t_cil, Hit::Cilindro);
+            considerar(ti_cone, Hit::Cone);
+            considerar(t_cubo, Hit::Cubo);
+            considerar(ti_esf, Hit::Esfera);
 
 
             Color cor(100, 100, 100);
 
-            if (ti_f == t) {
+            switch (hit) {
+            case Hit::Fundo:
                 cor = plano_fundo.CalcularCor(cena, dr_e);
-            } else if (ti_c == t) {
+                break;
+            case Hit::Chao:
                 cor = plano_chao.CalcularCor(cena, dr_e);
-            } else if (ti_e == t) {
+                break;
+            case Hit::Esq:
                 cor = plano_esq.CalcularCor(cena, dr_e);
-            } else if (ti_d == t) {
+                break;
+            case Hit::Dir:
                 cor = plano_dir.CalcularCor(cena, dr_e);
-            } else if (ti_t == t) {
+                break;
+            case Hit::Teto:
                 cor = plano_teto.CalcularCor(cena, dr_e);
-            } else if (t_cil == t) {
-                cor = cilindro.CalcularCor(cena, t, dr_e);
-            } else if (ti_cone == t) {
-                cor = cone.CalcularCor(cena, t, dr_e);
-            } else if (t_cubo == t) {
-                Color K_cubo(1.f, 0.078f, 0.576f);
-                Plano plano_cubo(inter_cubo.ponto, inter_cubo.normal, Material::Solido(K_cubo, m_e));
+                break;
+            case Hit::Cilindro:
+                cor = cilindro.CalcularCor(cena, t_best, dr_e);
+                break;
+            case Hit::Cone:
+                cor = cone.CalcularCor(cena, t_best, dr_e);
+                break;
+            case Hit::Esfera:
+                cor = esfera.CalcularCor(cena, t_best, dr_e);
+                break;
+            case Hit::Cubo: {
+                Vetor PiV = cuboMalha.getPontoIntersecao();
+                Vetor nV = cuboMalha.calcularNormal(PiV);
+                Plano plano_cubo(Point(PiV.i, PiV.j, PiV.k), Vector(nV.i, nV.j, nV.k), Material());
+                plano_cubo.setKa(cuboMalha.getKa());
+                plano_cubo.setKd(cuboMalha.getKd());
+                plano_cubo.setKe(cuboMalha.getKe());
+                plano_cubo.setShininess(cuboMalha.getShininess());
                 cor = plano_cubo.CalcularCor(cena, dr_e);
-            } else if (ti_esf == t){
-                cor = esfera.CalcularCor(cena, t, dr_e);
-            } else if (t > 0.0f && delta >= 0.0f) {
-                SDL_SetRenderDrawColor(renderer, 
-                static_cast<int>(cor.r ), 
-                static_cast<int>(cor.g ), 
-                static_cast<int>(cor.b ),
-                255);
-                SDL_RenderDrawPoint(renderer, coluna, linha);
+                break;
+            }
+            case Hit::None:
+            default:
+                break;
             }
 
-            SDL_SetRenderDrawColor(renderer, 
-                static_cast<int>(cor.r ), 
-                static_cast<int>(cor.g ), 
-                static_cast<int>(cor.b ),
+            SDL_SetRenderDrawColor(renderer,
+                static_cast<int>(cor.r),
+                static_cast<int>(cor.g),
+                static_cast<int>(cor.b),
                 255);
             SDL_RenderDrawPoint(renderer, coluna, linha);
-            
+
         }
     }
 
@@ -297,6 +330,6 @@ int main() {
 
     SDL_DestroyWindow(window);
     SDL_Quit();
-    
+
     return 0;
 }

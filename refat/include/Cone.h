@@ -4,11 +4,12 @@
 #include "Point.h"
 #include "Vector.h"
 #include "Material.h"
+#include "Objeto.h"
 
 class Color;
 struct Cena;
 
-class Cone {
+class Cone : public Objeto {
 public:
     Point cb;
     Point v;
@@ -29,6 +30,9 @@ public:
 
     Color CalcularCor(const Cena& cena, float t, const Vector& dir) const;
     Color CalcularCor(const Cena& cena, float t, const Vector& dir, const Color& K) const;
+
+    bool verificarIntersecao(Vetor p0, Vetor dr) override;
+    Vetor calcularNormal(Vetor posicao) override;
 };
 
 // Função relacionada ao Cone

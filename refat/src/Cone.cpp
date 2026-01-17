@@ -7,6 +7,7 @@
 #include "../include/Utils.h"
 #include <cmath>
 #include <algorithm>
+#include <limits>
 
 Cone::Cone(const Point& cb_c, const Point& v_c, const float raio_c)
     : cb(cb_c), v(v_c), raio(raio_c), material(), dc(0.0f, 1.0f, 0.0f), altura(0.0f), teta(0.0f) {
@@ -202,6 +203,13 @@ Color Cone::CalcularCor(const Cena& cena, float t, const Vector& dir) const {
     bool naSombraEsf = false;
     bool naSombraCil = false;
 
+    Vetor kaV = getKa();
+    Vetor kdV = getKd();
+    Vetor keV = getKe();
+    Color Ka(kaV.i, kaV.j, kaV.k);
+    Color Kd(kdV.i, kdV.j, kdV.k);
+    Color Ke(keV.i, keV.j, keV.k);
+
     Point Pi = calcula_eq_ray(cena.observador, t, dir);
 
     // Base do cone: plano em cb com normal dc
@@ -233,7 +241,7 @@ Color Cone::CalcularCor(const Cena& cena, float t, const Vector& dir) const {
     Vector vdir(-dir.i, -dir.j, -dir.k);
     Vector r1 = calcula_esc_por_vetor(2.0f, calcula_esc_por_vetor(calcula_prod_esc(n, l), n));
     Vector r(r1.i - l.i, r1.j - l.j, r1.k - l.k);
-    Color Ia(cena.luzAmbiente.r * material.Ka.r, cena.luzAmbiente.g * material.Ka.g, cena.luzAmbiente.b * material.Ka.b);
+    Color Ia(cena.luzAmbiente.r * Ka.r, cena.luzAmbiente.g * Ka.g, cena.luzAmbiente.b * Ka.b);
 
     Point Pi_mod(Pi.x + l.i * 1e-4f, Pi.y + l.j * 1e-4f, Pi.z + l.k * 1e-4f);
     float dist_Pi_Luz = calcula_norma(subtrai_pontos(cena.luz.pos, Pi_mod));
@@ -268,14 +276,14 @@ Color Cone::CalcularCor(const Cena& cena, float t, const Vector& dir) const {
 
     float fd = lidarExcecao(calcula_prod_esc(n, l));
     float cosAlpha = lidarExcecao(calcula_prod_esc(r, vdir));
-    float fe = pow(cosAlpha, material.m);
+    float fe = pow(cosAlpha, static_cast<float>(getShininess()));
 
-    Color Id(cena.luz.intensidade.r * material.Kd.r * fd,
-        cena.luz.intensidade.g * material.Kd.g * fd,
-        cena.luz.intensidade.b * material.Kd.b * fd);
-    Color Ie(cena.luz.intensidade.r * material.Ke.r * fe,
-        cena.luz.intensidade.g * material.Ke.g * fe,
-        cena.luz.intensidade.b * material.Ke.b * fe);
+    Color Id(cena.luz.intensidade.r * Kd.r * fd,
+        cena.luz.intensidade.g * Kd.g * fd,
+        cena.luz.intensidade.b * Kd.b * fd);
+    Color Ie(cena.luz.intensidade.r * Ke.r * fe,
+        cena.luz.intensidade.g * Ke.g * fe,
+        cena.luz.intensidade.b * Ke.b * fe);
     Color I(lidarExcecao(Id.r + Ie.r + Ia.r), lidarExcecao(Id.g + Ie.g + Ia.g), lidarExcecao(Id.b + Ie.b + Ia.b));
 
     int R = static_cast<int>(roundf(I.r * 255.0f));
@@ -290,4 +298,50 @@ extern Cone cone;
 float calcula_t_cone(Point& Pj) {
     Vector dir = calcula_dr(Po, Pj);
     return cone.CalcularIntersecao(Po, dir);
+}
+
+bool Cone::verificarIntersecao(Vetor p0, Vetor dr) {
+    Point origem(p0.i, p0.j, p0.k);
+    Vector dir(dr.i, dr.j, dr.k);
+
+    float t = CalcularIntersecao(origem, dir);
+    if (!(t > 1e-4f) || !std::isfinite(t)) {
+        setTemIntersecao(false);
+        setDistancia(std::numeric_limits<double>::infinity());
+        return false;
+    }
+
+    Point Pi = calcula_eq_ray(origem, t, dir);
+    setTemIntersecao(true);
+    setDistancia(static_cast<double>(t));
+    setPontoIntersecao(Vetor(Pi.x, Pi.y, Pi.z));
+    return true;
+}
+
+Vetor Cone::calcularNormal(Vetor posicao) {
+    Point Pi(posicao.i, posicao.j, posicao.k);
+
+    // Detecta base: plano passando em cb com normal dc
+    Vector dist_centro = subtrai_pontos(Pi, cb);
+    float altura_Pi = calcula_prod_esc(dist_centro, dc);
+    bool na_base = std::fabs(altura_Pi) < 1e-3f;
+
+    Vector nLocal = na_base
+        ? dc
+        : [&]() {
+        Vector V = subtrai_pontos(v, Pi);
+        float vNorma = calcula_norma(V);
+        if (vNorma == 0.0f) vNorma = 1.0f;
+        Vector s_conjugado(V.i / vNorma, V.j / vNorma, V.k / vNorma);
+        Matriz3x3 M_id(1.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 1.0f);
+        Matriz3x3 M_e = matrizSubtrai(M_id, outerProduto(s_conjugado));
+        Vector N = matrizVetorProduto(M_e, dc);
+        float N_norma = calcula_norma(N);
+        if (N_norma == 0.0f) N_norma = 1.0f;
+        return Vector(N.i / N_norma, N.j / N_norma, N.k / N_norma);
+        }();
+
+    return Vetor(nLocal.i, nLocal.j, nLocal.k);
 }

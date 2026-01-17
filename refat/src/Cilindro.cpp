@@ -4,6 +4,7 @@
 #include "../include/Utils.h"
 #include <cmath>
 #include <algorithm>
+#include <limits>
 
 Cilindro::Cilindro(const Point& cb_c, const float raio_c, const float altura_c, const Vector& dc_c)
     : cb(cb_c), raio(raio_c), altura(altura_c), dc(dc_c), material() {
@@ -108,11 +109,18 @@ Color Cilindro::CalcularCor(const Cena& cena, float t, const Vector& dir,
 Color Cilindro::CalcularCor(const Cena& cena, float t, const Vector& dir) const {
     Point P = calcula_eq_ray(cena.observador, t, dir);
 
+    Vetor kaV = getKa();
+    Vetor kdV = getKd();
+    Vetor keV = getKe();
+    Color Ka(kaV.i, kaV.j, kaV.k);
+    Color Kd(kdV.i, kdV.j, kdV.k);
+    Color Ke(keV.i, keV.j, keV.k);
+
     bool naSombra = false;
     float dist_Pi_Luz = calcula_norma(subtrai_pontos(cena.luz.pos, P));
     if (t < dist_Pi_Luz) naSombra = true;
 
-    Color Ia(cena.luzAmbiente.r * material.Ka.r, cena.luzAmbiente.g * material.Ka.g, cena.luzAmbiente.b * material.Ka.b);
+    Color Ia(cena.luzAmbiente.r * Ka.r, cena.luzAmbiente.g * Ka.g, cena.luzAmbiente.b * Ka.b);
     if (naSombra) {
         Color I(lidarExcecao(Ia.r), lidarExcecao(Ia.g), lidarExcecao(Ia.b));
         int R = static_cast<int>(roundf(I.r * 255.0f));
@@ -129,14 +137,14 @@ Color Cilindro::CalcularCor(const Cena& cena, float t, const Vector& dir) const 
 
     float fd = lidarExcecao(calcula_prod_esc(n, l));
     float cosAlpha = lidarExcecao(calcula_prod_esc(r, v));
-    float fe = pow(cosAlpha, material.m);
+    float fe = pow(cosAlpha, static_cast<float>(getShininess()));
 
-    Color Id(cena.luz.intensidade.r * material.Kd.r * fd,
-        cena.luz.intensidade.g * material.Kd.g * fd,
-        cena.luz.intensidade.b * material.Kd.b * fd);
-    Color Ie(cena.luz.intensidade.r * material.Ke.r * fe,
-        cena.luz.intensidade.g * material.Ke.g * fe,
-        cena.luz.intensidade.b * material.Ke.b * fe);
+    Color Id(cena.luz.intensidade.r * Kd.r * fd,
+        cena.luz.intensidade.g * Kd.g * fd,
+        cena.luz.intensidade.b * Kd.b * fd);
+    Color Ie(cena.luz.intensidade.r * Ke.r * fe,
+        cena.luz.intensidade.g * Ke.g * fe,
+        cena.luz.intensidade.b * Ke.b * fe);
     Color I(lidarExcecao(Id.r + Ie.r + Ia.r), lidarExcecao(Id.g + Ie.g + Ia.g), lidarExcecao(Id.b + Ie.b + Ia.b));
 
     int R = static_cast<int>(roundf(I.r * 255.0f));
@@ -151,4 +159,28 @@ Vector calcula_n_cilindro(Point P, Cilindro cilindro) {
 
 float calcula_t_Cilindro(Cilindro cilindro, Vector dr, Point Po) {
     return cilindro.CalcularIntersecao(Po, dr);
+}
+
+bool Cilindro::verificarIntersecao(Vetor p0, Vetor dr) {
+    Point origem(p0.i, p0.j, p0.k);
+    Vector dir(dr.i, dr.j, dr.k);
+
+    float t = CalcularIntersecao(origem, dir);
+    if (!(t > 1e-4f) || !std::isfinite(t)) {
+        setTemIntersecao(false);
+        setDistancia(std::numeric_limits<double>::infinity());
+        return false;
+    }
+
+    Point Pi = calcula_eq_ray(origem, t, dir);
+    setTemIntersecao(true);
+    setDistancia(static_cast<double>(t));
+    setPontoIntersecao(Vetor(Pi.x, Pi.y, Pi.z));
+    return true;
+}
+
+Vetor Cilindro::calcularNormal(Vetor posicao) {
+    Point P(posicao.i, posicao.j, posicao.k);
+    Vector nLocal = CalcularNormal(P);
+    return Vetor(nLocal.i, nLocal.j, nLocal.k);
 }

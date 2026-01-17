@@ -4,11 +4,12 @@
 #include "Point.h"
 #include "Vector.h"
 #include "Material.h"
+#include "Objeto.h"
 
 class Color;
 struct Cena;
 
-class Cilindro {
+class Cilindro : public Objeto {
 public:
     Point cb;
     float raio;
@@ -25,6 +26,9 @@ public:
     Color CalcularCor(const Cena& cena, float t, const Vector& dir) const;
     Color CalcularCor(const Cena& cena, float t, const Vector& dir,
         const Color& K_a, const Color& K_d, const Color& K_e) const;
+
+    bool verificarIntersecao(Vetor p0, Vetor dr) override;
+    Vetor calcularNormal(Vetor posicao) override;
 };
 
 // Funções relacionadas ao Cilindro

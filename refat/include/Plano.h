@@ -4,11 +4,12 @@
 #include "Point.h"
 #include "Vector.h"
 #include "Material.h"
+#include "Objeto.h"
 
 class Color;
 struct Cena;
 
-class Plano {
+class Plano : public Objeto {
 public:
     Point p_pi;
     Vector n;
@@ -27,6 +28,9 @@ public:
 
     // Compatibilidade: versão antiga que recebe Ks (agora ignorados)
     Color CalcularCor(const Cena& cena, const Vector& dir, const Color& K_e, const Color& K_d) const;
+
+    bool verificarIntersecao(Vetor p0, Vetor dr) override;
+    Vetor calcularNormal(Vetor posicao) override;
 };
 
 // Função relacionada ao Plano

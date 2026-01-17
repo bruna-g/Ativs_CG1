@@ -17,6 +17,8 @@
 #include "../include/Matriz3x3.h"
 #include "../include/Cena.h"
 #include "../include/Material.h"
+#include "../include/Malha.h"
+#include "../include/Esfera.h"
 using namespace std;
 
 
@@ -38,6 +40,8 @@ float rEsfera = 5.0f;
 Point centroEsfera(0.f, 95.f, -200.f);
 Color K_e(0.854f, 0.647f, 0.125f);  // Material com canal vermelho
 float m_e = 10.0f;            // Expoente especular
+
+Esfera esfera(centroEsfera, rEsfera);
 
 
 //textura de madeira
@@ -134,17 +138,7 @@ Color KCone(0.f, 1.f, 0.498f);
 Material mat_cone;
 
 //cubo
-Cubo cubo(Point(0.f, -150.f, -165.f), 40.f);
-
-struct Face {
-    Point p;
-    Vector n;
-};
-
-
-IntersecaoCubo calcula_intersecao_cubo_completa(const Cubo& cubo, const Vector& dr, Point& Po);
-
-
+Malha cuboMalha;
 
 Matriz3x3 M_id(1.0f, 0.0f, 0.0f,
     0.0f, 1.0f, 0.0f,
@@ -157,8 +151,10 @@ Matriz3x3 M_estrela = matrizSubtrai(M_conjugada, escalarMatriz(pow((altura_cone 
 
 Color calcula_Plano(Plano P, Vector dr, Color K_e, Color K_d) {
     if (gCena == nullptr) return Color(0, 0, 0);
-    (void)K_e;
-    (void)K_d;
+    P.setKa(Vetor(K_d.r, K_d.g, K_d.b));
+    P.setKd(Vetor(K_d.r, K_d.g, K_d.b));
+    P.setKe(Vetor(K_e.r, K_e.g, K_e.b));
+    P.setShininess(gCena->expoenteEspecular);
     return P.CalcularCor(*gCena, dr);
 
 }
@@ -167,6 +163,10 @@ Color calcula_Plano(Plano P, Vector dr, Color K_e, Color K_d) {
 
 Color calcula_color_cil(Cilindro cilindro, float t_cil, Vector dr) {
     if (gCena == nullptr) return Color(0, 0, 0);
+    cilindro.setKa(Vetor(KCil_a.r, KCil_a.g, KCil_a.b));
+    cilindro.setKd(Vetor(KCil_d.r, KCil_d.g, KCil_d.b));
+    cilindro.setKe(Vetor(KCil_e.r, KCil_e.g, KCil_e.b));
+    cilindro.setShininess(gCena->expoenteEspecular);
     return cilindro.CalcularCor(*gCena, t_cil, dr);
 
 }
@@ -177,49 +177,64 @@ int main() {
     img << "P3\n" << nCol << " " << nLin << "\n255\n";
     texturaMadeira = new Textura("madeira", "madeira.bmp");
 
+    // Material da esfera usando o Objeto base
+    esfera.setKa(Vetor(K_e.r, K_e.g, K_e.b));
+    esfera.setKd(Vetor(K_e.r, K_e.g, K_e.b));
+    esfera.setKe(Vetor(K_e.r, K_e.g, K_e.b));
+    esfera.setShininess(m_e);
+
+    // Cubo como malha
+    Color K_cubo(1.f, 0.078f, 0.576f);
+    cuboMalha = Cubo::criarCubo(
+        Vetor(0.f, -150.f, -165.f, 0.0f),
+        40.0,
+        Vetor(K_cubo.r, K_cubo.g, K_cubo.b, 0.0f),
+        Vetor(K_cubo.r, K_cubo.g, K_cubo.b, 0.0f),
+        Vetor(K_cubo.r, K_cubo.g, K_cubo.b, 0.0f),
+        m_e
+    );
+
     // Materiais (inicializa aqui para poder apontar para a textura carregada)
-    mat_chao.Ka = KC_d;
-    mat_chao.Kd = KC_d;
-    mat_chao.Ke = KC_e;
-    mat_chao.m = m_e;
     mat_chao.usarTextura = true;
     mat_chao.textura = texturaMadeira;
 
-    mat_fundo.Ka = KF_d;
-    mat_fundo.Kd = KF_d;
-    mat_fundo.Ke = KF_e;
-    mat_fundo.m = m_f;
-
-    mat_esq.Ka = KE_d;
-    mat_esq.Kd = KE_d;
-    mat_esq.Ke = KE_e;
-    mat_esq.m = m_e;
-
-    mat_dir.Ka = KD_d;
-    mat_dir.Kd = KD_d;
-    mat_dir.Ke = KD_e;
-    mat_dir.m = m_e;
-
-    mat_teto.Ka = KT_d;
-    mat_teto.Kd = KT_d;
-    mat_teto.Ke = KT_e;
-    mat_teto.m = m_e;
-
-    mat_cil.Ka = KCil_a;
-    mat_cil.Kd = KCil_d;
-    mat_cil.Ke = KCil_e;
-    mat_cil.m = m_e;
-
-    mat_cone = Material::Solido(KCone, m_e);
-
-    // Aplica os materiais nos objetos globais (já instanciados)
     plano_chao.material = mat_chao;
-    plano_fundo.material = mat_fundo;
-    plano_esq.material = mat_esq;
-    plano_dir.material = mat_dir;
-    plano_teto.material = mat_teto;
-    cilindro.material = mat_cil;
-    cone.material = mat_cone;
+
+    // Materiais via Objeto (Ka/Kd/Ke/shininess)
+    plano_chao.setKa(Vetor(KC_d.r, KC_d.g, KC_d.b));
+    plano_chao.setKd(Vetor(KC_d.r, KC_d.g, KC_d.b));
+    plano_chao.setKe(Vetor(KC_e.r, KC_e.g, KC_e.b));
+    plano_chao.setShininess(m_e);
+
+    plano_fundo.setKa(Vetor(KF_d.r, KF_d.g, KF_d.b));
+    plano_fundo.setKd(Vetor(KF_d.r, KF_d.g, KF_d.b));
+    plano_fundo.setKe(Vetor(KF_e.r, KF_e.g, KF_e.b));
+    plano_fundo.setShininess(m_e);
+
+    plano_esq.setKa(Vetor(KE_d.r, KE_d.g, KE_d.b));
+    plano_esq.setKd(Vetor(KE_d.r, KE_d.g, KE_d.b));
+    plano_esq.setKe(Vetor(KE_e.r, KE_e.g, KE_e.b));
+    plano_esq.setShininess(m_e);
+
+    plano_dir.setKa(Vetor(KD_d.r, KD_d.g, KD_d.b));
+    plano_dir.setKd(Vetor(KD_d.r, KD_d.g, KD_d.b));
+    plano_dir.setKe(Vetor(KD_e.r, KD_e.g, KD_e.b));
+    plano_dir.setShininess(m_e);
+
+    plano_teto.setKa(Vetor(KT_d.r, KT_d.g, KT_d.b));
+    plano_teto.setKd(Vetor(KT_d.r, KT_d.g, KT_d.b));
+    plano_teto.setKe(Vetor(KT_e.r, KT_e.g, KT_e.b));
+    plano_teto.setShininess(m_e);
+
+    cilindro.setKa(Vetor(KCil_a.r, KCil_a.g, KCil_a.b));
+    cilindro.setKd(Vetor(KCil_d.r, KCil_d.g, KCil_d.b));
+    cilindro.setKe(Vetor(KCil_e.r, KCil_e.g, KCil_e.b));
+    cilindro.setShininess(m_e);
+
+    cone.setKa(Vetor(KCone.r, KCone.g, KCone.b));
+    cone.setKd(Vetor(KCone.r, KCone.g, KCone.b));
+    cone.setKe(Vetor(KCone.r, KCone.g, KCone.b));
+    cone.setShininess(m_e);
 
     Cena cena;
     cena.observador = Po;
@@ -241,22 +256,9 @@ int main() {
 
             Vector dr_e = calcula_dr(Po, Pj);
 
-            Vector w_e = subtrai_pontos(Po, centroEsfera);
-
-            float a_delta = calcula_prod_esc(dr_e, dr_e);
-            float b_delta = 2.0f * calcula_prod_esc(dr_e, w_e);
-            float c_delta = calcula_prod_esc(w_e, w_e) - rEsfera * rEsfera;
-
-            float delta = b_delta * b_delta - 4.0f * a_delta * c_delta;
-
             float t = -1.0f;
-            if (delta >= 0) {
-                float t1 = (-b_delta + sqrt(delta)) / (2.0f * a_delta);
-                float t2 = (-b_delta - sqrt(delta)) / (2.0f * a_delta);
-
-                if (t1 > 0.0f && t2 > 0.0f) t = min(t1, t2);
-                else if (t1 > 0.0f) t = t1;
-                else if (t2 > 0.0f) t = t2;
+            if (esfera.verificarIntersecao(Vetor(Po.x, Po.y, Po.z), Vetor(dr_e.i, dr_e.j, dr_e.k))) {
+                t = static_cast<float>(esfera.getDistancia());
             }
 
             // Interseção com os planos
@@ -270,8 +272,10 @@ int main() {
             float t_cil = cilindro.CalcularIntersecao(Po, dr_e);
             float ti_cone = cone.CalcularIntersecao(Po, Pj);
 
-            IntersecaoCubo inter_cubo = cubo.CalcularIntersecaoCompleta(Po, dr_e);
-            float t_cubo = inter_cubo.intercepta ? inter_cubo.t : -1.0f;
+            float t_cubo = -1.0f;
+            if (cuboMalha.verificarIntersecao(Vetor(Po.x, Po.y, Po.z, 0.0f), Vetor(dr_e.i, dr_e.j, dr_e.k, 0.0f))) {
+                t_cubo = static_cast<float>(cuboMalha.getDistancia());
+            }
 
             if (ti_c > 0.0f && (ti_c < t || t < 0.0f)) t = ti_c;
             if (ti_f > 0.0f && (ti_f < t || t < 0.0f)) t = ti_f;
@@ -321,21 +325,31 @@ int main() {
                 continue;
             }
             else if (t_cubo == t) {
-                // Renderiza o cubo (você pode criar uma função similar a calcula_Plano)
-                Color K_cubo(1.f, 0.078f, 0.576f); // Cor vermelha para o cubo
-                Plano plano_cubo(inter_cubo.ponto, inter_cubo.normal, Material::Solido(K_cubo, m_e));
+                Vetor PiV = cuboMalha.getPontoIntersecao();
+                Vetor nV = cuboMalha.calcularNormal(PiV);
+                Plano plano_cubo(Point(PiV.i, PiV.j, PiV.k), Vector(nV.i, nV.j, nV.k), Material());
+
+                Vetor ka = cuboMalha.getKa();
+                Vetor kd = cuboMalha.getKd();
+                Vetor ke = cuboMalha.getKe();
+                plano_cubo.setKa(ka);
+                plano_cubo.setKd(kd);
+                plano_cubo.setKe(ke);
+                plano_cubo.setShininess(cuboMalha.getShininess());
+
                 Color cor_cubo = plano_cubo.CalcularCor(cena, dr_e);
                 img << static_cast<int>(cor_cubo.r) << ' ' << static_cast<int>(cor_cubo.g) << ' ' << static_cast<int>(cor_cubo.b) << ' ';
                 continue;
             }
-            else if (t <= 0.0f || delta < 0.0f) {
+            else if (t <= 0.0f) {
                 img << "100 100 100 ";
                 continue;
             }
 
             // esfera
             Point Pi = calcula_eq_ray(Po, t, dr_e);
-            Vector n = calcula_n(Pi, centroEsfera, rEsfera);
+            Vetor nV = esfera.calcularNormal(Vetor(Pi.x, Pi.y, Pi.z));
+            Vector n(nV.i, nV.j, nV.k);
             Vector X(-dr_e.i, -dr_e.j, -dr_e.k);
             Vector l = calcula_l(P_F, Pi);
             Vector r1 = calcula_esc_por_vetor(2.0f, calcula_esc_por_vetor(calcula_prod_esc(n, l), n));
@@ -343,11 +357,14 @@ int main() {
 
             float fd = lidarExcecao(calcula_prod_esc(n, l));
             float cosAlpha = lidarExcecao(calcula_prod_esc(r, X));
-            float fe = pow(cosAlpha, m_e);
+            float fe = pow(cosAlpha, esfera.getShininess());
 
-            Color Id(I_F.r * K_e.r * fd, I_F.g * K_e.g * fd, I_F.b * K_e.b * fd);
-            Color Ie(I_F.r * K_e.r * fe, I_F.g * K_e.g * fe, I_F.b * K_e.b * fe);
-            Color Ia(I_A.r * K_e.r, I_A.g * K_e.g, I_A.b * K_e.b);
+            Vetor keV = esfera.getKe();
+            Color K_esf(keV.i, keV.j, keV.k);
+
+            Color Id(I_F.r * K_esf.r * fd, I_F.g * K_esf.g * fd, I_F.b * K_esf.b * fd);
+            Color Ie(I_F.r * K_esf.r * fe, I_F.g * K_esf.g * fe, I_F.b * K_esf.b * fe);
+            Color Ia(I_A.r * K_esf.r, I_A.g * K_esf.g, I_A.b * K_esf.b);
             Color I(lidarExcecao(Id.r + Ie.r + Ia.r), lidarExcecao(Id.g + Ie.g + Ia.g), lidarExcecao(Id.b + Ie.b + Ia.b));
 
             int R = static_cast<int>(roundf(I.r * 255.0f));
@@ -369,6 +386,10 @@ int main() {
 Color calculaCone(float t, Point p) {
     if (gCena == nullptr) return Color(0, 0, 0);
     Vector dr = calcula_dr(Po, p);
+    cone.setKa(Vetor(KCone.r, KCone.g, KCone.b));
+    cone.setKd(Vetor(KCone.r, KCone.g, KCone.b));
+    cone.setKe(Vetor(KCone.r, KCone.g, KCone.b));
+    cone.setShininess(gCena->expoenteEspecular);
     return cone.CalcularCor(*gCena, t, dr);
 }
 

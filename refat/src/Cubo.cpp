@@ -1,59 +1,69 @@
 #include "../include/Cubo.h"
 #include "../include/Utils.h"
 #include "../include/Plano.h"
-#include <cmath>
 
-struct Face {
-    Point p;
-    Vector n;
-};
+Malha Cubo::criarCubo(Vetor centroBase, double comprimentoAresta, Vetor Ka, Vetor Kd, Vetor Ke, double shininess) {
+    Malha malha;
 
-Cubo::Cubo(const Point& centro_c, const float aresta_c)
-    : centro_base(centro_c), aresta(aresta_c) {
-}
+    malha.setShininess(shininess);
+    malha.setKa(Ka);
+    malha.setKd(Kd);
+    malha.setKe(Ke);
 
-IntersecaoCubo Cubo::CalcularIntersecaoCompleta(const Point& origem, const Vector& dir) const {
-    IntersecaoCubo resultado = { false, INFINITY, Vector(0, 0, 0), Point(0, 0, 0) };
+    float half = static_cast<float>(comprimentoAresta / 2.0);
+    float a = static_cast<float>(comprimentoAresta);
 
-    float half = aresta / 2.0f;
+    // 8 vértices (base em y=centroBase.y e topo em y+aresta)
+    malha.adicionarVertice(Vertice(Vetor(centroBase.i - half, centroBase.j, centroBase.k - half, 0.0f)));
+    malha.adicionarVertice(Vertice(Vetor(centroBase.i - half, centroBase.j, centroBase.k + half, 1.0f)));
+    malha.adicionarVertice(Vertice(Vetor(centroBase.i + half, centroBase.j, centroBase.k + half, 1.0f)));
+    malha.adicionarVertice(Vertice(Vetor(centroBase.i + half, centroBase.j, centroBase.k - half, 1.0f)));
 
-    Face faces[6] = {
-        {Point(centro_base.x, centro_base.y, centro_base.z - half), Vector(0, 0, -1)},
-        {Point(centro_base.x, centro_base.y, centro_base.z + half), Vector(0, 0, 1)},
-        {Point(centro_base.x - half, centro_base.y, centro_base.z), Vector(-1, 0, 0)},
-        {Point(centro_base.x + half, centro_base.y, centro_base.z), Vector(1, 0, 0)},
-        {Point(centro_base.x, centro_base.y, centro_base.z), Vector(0, -1, 0)},
-        {Point(centro_base.x, centro_base.y + aresta, centro_base.z), Vector(0, 1, 0)}
-    };
+    malha.adicionarVertice(Vertice(Vetor(centroBase.i - half, centroBase.j + a, centroBase.k - half, 1.0f)));
+    malha.adicionarVertice(Vertice(Vetor(centroBase.i - half, centroBase.j + a, centroBase.k + half, 1.0f)));
+    malha.adicionarVertice(Vertice(Vetor(centroBase.i + half, centroBase.j + a, centroBase.k + half, 1.0f)));
+    malha.adicionarVertice(Vertice(Vetor(centroBase.i + half, centroBase.j + a, centroBase.k - half, 1.0f)));
 
-    for (int i = 0; i < 6; i++) {
-        float denom = calcula_prod_esc(dir, faces[i].n);
-        if (fabs(denom) < 1e-6f) continue;
+    // Arestas (12 básicas)
+    malha.adicionarAresta(Aresta(0, 1));
+    malha.adicionarAresta(Aresta(1, 2));
+    malha.adicionarAresta(Aresta(2, 3));
+    malha.adicionarAresta(Aresta(3, 0));
 
-        Vector w = subtrai_pontos(origem, faces[i].p);
-        float t_aux = calcula_t_plano(w, faces[i].n, dir);
-        if (t_aux <= 1e-4f || t_aux >= resultado.t) continue;
+    malha.adicionarAresta(Aresta(4, 5));
+    malha.adicionarAresta(Aresta(5, 6));
+    malha.adicionarAresta(Aresta(6, 7));
+    malha.adicionarAresta(Aresta(7, 4));
 
-        Point Pi = calcula_eq_ray(origem, t_aux, dir);
+    malha.adicionarAresta(Aresta(0, 4));
+    malha.adicionarAresta(Aresta(1, 5));
+    malha.adicionarAresta(Aresta(2, 6));
+    malha.adicionarAresta(Aresta(3, 7));
 
-        bool dentro_x = (Pi.x >= centro_base.x - half - 1e-4f) &&
-            (Pi.x <= centro_base.x + half + 1e-4f);
-        bool dentro_y = (Pi.y >= centro_base.y - 1e-4f) &&
-            (Pi.y <= centro_base.y + aresta + 1e-4f);
-        bool dentro_z = (Pi.z >= centro_base.z - half - 1e-4f) &&
-            (Pi.z <= centro_base.z + half + 1e-4f);
+    // Faces trianguladas (12 triângulos = 6 faces * 2)
+    // Base (normal -Y)
+    malha.adicionarFace(Face(0, 2, 1));
+    malha.adicionarFace(Face(0, 3, 2));
 
-        if (dentro_x && dentro_y && dentro_z) {
-            resultado.intercepta = true;
-            resultado.t = t_aux;
-            resultado.normal = faces[i].n;
-            resultado.ponto = Pi;
-        }
-    }
+    // Topo (normal +Y)
+    malha.adicionarFace(Face(4, 5, 6));
+    malha.adicionarFace(Face(4, 6, 7));
 
-    return resultado;
-}
+    // Lado -X
+    malha.adicionarFace(Face(0, 1, 5));
+    malha.adicionarFace(Face(0, 5, 4));
 
-IntersecaoCubo calcula_intersecao_cubo_completa(const Cubo& cubo, const Vector& dr, Point& Po) {
-    return cubo.CalcularIntersecaoCompleta(Po, dr);
+    // Lado +X
+    malha.adicionarFace(Face(3, 6, 2));
+    malha.adicionarFace(Face(3, 7, 6));
+
+    // Lado -Z
+    malha.adicionarFace(Face(0, 7, 3));
+    malha.adicionarFace(Face(0, 4, 7));
+
+    // Lado +Z
+    malha.adicionarFace(Face(1, 2, 6));
+    malha.adicionarFace(Face(1, 6, 5));
+
+    return malha;
 }

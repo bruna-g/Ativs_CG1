@@ -7,6 +7,7 @@
 #include "../include/Vector.h"
 
 #include <cmath>
+#include <limits>
 
 Plano::Plano(const Point& p_pi_p, const Vector& n_v, bool tem_textura_p)
     : p_pi(p_pi_p), n(n_v), tem_textura(tem_textura_p), material() {
@@ -33,7 +34,14 @@ Color Plano::CalcularCor(const Cena& cena, const Vector& dir) const {
     Vector l = calcula_l(cena.luz.pos, Pi);
     Point Pi_mod(Pi.x + l.i * 1e-4f, Pi.y + l.j * 1e-4f, Pi.z + l.k * 1e-4f);
 
-    Color Kd_textured = material.Kd;
+    Vetor kaV = getKa();
+    Vetor kdV = getKd();
+    Vetor keV = getKe();
+    Color Ka(kaV.i, kaV.j, kaV.k);
+    Color KdBase(kdV.i, kdV.j, kdV.k);
+    Color Ke(keV.i, keV.j, keV.k);
+
+    Color Kd_textured = KdBase;
     if (material.usarTextura && material.textura != nullptr) {
         Vector nLocal = n;
         Vector arbitrary = (fabs(nLocal.i) < 0.9f) ? Vector(1.0f, 0.0f, 0.0f) : Vector(0.0f, 1.0f, 0.0f);
@@ -82,7 +90,9 @@ Color Plano::CalcularCor(const Cena& cena, const Vector& dir) const {
         if (t_cone > 1e-4f && t_cone < dist_Pi_Luz) naSombraCone = true;
     }
 
-    Color Ia(cena.luzAmbiente.r * Kd_textured.r, cena.luzAmbiente.g * Kd_textured.g, cena.luzAmbiente.b * Kd_textured.b);
+    // Se tem textura, aplica também no termo ambiente.
+    Color Ka_textured = material.usarTextura ? Kd_textured : Ka;
+    Color Ia(cena.luzAmbiente.r * Ka_textured.r, cena.luzAmbiente.g * Ka_textured.g, cena.luzAmbiente.b * Ka_textured.b);
     if (naSombraEsf || naSombraCil || naSombraCone) {
         Color I(lidarExcecao(Ia.r), lidarExcecao(Ia.g), lidarExcecao(Ia.b));
         int R = static_cast<int>(roundf(I.r * 255.0f));
@@ -97,14 +107,14 @@ Color Plano::CalcularCor(const Cena& cena, const Vector& dir) const {
 
     float fd = lidarExcecao(calcula_prod_esc(n, l));
     float cosAlpha = lidarExcecao(calcula_prod_esc(r, v));
-    float fe = pow(cosAlpha, material.m);
+    float fe = pow(cosAlpha, static_cast<float>(getShininess()));
 
     Color Id(cena.luz.intensidade.r * Kd_textured.r * fd,
         cena.luz.intensidade.g * Kd_textured.g * fd,
         cena.luz.intensidade.b * Kd_textured.b * fd);
-    Color Ie(cena.luz.intensidade.r * material.Ke.r * fe,
-        cena.luz.intensidade.g * material.Ke.g * fe,
-        cena.luz.intensidade.b * material.Ke.b * fe);
+    Color Ie(cena.luz.intensidade.r * Ke.r * fe,
+        cena.luz.intensidade.g * Ke.g * fe,
+        cena.luz.intensidade.b * Ke.b * fe);
     Color I(lidarExcecao(Id.r + Ie.r + Ia.r), lidarExcecao(Id.g + Ie.g + Ia.g), lidarExcecao(Id.b + Ie.b + Ia.b));
 
     int R = static_cast<int>(roundf(I.r * 255.0f));
@@ -115,6 +125,32 @@ Color Plano::CalcularCor(const Cena& cena, const Vector& dir) const {
 
 Color Plano::CalcularCor(const Cena& cena, const Vector& dir, const Color& /*K_e*/, const Color& /*K_d*/) const {
     return CalcularCor(cena, dir);
+}
+
+bool Plano::verificarIntersecao(Vetor p0, Vetor dr) {
+    // Converte Vetor -> Point (origem) e usa a interseção OO existente.
+    Point origem(p0.i, p0.j, p0.k);
+    Vector dir(dr.i, dr.j, dr.k);
+
+    float t = CalcularIntersecao(origem, dir);
+    if (!(t > 1e-4f) || !std::isfinite(t)) {
+        setTemIntersecao(false);
+        setDistancia(std::numeric_limits<double>::infinity());
+        return false;
+    }
+
+    Point Pi = calcula_eq_ray(origem, t, dir);
+    setTemIntersecao(true);
+    setDistancia(static_cast<double>(t));
+    setPontoIntersecao(Vetor(Pi.x, Pi.y, Pi.z));
+    return true;
+}
+
+Vetor Plano::calcularNormal(Vetor /*posicao*/) {
+    // Normal constante do plano.
+    float nn = std::sqrt(n.i * n.i + n.j * n.j + n.k * n.k);
+    if (nn <= 1e-8f) return Vetor(0.0f, 0.0f, 0.0f);
+    return Vetor(n.i / nn, n.j / nn, n.k / nn);
 }
 
 float calcula_t_plano(Vector w, Vector n, Vector dr) {

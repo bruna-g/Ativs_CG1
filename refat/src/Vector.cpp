@@ -11,10 +11,17 @@ Vector::Vector(float i_v, float j_v, float k_v) {
     this->q = 0;
 }
 
+Vector::Vector(float i_v, float j_v, float k_v, float q_v) {
+    this->i = i_v;
+    this->j = j_v;
+    this->k = k_v;
+    this->q = q_v;
+}
+
 Vector cross(const Vector& a, const Vector& b) {
     return Vector(a.j * b.k - a.k * b.j,
-                  a.k * b.i - a.i * b.k,
-                  a.i * b.j - a.j * b.i);
+        a.k * b.i - a.i * b.k,
+        a.i * b.j - a.j * b.i);
 }
 
 Vector matrizVetorProduto(const Matriz3x3& M, const Vector& v) {
