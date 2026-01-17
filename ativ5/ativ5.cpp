@@ -95,13 +95,13 @@ float hJanela = 60.0f;
 int nCol = 500;
 int nLin = 500;
 
-float dJanela = 30.0f;
+float dJanela = 10.0f;
 float z = -dJanela;
 
 float Dx = wJanela / nCol;
 float Dy = hJanela / nLin;
 
-Point Po(0.f, 0.f, 0.f);
+Point Po(50.f, 0.f, 0.f);
 
 //esfera
 float rEsfera = 5.0f;
@@ -156,11 +156,11 @@ Color KT_d(0.933f, 0.933f, 0.933f);
 Color KT_e(0.933f, 0.933f, 0.933f);
 
 //fonte luminosa
-Color I_F(0.7f, 0.7f, 0.7f); // Intensidade da luz (branca)
+Color I_F(1.5f, 1.5f, 1.5f); // Intensidade da luz (branca)
 Point P_F(-100.f, 140.f, -20.f);    // Posição da fonte de luz
 
 //luz ambiente
-Color I_A(0.3f, 0.3f, 0.3f); // Intensidade da luz ambiente
+Color I_A(0.8f, 0.8f, 0.8f); // Intensidade da luz ambiente
 
 //cilindro
 Point centroCilindro(0.f, -150.f, -200.f);
