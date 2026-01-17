@@ -1,10 +1,10 @@
-#include "Color.h"
-#include "Plano.h"
-#include "Vector.h"
-#include "Cilindro.h"
-#include "Point.h"
-#include "Cone.h"
-#include "Textura.hpp"
+#include "../include/Color.h"
+#include "../include/Plano.h"
+#include "../include/Vector.h"
+#include "../include/Cilindro.h"
+#include "../include/Point.h"
+#include "../include/Cone.h"
+#include "../include/Textura.hpp"
 #include <cmath>
 #include <algorithm>
 

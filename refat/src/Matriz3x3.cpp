@@ -1,5 +1,5 @@
-#include "Matriz3x3.h"
-#include "Vector.h"
+#include "../include/Matriz3x3.h"
+#include "../include/Vector.h"
 
 Matriz3x3::Matriz3x3(float m00, float m01, float m02,
                      float m10, float m11, float m12,

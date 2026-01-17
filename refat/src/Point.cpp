@@ -1,5 +1,4 @@
-#include "Point.h"
-#include "Vector.h"
+#include "../include/Point.h"
 
 Point::Point(float x_p, float y_p, float z_p) {
     this->x = x_p;
