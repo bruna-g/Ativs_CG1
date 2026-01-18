@@ -9,6 +9,7 @@ class Vector {
 public:
     float i, j, k, q;
 
+    Vector();
     Vector(float i_v, float j_v, float k_v);
     Vector(float i_v, float j_v, float k_v, float q_v);
 };

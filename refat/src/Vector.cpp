@@ -18,6 +18,8 @@ Vector::Vector(float i_v, float j_v, float k_v, float q_v) {
     this->q = q_v;
 }
 
+Vector::Vector() : i(0.f), j(0.f), k(0.f), q(0.f) {}
+
 Vector cross(const Vector& a, const Vector& b) {
     return Vector(a.j * b.k - a.k * b.j,
         a.k * b.i - a.i * b.k,

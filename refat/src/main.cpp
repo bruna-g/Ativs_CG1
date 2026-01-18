@@ -18,26 +18,38 @@
 #include "../include/Matriz3x3.h"
 #include "../include/Cena.h"
 #include "../include/Material.h"
+#include "../include/Camera.h"
 using namespace std;
 
 // Configuração da janela de visualização
-float wJanela = 60.0f;
-float hJanela = 60.0f;
 int nCol = 500;
 int nLin = 500;
 
-float dJanela = 30.0f;
-float z = -dJanela;
+Point eye(100.f, 140.f, 190.f);
+Point at(100.f, 50.f, 100.f);
+Vector up(0.f, 1.f, 0.f);
+float distanciaFocal = 30.0f;
 
+// Campo de visão - IMPORTANTE: manter proporção igual a nCol/nLin
+float xMin = -50.0f;
+float xMax = 50.0f;
+float hJanelaDesejada = (xMax - xMin) * nLin / nCol;  // Manter proporção
+float yMin = -hJanelaDesejada / 2.0f;
+float yMax = hJanelaDesejada / 2.0f;
+
+Camera camera(eye, at, up, distanciaFocal, xMin, xMax, yMin, yMax);
+
+float wJanela = camera.getLarguraJanela();
+float hJanela = camera.getAlturaJanela();
 float Dx = wJanela / nCol;
 float Dy = hJanela / nLin;
 
-Point Po(0.f, 0.f, 0.f);
+Point Po(0.f, 10.f, 0.f);
 
-// Esfera
+// Esfera (topoete da árvore)
 float rEsfera = 5.0f;
-Point centroEsfera(0.f, 95.f, -200.f);
-Color K_e(0.854f, 0.647f, 0.125f);
+Point centroEsfera(100.f, 150.f, 100.f);
+Color K_e(0.8f, 0.6f, 0.2f);
 float m_e = 10.0f;
 Esfera esfera(centroEsfera, rEsfera);
 
@@ -46,7 +58,7 @@ Textura* texturaMadeira = nullptr;
 static Cena* gCena = nullptr;
 
 // Chão
-Point P_pi_chao(0.f, -150.f, 0.f);
+Point P_pi_chao(100.f, 0.f, 100.f);
 Vector n_chao(0.f, 1.0f, 0.f);
 Color KC_d(0.2f, 0.7f, 0.2f);
 Color KC_e(0.0f, 0.0f, 0.0f);
@@ -55,8 +67,8 @@ Material mat_chao;
 Plano plano_chao(P_pi_chao, n_chao, mat_chao);
 
 // Fundo
-Point P_pi_fundo(200.f, -150.f, -400.f);
-Vector n_fundo(0.f, 0.f, 1.f);
+Point P_pi_fundo(100.f, 100.f, 400.f);
+Vector n_fundo(0.f, 0.f, -1.f);
 Color KF_d(0.686f, 0.933f, 0.933f);
 Color KF_e(0.686f, 0.933f, 0.933f);
 float m_f = 1.0f;
@@ -64,7 +76,7 @@ Material mat_fundo;
 Plano plano_fundo(P_pi_fundo, n_fundo, mat_fundo);
 
 // Parede esquerda
-Point P_pi_esq(-200.f, -150.f, 0.f);
+Point P_pi_esq(0.f, 100.f, 100.f);
 Vector n_esq(1.f, 0.f, 0.f);
 Color KE_d(0.686f, 0.933f, 0.933f);
 Color KE_e(0.686f, 0.933f, 0.933f);
@@ -72,7 +84,7 @@ Material mat_esq;
 Plano plano_esq(P_pi_esq, n_esq, mat_esq);
 
 // Parede direita
-Point P_pi_dir(200.f, -150.f, 0.f);
+Point P_pi_dir(200.f, 100.f, 100.f);
 Vector n_dir(-1.f, 0.f, 0.f);
 Color KD_d(0.686f, 0.933f, 0.933f);
 Color KD_e(0.686f, 0.933f, 0.933f);
@@ -80,7 +92,7 @@ Material mat_dir;
 Plano plano_dir(P_pi_dir, n_dir, mat_dir);
 
 // Teto
-Point P_pi_teto(0.f, 150.f, 0.f);
+Point P_pi_teto(100.f, 300.f, 100.f);
 Vector n_teto(0.f, -1.f, 0.f);
 Color KT_d(0.933f, 0.933f, 0.933f);
 Color KT_e(0.933f, 0.933f, 0.933f);
@@ -89,30 +101,30 @@ Plano plano_teto(P_pi_teto, n_teto, mat_teto);
 
 // Fonte luminosa
 Color I_F(0.7f, 0.7f, 0.7f);
-Point P_F(-100.f, 140.f, -20.f);
+Point P_F(50.f, 200.f, 50.f);
 
 // Luz ambiente
 Color I_A(0.3f, 0.3f, 0.3f);
 
-// Cilindro
-Point centroCilindro(0.f, -150.f, -200.f);
-float raio_cil = 5.f;
-float altura_cil = 90.f;
+// Cilindro (tronco da árvore)
+Point centroCilindro(100.f, 40.f, 100.f);
+float raio_cil = 8.f;
+float altura_cil = 60.f;
 Vector dc(0.f, 1.0f, 0.f);
 Cilindro cilindro(centroCilindro, raio_cil, altura_cil, dc);
-Color KCil_d(0.824f, 0.706f, 0.549f);
-Color KCil_e(0.824f, 0.706f, 0.549f);
-Color KCil_a(0.824f, 0.706f, 0.549f);
+Color KCil_d(0.545f, 0.270f, 0.075f);
+Color KCil_e(0.545f, 0.270f, 0.075f);
+Color KCil_a(0.545f, 0.270f, 0.075f);
 Material mat_cil;
 
-// Cone
-Point cb_cone(0.f, -60.f, -200.f);
-float raio_cone = 90.f;
-float altura_cone = 150.f;
+// Cone (copa da árvore)
+Point cb_cone(100.f, 100.f, 100.f);
+float raio_cone = 40.f;
+float altura_cone = 50.f;
 Vector aux_v_cone = calcula_esc_por_vetor(altura_cone, dc);
 Point v_cone(cb_cone.x + aux_v_cone.i, cb_cone.y + aux_v_cone.j, cb_cone.z + aux_v_cone.k);
 Cone cone(cb_cone, v_cone, raio_cone);
-Color KCone(0.f, 1.f, 0.498f);
+Color KCone(0.f, 0.6f, 0.2f);
 Material mat_cone;
 
 // Cubo (como malha)
@@ -128,7 +140,7 @@ int main() {
 
     SDL_Init(SDL_INIT_VIDEO);
     SDL_CreateWindowAndRenderer(nCol, nLin, 0, &window, &renderer);
-    SDL_SetWindowTitle(window, "Ray Casting - Cena 3D");
+    SDL_SetWindowTitle(window, "Trabalho Final - CG");
     texturaMadeira = new Textura("madeira", "madeira.bmp");
 
     // Materiais / propriedades via Objeto (Ka/Kd/Ke/shininess)
@@ -179,7 +191,7 @@ int main() {
     // Cubo como malha
     Color K_cubo(1.f, 0.078f, 0.576f);
     cuboMalha = Cubo::criarCubo(
-        Vetor(0.f, -150.f, -165.f, 0.0f),
+        Vetor(100.f, 0.f, 100.f, 0.0f),
         40.0,
         Vetor(K_cubo.r, K_cubo.g, K_cubo.b, 0.0f),
         Vetor(K_cubo.r, K_cubo.g, K_cubo.b, 0.0f),
@@ -188,7 +200,7 @@ int main() {
     );
 
     Cena cena;
-    cena.observador = Po;
+    cena.observador = camera.getEye();
     cena.luz = LuzPontual{ P_F, I_F };
     cena.luzAmbiente = I_A;
     cena.centroEsfera = centroEsfera;
@@ -204,12 +216,12 @@ int main() {
 
     // Ray casting
     for (int linha = 0; linha < nLin; linha++) {
-        float y = hJanela / 2 - Dy / 2 - linha * Dy;
+        float y = camera.getYMax() - (linha + 0.5f) * Dy;  // CORRIGIDO
         for (int coluna = 0; coluna < nCol; coluna++) {
-            float x = -wJanela / 2 + Dx / 2 + coluna * Dx;
-            Point Pj(x, y, z);
+            float x = camera.getXMin() + (coluna + 0.5f) * Dx;  // TAMBÉM CORRIGIDO PARA CONSISTÊNCIA
 
-            Vector dr_e = calcula_dr(Po, Pj);
+            Vector dr_e = camera.gerarRaio(x, y);
+            Point Po = camera.getEye();
 
             float t_best = std::numeric_limits<float>::infinity();
             enum class Hit {
@@ -235,14 +247,14 @@ int main() {
 
             // Interseção com os planos
             float ti_c = plano_chao.CalcularIntersecao(Po, dr_e);
-            float ti_f = plano_fundo.CalcularIntersecao(Po, dr_e);
-            float ti_e = plano_esq.CalcularIntersecao(Po, dr_e);
-            float ti_d = plano_dir.CalcularIntersecao(Po, dr_e);
-            float ti_t = plano_teto.CalcularIntersecao(Po, dr_e);
+            // float ti_f = plano_fundo.CalcularIntersecao(Po, dr_e);
+            // float ti_e = plano_esq.CalcularIntersecao(Po, dr_e);
+            // float ti_d = plano_dir.CalcularIntersecao(Po, dr_e);
+            // float ti_t = plano_teto.CalcularIntersecao(Po, dr_e);
 
             // Objetos
             float t_cil = cilindro.CalcularIntersecao(Po, dr_e);
-            float ti_cone = cone.CalcularIntersecao(Po, Pj);
+            float ti_cone = cone.CalcularIntersecao(Po, dr_e);
             float ti_esf = esfera.CalcularIntersecao(Po, dr_e);
 
             float t_cubo = std::numeric_limits<float>::infinity();
@@ -252,11 +264,11 @@ int main() {
                 t_cubo = static_cast<float>(cuboMalha.getDistancia());
             }
 
-            considerar(ti_f, Hit::Fundo);
+            // considerar(ti_f, Hit::Fundo);
             considerar(ti_c, Hit::Chao);
-            considerar(ti_e, Hit::Esq);
-            considerar(ti_d, Hit::Dir);
-            considerar(ti_t, Hit::Teto);
+            // considerar(ti_e, Hit::Esq);
+            // considerar(ti_d, Hit::Dir);
+            // considerar(ti_t, Hit::Teto);
             considerar(t_cil, Hit::Cilindro);
             considerar(ti_cone, Hit::Cone);
             considerar(t_cubo, Hit::Cubo);
@@ -272,15 +284,15 @@ int main() {
             case Hit::Chao:
                 cor = plano_chao.CalcularCor(cena, dr_e);
                 break;
-            case Hit::Esq:
-                cor = plano_esq.CalcularCor(cena, dr_e);
-                break;
-            case Hit::Dir:
-                cor = plano_dir.CalcularCor(cena, dr_e);
-                break;
-            case Hit::Teto:
-                cor = plano_teto.CalcularCor(cena, dr_e);
-                break;
+            // case Hit::Esq:
+            //     cor = plano_esq.CalcularCor(cena, dr_e);
+            //     break;
+            // case Hit::Dir:
+            //     cor = plano_dir.CalcularCor(cena, dr_e);
+            //     break;
+            // case Hit::Teto:
+            //     cor = plano_teto.CalcularCor(cena, dr_e);
+            //     break;
             case Hit::Cilindro:
                 cor = cilindro.CalcularCor(cena, t_best, dr_e);
                 break;
