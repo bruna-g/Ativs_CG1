@@ -4,6 +4,8 @@
 #include "../include/Color.h"
 #include "../include/Textura.hpp"
 #include "../include/Cone.h"
+#include "../include/Cilindro.h"
+#include "../include/Malha.h"
 #include "../include/Vector.h"
 
 #include <cmath>
@@ -27,6 +29,7 @@ Color Plano::CalcularCor(const Cena& cena, const Vector& dir) const {
     bool naSombraEsf = false;
     bool naSombraCil = false;
     bool naSombraCone = false;
+    bool naSombraCubo = false;
 
     float ti = CalcularIntersecao(cena.observador, dir);
     Point Pi = calcula_eq_ray(cena.observador, ti, dir);
@@ -90,10 +93,26 @@ Color Plano::CalcularCor(const Cena& cena, const Vector& dir) const {
         if (t_cone > 1e-4f && t_cone < dist_Pi_Luz) naSombraCone = true;
     }
 
+    // Sombra do cilindro
+    if (!naSombraEsf && !naSombraCone && cena.cilindro != nullptr) {
+        float t_cil = cena.cilindro->CalcularIntersecao(Pi_mod, l);
+        if (t_cil > 1e-4f && t_cil < dist_Pi_Luz) naSombraCil = true;
+    }
+
+    // Sombra do cubo (malha)
+    if (!naSombraEsf && !naSombraCone && !naSombraCil && cena.cubo != nullptr) {
+        if (cena.cubo->verificarIntersecao(
+            Vetor(Pi_mod.x, Pi_mod.y, Pi_mod.z, 0.0f),
+            Vetor(l.i, l.j, l.k, 0.0f))) {
+            float t_cubo = static_cast<float>(cena.cubo->getDistancia());
+            if (t_cubo > 1e-4f && t_cubo < dist_Pi_Luz) naSombraCubo = true;
+        }
+    }
+
     // Se tem textura, aplica também no termo ambiente.
     Color Ka_textured = material.usarTextura ? Kd_textured : Ka;
     Color Ia(cena.luzAmbiente.r * Ka_textured.r, cena.luzAmbiente.g * Ka_textured.g, cena.luzAmbiente.b * Ka_textured.b);
-    if (naSombraEsf || naSombraCil || naSombraCone) {
+    if (naSombraEsf || naSombraCil || naSombraCone || naSombraCubo) {
         Color I(lidarExcecao(Ia.r), lidarExcecao(Ia.g), lidarExcecao(Ia.b));
         int R = static_cast<int>(roundf(I.r * 255.0f));
         int G = static_cast<int>(roundf(I.g * 255.0f));

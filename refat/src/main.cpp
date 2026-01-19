@@ -25,8 +25,8 @@ using namespace std;
 int nCol = 500;
 int nLin = 500;
 
-Point eye(100.f, 115.f, 210.f);
-Point at(100.f, 110.f, 140.f);
+Point eye(100.f, 130.f, 240.f);
+Point at(100.f, 95.f, 100.f);
 Vector up(0.f, 1.f, 0.f);
 float distanciaFocal = 30.0f;
 
@@ -101,7 +101,7 @@ Plano plano_teto(P_pi_teto, n_teto, mat_teto);
 
 // Fonte luminosa
 Color I_F(0.7f, 0.7f, 0.7f);
-Point P_F(50.f, 200.f, 50.f);
+Point P_F(15.f, 200.f, 270.f);
 
 // Luz ambiente
 Color I_A(0.3f, 0.3f, 0.3f);
@@ -207,6 +207,7 @@ int main() {
     cena.raioEsfera = rEsfera;
     cena.cone = &cone;
     cena.cilindro = &cilindro;
+    cena.cubo = &cuboMalha;
     cena.texturaMadeira = texturaMadeira;
     cena.expoenteEspecular = m_e;
     gCena = &cena;
