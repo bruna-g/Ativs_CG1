@@ -25,8 +25,8 @@ using namespace std;
 int nCol = 500;
 int nLin = 500;
 
-Point eye(100.f, 140.f, 190.f);
-Point at(100.f, 50.f, 100.f);
+Point eye(100.f, 115.f, 210.f);
+Point at(100.f, 110.f, 140.f);
 Vector up(0.f, 1.f, 0.f);
 float distanciaFocal = 30.0f;
 
@@ -48,7 +48,7 @@ Point Po(0.f, 10.f, 0.f);
 
 // Esfera (topoete da árvore)
 float rEsfera = 5.0f;
-Point centroEsfera(100.f, 150.f, 100.f);
+Point centroEsfera(100.f, 150.f + rEsfera, 100.f);
 Color K_e(0.8f, 0.6f, 0.2f);
 float m_e = 10.0f;
 Esfera esfera(centroEsfera, rEsfera);
@@ -284,15 +284,15 @@ int main() {
             case Hit::Chao:
                 cor = plano_chao.CalcularCor(cena, dr_e);
                 break;
-            // case Hit::Esq:
-            //     cor = plano_esq.CalcularCor(cena, dr_e);
-            //     break;
-            // case Hit::Dir:
-            //     cor = plano_dir.CalcularCor(cena, dr_e);
-            //     break;
-            // case Hit::Teto:
-            //     cor = plano_teto.CalcularCor(cena, dr_e);
-            //     break;
+                // case Hit::Esq:
+                //     cor = plano_esq.CalcularCor(cena, dr_e);
+                //     break;
+                // case Hit::Dir:
+                //     cor = plano_dir.CalcularCor(cena, dr_e);
+                //     break;
+                // case Hit::Teto:
+                //     cor = plano_teto.CalcularCor(cena, dr_e);
+                //     break;
             case Hit::Cilindro:
                 cor = cilindro.CalcularCor(cena, t_best, dr_e);
                 break;

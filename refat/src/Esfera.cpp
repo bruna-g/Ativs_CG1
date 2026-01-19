@@ -24,24 +24,30 @@ Vector Esfera::CalcularNormal(const Point& P) const {
 }
 
 float Esfera::CalcularIntersecao(const Point& origem, const Vector& dir) const {
-    // Mantém a assinatura antiga (Vector) e retorna INFINITY quando não houver interseção.
-    Vector w = subtrai_pontos(origem, centro);
+    // Mantém a assinatura antiga (Vector) e retorna +infinity quando não houver interseção.
+    // Implementação mais robusta: usa half_b para reduzir perda numérica.
+    const Vector w = subtrai_pontos(origem, centro);
 
-    float a = calcula_prod_esc(dir, dir);
-    float b = 2.0f * calcula_prod_esc(dir, w);
-    float c = calcula_prod_esc(w, w) - raio * raio;
+    const double a = static_cast<double>(calcula_prod_esc(dir, dir));
+    if (std::abs(a) < 1e-12) return std::numeric_limits<float>::infinity();
 
-    float delta = b * b - 4.0f * a * c;
-    if (delta < 0.0f) return std::numeric_limits<float>::infinity();
+    const double half_b = static_cast<double>(calcula_prod_esc(w, dir));
+    const double c = static_cast<double>(calcula_prod_esc(w, w)) - static_cast<double>(raio) * static_cast<double>(raio);
 
-    float sqrtD = std::sqrt(delta);
-    float t1 = (-b - sqrtD) / (2.0f * a);
-    float t2 = (-b + sqrtD) / (2.0f * a);
+    const double delta = half_b * half_b - a * c;
+    if (delta < 0.0) return std::numeric_limits<float>::infinity();
 
-    float t = std::numeric_limits<float>::infinity();
-    if (t1 > 1e-4f) t = t1;
-    if (t2 > 1e-4f) t = std::min(t, t2);
-    return t;
+    const double sqrtD = std::sqrt(delta);
+    const double t1 = (-half_b - sqrtD) / a;
+    const double t2 = (-half_b + sqrtD) / a;
+
+    const double eps = 1e-4;
+    double t = std::numeric_limits<double>::infinity();
+    if (t1 > eps) t = t1;
+    if (t2 > eps) t = std::min(t, t2);
+    if (!std::isfinite(t)) return std::numeric_limits<float>::infinity();
+
+    return static_cast<float>(t);
 }
 
 Color Esfera::CalcularCor(const Cena& cena, float t, const Vector& dir,
@@ -68,7 +74,11 @@ Color Esfera::CalcularCor(const Cena& cena, float t, const Vector& dir,
     Vector r(r1.i - l.i, r1.j - l.j, r1.k - l.k);
 
     float fd = lidarExcecao(calcula_prod_esc(n, l));
+    fd = std::clamp(fd, 0.0f, 1.0f);
+
     float cosAlpha = lidarExcecao(calcula_prod_esc(r, v));
+    cosAlpha = std::clamp(cosAlpha, 0.0f, 1.0f);
+
     float fe = pow(cosAlpha, cena.expoenteEspecular);
 
     Color Id(cena.luz.intensidade.r * K_d.r * fd,
@@ -115,7 +125,11 @@ Color Esfera::CalcularCor(const Cena& cena, float t, const Vector& dir) const {
     Vector r(r1.i - l.i, r1.j - l.j, r1.k - l.k);
 
     float fd = lidarExcecao(calcula_prod_esc(n, l));
+    fd = std::clamp(fd, 0.0f, 1.0f);
+
     float cosAlpha = lidarExcecao(calcula_prod_esc(r, v));
+    cosAlpha = std::clamp(cosAlpha, 0.0f, 1.0f);
+
     float fe = pow(cosAlpha, static_cast<float>(getShininess()));
 
     Color Id(cena.luz.intensidade.r * Kd.r * fd,
@@ -134,7 +148,8 @@ Color Esfera::CalcularCor(const Cena& cena, float t, const Vector& dir) const {
 
 bool Esfera::verificarIntersecao(Vetor p0, Vetor dr) {
     Point origem(p0.i, p0.j, p0.k);
-    float t = CalcularIntersecao(origem, Vector(dr.i, dr.j, dr.k));
+    const Vector dir(dr.i, dr.j, dr.k);
+    float t = CalcularIntersecao(origem, dir);
 
     if (!(t > 1e-4f) || !std::isfinite(t)) {
         setTemIntersecao(false);
@@ -142,7 +157,7 @@ bool Esfera::verificarIntersecao(Vetor p0, Vetor dr) {
         return false;
     }
 
-    Point Pi = calcula_eq_ray(origem, t, Vector(dr.i, dr.j, dr.k));
+    Point Pi = calcula_eq_ray(origem, t, dir);
     setTemIntersecao(true);
     setDistancia(static_cast<double>(t));
     setPontoIntersecao(Vetor(Pi.x, Pi.y, Pi.z));
