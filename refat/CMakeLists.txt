@@ -42,6 +42,7 @@ set(REFAT_COMMON_SOURCES
   "${REFAT_SRC_DIR}/Matriz3x3.cpp"
   "${REFAT_SRC_DIR}/Utils.cpp"
   "${REFAT_SRC_DIR}/Textura.cpp"
+  "${REFAT_SRC_DIR}/Camera.cpp"
   # OBS: Malha.cpp está em include/
   "${REFAT_INC_DIR}/Malha.cpp"
 )

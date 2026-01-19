@@ -7,6 +7,7 @@
 class Textura;
 class Cone;
 class Cilindro;
+class Malha;
 
 struct LuzPontual {
     Point pos;
@@ -27,6 +28,7 @@ struct Cena {
     // Objetos que participam dos testes de sombra
     const Cone* cone = nullptr;
     const Cilindro* cilindro = nullptr;
+    Malha* cubo = nullptr;
 
     // Recursos
     Textura* texturaMadeira = nullptr;
