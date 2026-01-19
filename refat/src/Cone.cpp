@@ -114,7 +114,6 @@ float Cone::CalcularIntersecao(const Point& origem, const Point& pontoJanela) co
 }
 
 Color Cone::CalcularCor(const Cena& cena, float t, const Vector& dir, const Color& K) const {
-    bool naSombraEsf = false;
     bool naSombraCil = false;
 
     Point Pi = calcula_eq_ray(cena.observador, t, dir);
@@ -153,27 +152,9 @@ Color Cone::CalcularCor(const Cena& cena, float t, const Vector& dir, const Colo
     Point Pi_mod(Pi.x + l.i * 1e-4f, Pi.y + l.j * 1e-4f, Pi.z + l.k * 1e-4f);
     float dist_Pi_Luz = calcula_norma(subtrai_pontos(cena.luz.pos, Pi_mod));
 
-    // Sombra da esfera
-    Vector w_sombra = subtrai_pontos(Pi_mod, cena.centroEsfera);
-    float a_delta = calcula_prod_esc(l, l);
-    float b_delta = 2.0f * calcula_prod_esc(l, w_sombra);
-    float c_delta = calcula_prod_esc(w_sombra, w_sombra) - cena.raioEsfera * cena.raioEsfera;
-    float delta = b_delta * b_delta - 4.0f * a_delta * c_delta;
-    float s1 = INFINITY;
-    float s2 = INFINITY;
-    if (delta > 0.f) {
-        s1 = (-b_delta - sqrt(delta)) / (2.0f * a_delta);
-        s2 = (-b_delta + sqrt(delta)) / (2.0f * a_delta);
-    }
-    if ((s1 > 1e-4f && s1 < dist_Pi_Luz) || (s2 > 1e-4f && s2 < dist_Pi_Luz)) naSombraEsf = true;
+    naSombraCil = cena.estaNaSombra(Pi_mod, l, dist_Pi_Luz, const_cast<Cone*>(this));
 
-    // Sombra do cilindro
-    if (!naSombraEsf && cena.cilindro != nullptr) {
-        float t_cil_shadow = cena.cilindro->CalcularIntersecao(Pi_mod, l);
-        if (t_cil_shadow > 1e-4f && t_cil_shadow < dist_Pi_Luz) naSombraCil = true;
-    }
-
-    if (naSombraCil || naSombraEsf) {
+    if (naSombraCil) {
         Color I(lidarExcecao(Ia.r), lidarExcecao(Ia.g), lidarExcecao(Ia.b));
         int R = static_cast<int>(roundf(I.r * 255.0f));
         int G = static_cast<int>(roundf(I.g * 255.0f));
@@ -200,7 +181,6 @@ Color Cone::CalcularCor(const Cena& cena, float t, const Vector& dir, const Colo
 }
 
 Color Cone::CalcularCor(const Cena& cena, float t, const Vector& dir) const {
-    bool naSombraEsf = false;
     bool naSombraCil = false;
 
     Vetor kaV = getKa();
@@ -246,27 +226,9 @@ Color Cone::CalcularCor(const Cena& cena, float t, const Vector& dir) const {
     Point Pi_mod(Pi.x + l.i * 1e-4f, Pi.y + l.j * 1e-4f, Pi.z + l.k * 1e-4f);
     float dist_Pi_Luz = calcula_norma(subtrai_pontos(cena.luz.pos, Pi_mod));
 
-    // Sombra da esfera
-    Vector w_sombra = subtrai_pontos(Pi_mod, cena.centroEsfera);
-    float a_delta = calcula_prod_esc(l, l);
-    float b_delta = 2.0f * calcula_prod_esc(l, w_sombra);
-    float c_delta = calcula_prod_esc(w_sombra, w_sombra) - cena.raioEsfera * cena.raioEsfera;
-    float delta = b_delta * b_delta - 4.0f * a_delta * c_delta;
-    float s1 = INFINITY;
-    float s2 = INFINITY;
-    if (delta > 0.f) {
-        s1 = (-b_delta - sqrt(delta)) / (2.0f * a_delta);
-        s2 = (-b_delta + sqrt(delta)) / (2.0f * a_delta);
-    }
-    if ((s1 > 1e-4f && s1 < dist_Pi_Luz) || (s2 > 1e-4f && s2 < dist_Pi_Luz)) naSombraEsf = true;
+    naSombraCil = cena.estaNaSombra(Pi_mod, l, dist_Pi_Luz, const_cast<Cone*>(this));
 
-    // Sombra do cilindro
-    if (!naSombraEsf && cena.cilindro != nullptr) {
-        float t_cil_shadow = cena.cilindro->CalcularIntersecao(Pi_mod, l);
-        if (t_cil_shadow > 1e-4f && t_cil_shadow < dist_Pi_Luz) naSombraCil = true;
-    }
-
-    if (naSombraCil || naSombraEsf) {
+    if (naSombraCil) {
         Color I(lidarExcecao(Ia.r), lidarExcecao(Ia.g), lidarExcecao(Ia.b));
         int R = static_cast<int>(roundf(I.r * 255.0f));
         int G = static_cast<int>(roundf(I.g * 255.0f));

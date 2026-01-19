@@ -31,6 +31,7 @@ set(REFAT_INC_DIR "${REFAT_DIR}/include")
 
 # Fontes comuns (compartilhadas pelos dois executáveis)
 set(REFAT_COMMON_SOURCES
+  "${REFAT_SRC_DIR}/Cena.cpp"
   "${REFAT_SRC_DIR}/Vector.cpp"
   "${REFAT_SRC_DIR}/Point.cpp"
   "${REFAT_SRC_DIR}/Color.cpp"

@@ -240,10 +240,7 @@ int main() {
     cena.observador = Po;
     cena.luz = LuzPontual{ P_F, I_F };
     cena.luzAmbiente = I_A;
-    cena.centroEsfera = centroEsfera;
-    cena.raioEsfera = rEsfera;
-    cena.cone = &cone;
-    cena.cilindro = &cilindro;
+    cena.objetosSombra = { &esfera, &cilindro, &cone, &cuboMalha };
     cena.texturaMadeira = texturaMadeira;
     cena.expoenteEspecular = m_e;
     gCena = &cena;

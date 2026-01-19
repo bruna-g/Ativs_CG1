@@ -25,8 +25,8 @@ using namespace std;
 int nCol = 500;
 int nLin = 500;
 
-Point eye(100.f, 130.f, 240.f);
-Point at(100.f, 95.f, 100.f);
+Point eye(200.f, 130.f, 240.f);
+Point at(200.f, 95.f, 100.f);
 Vector up(0.f, 1.f, 0.f);
 float distanciaFocal = 30.0f;
 
@@ -106,8 +106,9 @@ Point P_F(15.f, 200.f, 270.f);
 // Luz ambiente
 Color I_A(0.3f, 0.3f, 0.3f);
 
+//-----------------Arvore 1---------------------//
 // Cilindro (tronco da árvore)
-Point centroCilindro(100.f, 40.f, 100.f);
+Point centroCilindro(25.f, 00.f, 100.f);
 float raio_cil = 8.f;
 float altura_cil = 60.f;
 Vector dc(0.f, 1.0f, 0.f);
@@ -118,7 +119,7 @@ Color KCil_a(0.545f, 0.270f, 0.075f);
 Material mat_cil;
 
 // Cone (copa da árvore)
-Point cb_cone(100.f, 100.f, 100.f);
+Point cb_cone(25.f, 60.f, 100.f);
 float raio_cone = 40.f;
 float altura_cone = 50.f;
 Vector aux_v_cone = calcula_esc_por_vetor(altura_cone, dc);
@@ -126,6 +127,30 @@ Point v_cone(cb_cone.x + aux_v_cone.i, cb_cone.y + aux_v_cone.j, cb_cone.z + aux
 Cone cone(cb_cone, v_cone, raio_cone);
 Color KCone(0.f, 0.6f, 0.2f);
 Material mat_cone;
+//----------------------------------------------//
+
+//-----------------Arvore 2---------------------//
+// Cilindro (tronco da árvore)
+Point centroCilindro2(50.f, 00.f, 50.f);
+float raio_cil2 = 8.f;
+float altura_cil2 = 60.f;
+Vector dc2(0.f, 1.0f, 0.f);
+Cilindro cilindro2(centroCilindro2, raio_cil2, altura_cil2, dc2);
+Color KCil_d2(0.545f, 0.270f, 0.075f);
+Color KCil_e2(0.545f, 0.270f, 0.075f);
+Color KCil_a2(0.545f, 0.270f, 0.075f);
+Material mat_cil2;
+
+// Cone (copa da árvore)
+Point cb_cone2(50.f, 60.f, 50.f);
+float raio_cone2 = 40.f;
+float altura_cone2 = 50.f;
+Vector aux_v_cone2 = calcula_esc_por_vetor(altura_cone2, dc2);
+Point v_cone2(cb_cone2.x + aux_v_cone2.i, cb_cone2.y + aux_v_cone2.j, cb_cone2.z + aux_v_cone2.k);
+Cone cone2(cb_cone2, v_cone2, raio_cone2);
+Color KCone2(0.f, 0.6f, 0.2f);
+Material mat_cone2;
+//----------------------------------------------//
 
 // Cubo (como malha)
 Malha cuboMalha;
@@ -183,10 +208,20 @@ int main() {
     cilindro.setKe(Vetor(KCil_e.r, KCil_e.g, KCil_e.b));
     cilindro.setShininess(m_e);
 
+    cilindro2.setKa(Vetor(KCil_a2.r, KCil_a2.g, KCil_a2.b));
+    cilindro2.setKd(Vetor(KCil_d2.r, KCil_d2.g, KCil_d2.b));
+    cilindro2.setKe(Vetor(KCil_e2.r, KCil_e2.g, KCil_e2.b));
+    cilindro2.setShininess(m_e);
+
     cone.setKa(Vetor(KCone.r, KCone.g, KCone.b));
     cone.setKd(Vetor(KCone.r, KCone.g, KCone.b));
     cone.setKe(Vetor(KCone.r, KCone.g, KCone.b));
     cone.setShininess(m_e);
+
+    cone2.setKa(Vetor(KCone2.r, KCone2.g, KCone2.b));
+    cone2.setKd(Vetor(KCone2.r, KCone2.g, KCone2.b));
+    cone2.setKe(Vetor(KCone2.r, KCone2.g, KCone2.b));
+    cone2.setShininess(m_e);
 
     // Cubo como malha
     Color K_cubo(1.f, 0.078f, 0.576f);
@@ -203,11 +238,7 @@ int main() {
     cena.observador = camera.getEye();
     cena.luz = LuzPontual{ P_F, I_F };
     cena.luzAmbiente = I_A;
-    cena.centroEsfera = centroEsfera;
-    cena.raioEsfera = rEsfera;
-    cena.cone = &cone;
-    cena.cilindro = &cilindro;
-    cena.cubo = &cuboMalha;
+    cena.objetosSombra = { &esfera, &cilindro, &cone, &cilindro2, &cone2, &cuboMalha };
     cena.texturaMadeira = texturaMadeira;
     cena.expoenteEspecular = m_e;
     gCena = &cena;
@@ -233,7 +264,9 @@ int main() {
                 Dir,
                 Teto,
                 Cilindro,
+                Cilindro2,
                 Cone,
+                Cone2,
                 Cubo,
                 Esfera
             };
@@ -258,6 +291,9 @@ int main() {
             float ti_cone = cone.CalcularIntersecao(Po, dr_e);
             float ti_esf = esfera.CalcularIntersecao(Po, dr_e);
 
+            float t_cil2 = cilindro2.CalcularIntersecao(Po, dr_e);
+            float ti_cone2 = cone2.CalcularIntersecao(Po, dr_e);
+
             float t_cubo = std::numeric_limits<float>::infinity();
             if (cuboMalha.verificarIntersecao(
                 Vetor(Po.x, Po.y, Po.z, 0.0f),
@@ -271,7 +307,9 @@ int main() {
             // considerar(ti_d, Hit::Dir);
             // considerar(ti_t, Hit::Teto);
             considerar(t_cil, Hit::Cilindro);
+            considerar(t_cil2, Hit::Cilindro2);
             considerar(ti_cone, Hit::Cone);
+            considerar(ti_cone2, Hit::Cone2);
             considerar(t_cubo, Hit::Cubo);
             considerar(ti_esf, Hit::Esfera);
 
@@ -297,8 +335,14 @@ int main() {
             case Hit::Cilindro:
                 cor = cilindro.CalcularCor(cena, t_best, dr_e);
                 break;
+            case Hit::Cilindro2:
+                cor = cilindro2.CalcularCor(cena, t_best, dr_e);
+                break;
             case Hit::Cone:
                 cor = cone.CalcularCor(cena, t_best, dr_e);
+                break;
+            case Hit::Cone2:
+                cor = cone2.CalcularCor(cena, t_best, dr_e);
                 break;
             case Hit::Esfera:
                 cor = esfera.CalcularCor(cena, t_best, dr_e);

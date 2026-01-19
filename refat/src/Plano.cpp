@@ -26,10 +26,7 @@ float Plano::CalcularIntersecao(const Point& origem, const Vector& dir) const {
 }
 
 Color Plano::CalcularCor(const Cena& cena, const Vector& dir) const {
-    bool naSombraEsf = false;
-    bool naSombraCil = false;
-    bool naSombraCone = false;
-    bool naSombraCubo = false;
+    bool naSombra = false;
 
     float ti = CalcularIntersecao(cena.observador, dir);
     Point Pi = calcula_eq_ray(cena.observador, ti, dir);
@@ -71,48 +68,12 @@ Color Plano::CalcularCor(const Cena& cena, const Vector& dir) const {
     }
 
     float dist_Pi_Luz = calcula_norma(subtrai_pontos(cena.luz.pos, Pi_mod));
-
-    // Sombra da esfera
-    Point centroEsf = cena.centroEsfera;
-    Vector w_sombra = subtrai_pontos(Pi_mod, centroEsf);
-    float a_delta = calcula_prod_esc(l, l);
-    float b_delta = 2.0f * calcula_prod_esc(l, w_sombra);
-    float c_delta = calcula_prod_esc(w_sombra, w_sombra) - cena.raioEsfera * cena.raioEsfera;
-    float delta = b_delta * b_delta - 4.0f * a_delta * c_delta;
-    float s1 = INFINITY;
-    float s2 = INFINITY;
-    if (delta > 0.f) {
-        s1 = (-b_delta - sqrt(delta)) / (2.0f * a_delta);
-        s2 = (-b_delta + sqrt(delta)) / (2.0f * a_delta);
-    }
-    if ((s1 > 1e-4f && s1 < dist_Pi_Luz) || (s2 > 1e-4f && s2 < dist_Pi_Luz)) naSombraEsf = true;
-
-    // Sombra do cone
-    if (!naSombraEsf && cena.cone != nullptr) {
-        float t_cone = cena.cone->CalcularIntersecao(Pi_mod, l);
-        if (t_cone > 1e-4f && t_cone < dist_Pi_Luz) naSombraCone = true;
-    }
-
-    // Sombra do cilindro
-    if (!naSombraEsf && !naSombraCone && cena.cilindro != nullptr) {
-        float t_cil = cena.cilindro->CalcularIntersecao(Pi_mod, l);
-        if (t_cil > 1e-4f && t_cil < dist_Pi_Luz) naSombraCil = true;
-    }
-
-    // Sombra do cubo (malha)
-    if (!naSombraEsf && !naSombraCone && !naSombraCil && cena.cubo != nullptr) {
-        if (cena.cubo->verificarIntersecao(
-            Vetor(Pi_mod.x, Pi_mod.y, Pi_mod.z, 0.0f),
-            Vetor(l.i, l.j, l.k, 0.0f))) {
-            float t_cubo = static_cast<float>(cena.cubo->getDistancia());
-            if (t_cubo > 1e-4f && t_cubo < dist_Pi_Luz) naSombraCubo = true;
-        }
-    }
+    naSombra = cena.estaNaSombra(Pi_mod, l, dist_Pi_Luz);
 
     // Se tem textura, aplica também no termo ambiente.
     Color Ka_textured = material.usarTextura ? Kd_textured : Ka;
     Color Ia(cena.luzAmbiente.r * Ka_textured.r, cena.luzAmbiente.g * Ka_textured.g, cena.luzAmbiente.b * Ka_textured.b);
-    if (naSombraEsf || naSombraCil || naSombraCone || naSombraCubo) {
+    if (naSombra) {
         Color I(lidarExcecao(Ia.r), lidarExcecao(Ia.g), lidarExcecao(Ia.b));
         int R = static_cast<int>(roundf(I.r * 255.0f));
         int G = static_cast<int>(roundf(I.g * 255.0f));

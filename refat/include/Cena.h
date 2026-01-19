@@ -2,12 +2,13 @@
 #define CENA_H
 
 #include "Point.h"
+#include "Vector.h"
 #include "Color.h"
 
+#include <vector>
+
 class Textura;
-class Cone;
-class Cilindro;
-class Malha;
+class Objeto;
 
 struct LuzPontual {
     Point pos;
@@ -21,14 +22,9 @@ struct Cena {
     LuzPontual luz;
     Color luzAmbiente;
 
-    // Esfera (usada hoje para teste de sombra)
-    Point centroEsfera;
-    float raioEsfera;
-
-    // Objetos que participam dos testes de sombra
-    const Cone* cone = nullptr;
-    const Cilindro* cilindro = nullptr;
-    Malha* cubo = nullptr;
+    // Objetos que participam dos testes de sombra (ex.: cones/cilindros/esferas/malhas).
+    // Obs: não inclui planos por padrão.
+    std::vector<Objeto*> objetosSombra;
 
     // Recursos
     Textura* texturaMadeira = nullptr;
@@ -36,12 +32,14 @@ struct Cena {
     // Parâmetros de shading
     float expoenteEspecular = 10.0f;
 
+    // Retorna true se algum objeto em objetosSombra bloquear o raio (Pi_mod + s*l)
+    // antes de chegar na luz. Use "ignorar" para evitar auto-sombra.
+    bool estaNaSombra(const Point& Pi_mod, const Vector& l, float dist_Pi_Luz, Objeto* ignorar = nullptr) const;
+
     Cena()
         : observador(0.0f, 0.0f, 0.0f),
         luz{ Point(0.0f, 0.0f, 0.0f), Color(0.0f, 0.0f, 0.0f) },
-        luzAmbiente(0.0f, 0.0f, 0.0f),
-        centroEsfera(0.0f, 0.0f, 0.0f),
-        raioEsfera(0.0f) {
+        luzAmbiente(0.0f, 0.0f, 0.0f) {
     }
 };
 
