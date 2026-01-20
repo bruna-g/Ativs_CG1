@@ -175,6 +175,18 @@ Color KCone3(0.f, 0.6f, 0.2f);
 Material mat_cone3;
 //----------------------------------------------//
 
+// nave
+Point cb_nave(175.f, 120.f, 130.f);
+float raio_nave = 80.f;
+float altura_nave = 60.f;
+Vector aux_v_nave = calcula_esc_por_vetor(altura_nave, dc);
+Point v_nave(cb_nave.x + aux_v_nave.i, cb_nave.y + aux_v_nave.j, cb_nave.z + aux_v_nave.k);
+Cone nave(cb_nave, v_nave, raio_nave);
+Color Ka_nave(0.15f, 0.15f, 0.15f); // Ka - Ambiente
+Color Kd_nave(0.5f, 0.5f, 0.5f); // Kd - Difuso
+Color Ke_nave(0.9f, 0.9f, 0.9f); // Ke - Especular
+Material mat_nave;
+
 // Cubo (como malha)
 Malha cuboMalha;
 
@@ -256,6 +268,11 @@ int main() {
     cone3.setKe(Vetor(KCone3.r, KCone3.g, KCone3.b));
     cone3.setShininess(m_e);
 
+    nave.setKa(Vetor(Ka_nave.r, Ka_nave.g, Ka_nave.b));
+    nave.setKd(Vetor(Kd_nave.r, Kd_nave.g, Kd_nave.b));
+    nave.setKe(Vetor(Ke_nave.r, Ke_nave.g, Ke_nave.b));
+    nave.setShininess(150.0f);
+
     // Cubo como malha
     Color K_cubo(1.f, 0.078f, 0.576f);
     cuboMalha = Cubo::criarCubo(
@@ -303,7 +320,8 @@ int main() {
                 Cone2,
                 Cone3,
                 Cubo,
-                Esfera
+                Esfera,
+                Nave
             };
             Hit hit = Hit::None;
 
@@ -339,6 +357,8 @@ int main() {
                 t_cubo = static_cast<float>(cuboMalha.getDistancia());
             }
 
+            float ti_nave = nave.CalcularIntersecao(Po, dr_e);
+
             // considerar(ti_f, Hit::Fundo);
             considerar(ti_c, Hit::Chao);
             // considerar(ti_e, Hit::Esq);
@@ -350,6 +370,7 @@ int main() {
             considerar(ti_cone, Hit::Cone);
             considerar(ti_cone2, Hit::Cone2);
             considerar(ti_cone3, Hit::Cone3);
+            considerar(ti_nave, Hit::Nave);
             // considerar(t_cubo, Hit::Cubo);
             // considerar(ti_esf, Hit::Esfera);
 
@@ -389,6 +410,9 @@ int main() {
                 break;
             case Hit::Cone3:
                 cor = cone3.CalcularCor(cena, t_best, dr_e);
+                break;
+            case Hit::Nave:
+                cor = nave.CalcularCor(cena, t_best, dr_e);
                 break;
             case Hit::Esfera:
                 cor = esfera.CalcularCor(cena, t_best, dr_e);
