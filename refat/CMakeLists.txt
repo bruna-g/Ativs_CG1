@@ -57,12 +57,12 @@ add_executable(main
 )
 
 # Executável PPM (ray casting em arquivo)
-add_executable(ativ
-  "${REFAT_SRC_DIR}/ativ5.cpp"
-  ${REFAT_COMMON_SOURCES}
-)
+# add_executable(ativ
+#   "${REFAT_SRC_DIR}/ativ5.cpp"
+#   ${REFAT_COMMON_SOURCES}
+# )
 
-foreach(target IN ITEMS main ativ)
+foreach(target IN ITEMS main ) #ativ
   target_include_directories(${target} PRIVATE
     "${REFAT_INC_DIR}"
     ${SDL2_INCLUDE_DIRS}
