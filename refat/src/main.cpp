@@ -101,7 +101,7 @@ Plano plano_teto(P_pi_teto, n_teto, mat_teto);
 
 // Fonte luminosa
 Color I_F(0.7f, 0.7f, 0.7f);
-Point P_F(15.f, 200.f, 270.f);
+Point P_F(-20.f, 185.f, 350.f);
 
 // Luz ambiente
 Color I_A(0.3f, 0.3f, 0.3f);
@@ -174,6 +174,48 @@ Cone cone3(cb_cone3, v_cone3, raio_cone3);
 Color KCone3(0.f, 0.6f, 0.2f);
 Material mat_cone3;
 //----------------------------------------------//
+//-----------------Vaca---------------------//
+// Cilindro (tronco da árvore)
+Point centroCilindro4(150.f, 00.f, 110.f);
+float raio_cil4 = 2.f;
+float altura_cil4 = 20.f;
+Vector dc4(0.f, 1.0f, 0.f);
+Cilindro cilindro4(centroCilindro4, raio_cil4, altura_cil4, dc4);
+Color KCil_d4(0.545f, 0.270f, 0.075f);
+Color KCil_e4(0.545f, 0.270f, 0.075f);
+Color KCil_a4(0.545f, 0.270f, 0.075f);
+Material mat_cil4;
+
+Point centroCilindro5(150.f, 00.f, 140.f);
+float raio_cil5 = 2.f;
+float altura_cil5 = 20.f;
+Vector dc5(0.f, 1.0f, 0.f);
+Cilindro cilindro5(centroCilindro5, raio_cil5, altura_cil5, dc5);
+Color KCil_d5(0.545f, 0.270f, 0.075f);
+Color KCil_e5(0.545f, 0.270f, 0.075f);
+Color KCil_a5(0.545f, 0.270f, 0.075f);
+Material mat_cil5;
+
+Point centroCilindro6(190.f, 00.f, 110.f);
+float raio_cil6 = 2.f;
+float altura_cil6 = 20.f;
+Vector dc6(0.f, 1.0f, 0.f);
+Cilindro cilindro6(centroCilindro6, raio_cil6, altura_cil6, dc6);
+Color KCil_d6(0.545f, 0.270f, 0.075f);
+Color KCil_e6(0.545f, 0.270f, 0.075f);
+Color KCil_a6(0.545f, 0.270f, 0.075f);
+Material mat_cil6;
+
+Point centroCilindro7(190.f, 00.f, 140.f);
+float raio_cil7 = 2.f;
+float altura_cil7 = 20.f;
+Vector dc7(0.f, 1.0f, 0.f);
+Cilindro cilindro7(centroCilindro7, raio_cil7, altura_cil7, dc7);
+Color KCil_d7(0.545f, 0.270f, 0.075f);
+Color KCil_e7(0.545f, 0.270f, 0.075f);
+Color KCil_a7(0.545f, 0.270f, 0.075f);
+Material mat_cil7;
+//--------------------------------------//
 
 // nave
 Point cb_nave(175.f, 200.f, 130.f);
@@ -278,6 +320,26 @@ int main() {
     cilindro3.setKe(Vetor(KCil_e3.r, KCil_e3.g, KCil_e3.b));
     cilindro3.setShininess(5);
 
+    cilindro4.setKa(Vetor(KCil_a3.r, KCil_a3.g, KCil_a3.b));
+    cilindro4.setKd(Vetor(KCil_d3.r, KCil_d3.g, KCil_d3.b));
+    cilindro4.setKe(Vetor(KCil_e3.r, KCil_e3.g, KCil_e3.b));
+    cilindro4.setShininess(m_e);
+
+    cilindro5.setKa(Vetor(KCil_a3.r, KCil_a3.g, KCil_a3.b));
+    cilindro5.setKd(Vetor(KCil_d3.r, KCil_d3.g, KCil_d3.b));
+    cilindro5.setKe(Vetor(KCil_e3.r, KCil_e3.g, KCil_e3.b));
+    cilindro5.setShininess(m_e);
+
+    cilindro6.setKa(Vetor(KCil_a3.r, KCil_a3.g, KCil_a3.b));
+    cilindro6.setKd(Vetor(KCil_d3.r, KCil_d3.g, KCil_d3.b));
+    cilindro6.setKe(Vetor(KCil_e3.r, KCil_e3.g, KCil_e3.b));
+    cilindro6.setShininess(m_e);
+
+    cilindro7.setKa(Vetor(KCil_a3.r, KCil_a3.g, KCil_a3.b));
+    cilindro7.setKd(Vetor(KCil_d3.r, KCil_d3.g, KCil_d3.b));
+    cilindro7.setKe(Vetor(KCil_e3.r, KCil_e3.g, KCil_e3.b));
+    cilindro7.setShininess(m_e);
+
     cone.setKa(Vetor(KCone.r, KCone.g, KCone.b));
     cone.setKd(Vetor(KCone.r, KCone.g, KCone.b));
     cone.setKe(Vetor(KCone.r, KCone.g, KCone.b));
@@ -314,7 +376,7 @@ int main() {
     cena.luz = LuzPontual{ P_F, I_F };
     cena.luzAmbiente = I_A;
     cena.objetosSombra = { &cilindro, &cone, &cilindro2, &cone2, &cilindro3, &cone3, &nave,
-        &esfera1_nave, &esfera2_nave, &esfera3_nave };
+        &esfera1_nave, &esfera2_nave, &esfera3_nave, &cilindro4, &cilindro5, &cilindro6, &cilindro7 };
     cena.texturaMadeira = texturaMadeira;
     cena.expoenteEspecular = m_e;
     gCena = &cena;
@@ -342,6 +404,10 @@ int main() {
                 Cilindro,
                 Cilindro2,
                 Cilindro3,
+                Cilindro4,
+                Cilindro5,
+                Cilindro6,
+                Cilindro7,
                 Cone,
                 Cone2,
                 Cone3,
@@ -391,6 +457,10 @@ int main() {
             considerar(t_cil, Hit::Cilindro);
             considerar(t_cil2, Hit::Cilindro2);
             considerar(t_cil3, Hit::Cilindro3);
+            considerar(t_cil4, Hit::Cilindro4);
+            considerar(t_cil5, Hit::Cilindro5);
+            considerar(t_cil6, Hit::Cilindro6);
+            considerar(t_cil7, Hit::Cilindro7);
             considerar(ti_cone, Hit::Cone);
             considerar(ti_cone2, Hit::Cone2);
             considerar(ti_cone3, Hit::Cone3);
@@ -416,6 +486,18 @@ int main() {
                 break;
             case Hit::Cilindro3:
                 cor = cilindro3.CalcularCor(cena, t_best, dr_e);
+                break;
+            case Hit::Cilindro4:
+                cor = cilindro4.CalcularCor(cena, t_best, dr_e);
+                break;
+            case Hit::Cilindro5:
+                cor = cilindro5.CalcularCor(cena, t_best, dr_e);
+                break;
+            case Hit::Cilindro6:
+                cor = cilindro6.CalcularCor(cena, t_best, dr_e);
+                break;
+            case Hit::Cilindro7:
+                cor = cilindro7.CalcularCor(cena, t_best, dr_e);
                 break;
             case Hit::Cone:
                 cor = cone.CalcularCor(cena, t_best, dr_e);
