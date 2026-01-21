@@ -32,6 +32,27 @@ void Malha::adicionarFace(Face face) {
     atualizarNormalGlobal();
 }
 
+void Malha::aplicarEscalaUniforme(float s, const Vetor& pivo) {
+    if (s <= 0.0f) return;
+
+    for (auto& vert : vertices) {
+        Vetor& p = vert.pos;
+        p = Vetor(
+            pivo.i + (p.i - pivo.i) * static_cast<float>(s),
+            pivo.j + (p.j - pivo.j) * static_cast<float>(s),
+            pivo.k + (p.k - pivo.k) * static_cast<float>(s),
+            p.q
+        );
+    }
+
+    for (auto& face : faces) {
+        if (face.indices.size() >= 3) {
+            face.normal = calcularNormalFace(face);
+        }
+    }
+    atualizarNormalGlobal();
+}
+
 bool Malha::rayTriangleIntersect(const Vetor& origem, const Vetor& dir,
     const Vetor& v0, const Vetor& v1, const Vetor& v2,
     float& t) const {
@@ -179,4 +200,27 @@ Vetor Malha::calcularNormal(Vetor /*posicao*/) {
         atualizarNormalGlobal();
     }
     return normal;
+}
+
+void Malha::aplicarEscalaNoPivoObjeto(const Vetor& escala, const Point& pivo) {
+    const float sx = escala.i;
+    const float sy = escala.j;
+    const float sz = escala.k;
+
+    for (auto& vert : vertices) {
+        Vetor& p = vert.pos;
+        p = Vetor(
+            pivo.x + (p.i - pivo.x) * sx,
+            pivo.y + (p.j - pivo.y) * sy,
+            pivo.z + (p.k - pivo.z) * sz,
+            p.q
+        );
+    }
+
+    for (auto& face : faces) {
+        if (face.indices.size() >= 3) {
+            face.normal = calcularNormalFace(face);
+        }
+    }
+    atualizarNormalGlobal();
 }
