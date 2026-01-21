@@ -20,6 +20,8 @@ public:
     Esfera(const Point& centro_e, const float raio_e);
     Esfera(const Point& centro_e, const float raio_e, const Material& material_p);
 
+    void aplicarEscalaUniforme(float s);
+
     // Interseção (origem + t*dir) com a esfera.
     // Observação: Vetor é alias de Vector (Vetor.h), então uma única assinatura basta.
     float CalcularIntersecao(const Point& origem, const Vector& dir) const;
@@ -35,6 +37,15 @@ public:
     // Interface Objeto
     bool verificarIntersecao(Vetor p0, Vetor dr) override;
     Vetor calcularNormal(Vetor posicao) override;
+    void aplicarEscalaNoPivoObjeto(const Vetor& escala, const Point& pivo) override;
+
+    Point aplicarTranslacao(const Point& ponto, const Vetor& translacao) const {
+        return Objeto::aplicarTranslacao(ponto, translacao);
+    }
+
+    Point aplicarEscala(const Point& ponto, const Vetor& escala) const {
+        return Objeto::aplicarEscala(ponto, escala);
+    }
 };
 
 // Funções relacionadas à Esfera

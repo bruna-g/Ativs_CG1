@@ -25,6 +25,9 @@ public:
     Cone(const Point& cb_c, const Point& v_c, const float raio_c);
     Cone(const Point& cb_c, const Point& v_c, const float raio_c, const Material& material_p);
 
+    void recalcularDerivados();
+    void aplicarEscalaUniforme(float s);
+
     float CalcularIntersecao(const Point& origem, const Vector& dir) const;
     float CalcularIntersecao(const Point& origem, const Point& pontoJanela) const;
 
@@ -33,6 +36,15 @@ public:
 
     bool verificarIntersecao(Vetor p0, Vetor dr) override;
     Vetor calcularNormal(Vetor posicao) override;
+    void aplicarEscalaNoPivoObjeto(const Vetor& escala, const Point& pivo) override;
+
+    Point aplicarTranslacao(const Point& ponto, const Vetor& translacao) const {
+        return Objeto::aplicarTranslacao(ponto, translacao);
+    }
+
+    Point aplicarEscala(const Point& ponto, const Vetor& escala) const {
+        return Objeto::aplicarEscala(ponto, escala);
+    }
 };
 
 // Função relacionada ao Cone

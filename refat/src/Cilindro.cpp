@@ -14,6 +14,56 @@ Cilindro::Cilindro(const Point& cb_c, const float raio_c, const float altura_c, 
     : cb(cb_c), raio(raio_c), altura(altura_c), dc(dc_c), material(material_p) {
 }
 
+void Cilindro::aplicarEscalaUniforme(float s) {
+    if (s <= 0.0f) return;
+    raio *= s;
+    altura *= s;
+}
+
+void Cilindro::aplicarEscalaNoPivoObjeto(const Vetor& escala, const Point& pivo) {
+    // Topo atual (cb + altura*dc)
+    Point topo(cb.x + dc.i * altura, cb.y + dc.j * altura, cb.z + dc.k * altura);
+
+    // 1) Escala base e topo em torno do pivô
+    cb = Objeto::aplicarEscalaNoPivo(cb, escala, pivo);
+    topo = Objeto::aplicarEscalaNoPivo(topo, escala, pivo);
+
+    // 2) Atualiza eixo (dc) e altura
+    Vector eixo = subtrai_pontos(topo, cb);
+    float novaAltura = calcula_norma(eixo);
+    if (novaAltura > 1e-6f) {
+        altura = novaAltura;
+        dc = Vector(eixo.i / novaAltura, eixo.j / novaAltura, eixo.k / novaAltura);
+    }
+
+    // 3) Atualiza raio por fator radial aproximado no plano perpendicular ao eixo.
+    Vector dcLocal = dc;
+    Vector ref = (std::fabs(dcLocal.i) < 0.9f) ? Vector(1.0f, 0.0f, 0.0f) : Vector(0.0f, 1.0f, 0.0f);
+    Vector u = produto_vetorial(dcLocal, ref);
+    float nu = calcula_norma(u);
+    if (nu <= 1e-6f) nu = 1.0f;
+    u = calcula_esc_por_vetor(1.0f / nu, u);
+    Vector vperp = produto_vetorial(dcLocal, u);
+    float nv = calcula_norma(vperp);
+    if (nv <= 1e-6f) nv = 1.0f;
+    vperp = calcula_esc_por_vetor(1.0f / nv, vperp);
+
+    const float sx = escala.i;
+    const float sy = escala.j;
+    const float sz = escala.k;
+    auto lenEsc = [&](const Vector& a) {
+        Vector svec(sx * a.i, sy * a.j, sz * a.k);
+        return calcula_norma(svec);
+        };
+
+    const float fu = lenEsc(u);
+    const float fv = lenEsc(vperp);
+    const float fatorRadial = 0.5f * (fu + fv);
+    if (fatorRadial > 1e-6f) {
+        raio *= fatorRadial;
+    }
+}
+
 Vector Cilindro::CalcularNormal(const Point& P) const {
     Point cbCopy = cb;
     Point pCopy = P;

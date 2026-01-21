@@ -45,8 +45,19 @@ public:
     void adicionarFace(Face face);
     void adicionarVertice(Vertice vertice);
 
+    void aplicarEscalaUniforme(float s, const Vetor& pivo);
+
     bool verificarIntersecao(Vetor p0, Vetor dr) override;
     Vetor calcularNormal(Vetor posicao) override;
+    void aplicarEscalaNoPivoObjeto(const Vetor& escala, const Point& pivo) override;
+
+    Point aplicarTranslacao(const Point& ponto, const Vetor& translacao) const {
+        return Objeto::aplicarTranslacao(ponto, translacao);
+    }
+
+    Point aplicarEscala(const Point& ponto, const Vetor& escala) const {
+        return Objeto::aplicarEscala(ponto, escala);
+    }
 
 private:
     bool rayTriangleIntersect(const Vetor& origem, const Vetor& dir,
