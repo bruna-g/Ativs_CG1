@@ -398,12 +398,12 @@ int main() {
             float t_cil3 = cilindro3.CalcularIntersecao(Po, dr_e);
             float ti_cone3 = cone3.CalcularIntersecao(Po, dr_e);
 
-            float t_cubo = std::numeric_limits<float>::infinity();
-            if (cuboMalha.verificarIntersecao(
-                Vetor(Po.x, Po.y, Po.z, 0.0f),
-                Vetor(dr_e.i, dr_e.j, dr_e.k, 0.0f))) {
-                t_cubo = static_cast<float>(cuboMalha.getDistancia());
-            }
+            // float t_cubo = std::numeric_limits<float>::infinity();
+            // if (cuboMalha.verificarIntersecao(
+            //     Vetor(Po.x, Po.y, Po.z, 0.0f),
+            //     Vetor(dr_e.i, dr_e.j, dr_e.k, 0.0f))) {
+            //     t_cubo = static_cast<float>(cuboMalha.getDistancia());
+            // }
 
             float ti_nave = nave.CalcularIntersecao(Po, dr_e);
 
@@ -461,17 +461,17 @@ int main() {
             case Hit::Esfera3_nave:
                 cor = esfera3_nave.CalcularCor(cena, t_best, dr_e);
                 break;
-            case Hit::Cubo: {
-                Vetor PiV = cuboMalha.getPontoIntersecao();
-                Vetor nV = cuboMalha.calcularNormal(PiV);
-                Plano plano_cubo(Point(PiV.i, PiV.j, PiV.k), Vector(nV.i, nV.j, nV.k), Material());
-                plano_cubo.setKa(cuboMalha.getKa());
-                plano_cubo.setKd(cuboMalha.getKd());
-                plano_cubo.setKe(cuboMalha.getKe());
-                plano_cubo.setShininess(cuboMalha.getShininess());
-                cor = plano_cubo.CalcularCor(cena, dr_e);
-                break;
-            }
+                // case Hit::Cubo: {
+                //     Vetor PiV = cuboMalha.getPontoIntersecao();
+                //     Vetor nV = cuboMalha.calcularNormal(PiV);
+                //     Plano plano_cubo(Point(PiV.i, PiV.j, PiV.k), Vector(nV.i, nV.j, nV.k), Material());
+                //     plano_cubo.setKa(cuboMalha.getKa());
+                //     plano_cubo.setKd(cuboMalha.getKd());
+                //     plano_cubo.setKe(cuboMalha.getKe());
+                //     plano_cubo.setShininess(cuboMalha.getShininess());
+                //     cor = plano_cubo.CalcularCor(cena, dr_e);
+                //     break;
+                // }
             case Hit::None:
             default:
                 break;

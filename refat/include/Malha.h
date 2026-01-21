@@ -45,11 +45,11 @@ public:
     void adicionarFace(Face face);
     void adicionarVertice(Vertice vertice);
 
-    void aplicarEscalaUniforme(float s, const Vetor& pivo);
+    void aplicarEscalaUniforme(float s) override;
 
     bool verificarIntersecao(Vetor p0, Vetor dr) override;
     Vetor calcularNormal(Vetor posicao) override;
-    void aplicarEscalaNoPivoObjeto(const Vetor& escala, const Point& pivo) override;
+    void aplicarEscalaNoPivoObjeto(const Vetor& escala) override;
 
     Point aplicarTranslacao(const Point& ponto, const Vetor& translacao) const {
         return Objeto::aplicarTranslacao(ponto, translacao);

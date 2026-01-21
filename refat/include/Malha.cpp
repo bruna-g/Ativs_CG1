@@ -32,15 +32,15 @@ void Malha::adicionarFace(Face face) {
     atualizarNormalGlobal();
 }
 
-void Malha::aplicarEscalaUniforme(float s, const Vetor& pivo) {
+void Malha::aplicarEscalaUniforme(float s) {
     if (s <= 0.0f) return;
 
     for (auto& vert : vertices) {
         Vetor& p = vert.pos;
         p = Vetor(
-            pivo.i + (p.i - pivo.i) * static_cast<float>(s),
-            pivo.j + (p.j - pivo.j) * static_cast<float>(s),
-            pivo.k + (p.k - pivo.k) * static_cast<float>(s),
+            p.i * static_cast<float>(s),
+            p.j * static_cast<float>(s),
+            p.k * static_cast<float>(s),
             p.q
         );
     }
@@ -202,17 +202,17 @@ Vetor Malha::calcularNormal(Vetor /*posicao*/) {
     return normal;
 }
 
-void Malha::aplicarEscalaNoPivoObjeto(const Vetor& escala, const Point& pivo) {
+void Malha::aplicarEscalaNoPivoObjeto(const Vetor& escala) {
     const float sx = escala.i;
     const float sy = escala.j;
     const float sz = escala.k;
-
+    
     for (auto& vert : vertices) {
         Vetor& p = vert.pos;
         p = Vetor(
-            pivo.x + (p.i - pivo.x) * sx,
-            pivo.y + (p.j - pivo.y) * sy,
-            pivo.z + (p.k - pivo.z) * sz,
+            p.i * sx,
+            p.j * sy,
+            p.k * sz,
             p.q
         );
     }

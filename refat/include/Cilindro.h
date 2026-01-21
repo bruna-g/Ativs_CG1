@@ -20,7 +20,7 @@ public:
     Cilindro(const Point& cb_c, const float raio_c, const float altura_c, const Vector& dc_c);
     Cilindro(const Point& cb_c, const float raio_c, const float altura_c, const Vector& dc_c, const Material& material_p);
 
-    void aplicarEscalaUniforme(float s);
+    void aplicarEscalaUniforme(float s) override;
 
     float CalcularIntersecao(const Point& origem, const Vector& dir) const;
     Vector CalcularNormal(const Point& P) const;
@@ -31,7 +31,7 @@ public:
 
     bool verificarIntersecao(Vetor p0, Vetor dr) override;
     Vetor calcularNormal(Vetor posicao) override;
-    void aplicarEscalaNoPivoObjeto(const Vetor& escala, const Point& pivo) override;
+    void aplicarEscalaNoPivoObjeto(const Vetor& escala) override;
 
     Point aplicarTranslacao(const Point& ponto, const Vetor& translacao) const {
         return Objeto::aplicarTranslacao(ponto, translacao);
