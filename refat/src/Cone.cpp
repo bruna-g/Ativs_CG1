@@ -11,17 +11,82 @@
 
 Cone::Cone(const Point& cb_c, const Point& v_c, const float raio_c)
     : cb(cb_c), v(v_c), raio(raio_c), material(), dc(0.0f, 1.0f, 0.0f), altura(0.0f), teta(0.0f) {
-    Vector cbv = subtrai_pontos(v, cb);
-    altura = calcula_norma(cbv);
-    if (altura > 0.0f) {
-        dc = Vector(cbv.i / altura, cbv.j / altura, cbv.k / altura);
-    }
-    teta = atan(raio / (altura > 0.0f ? altura : 1.0f));
+    recalcularDerivados();
 }
 
 Cone::Cone(const Point& cb_c, const Point& v_c, const float raio_c, const Material& material_p)
     : Cone(cb_c, v_c, raio_c) {
     material = material_p;
+}
+
+void Cone::recalcularDerivados() {
+    Vector cbv = subtrai_pontos(v, cb);
+    altura = calcula_norma(cbv);
+    if (altura > 0.0f) {
+        dc = Vector(cbv.i / altura, cbv.j / altura, cbv.k / altura);
+    }
+    else {
+        dc = Vector(0.0f, 1.0f, 0.0f);
+        altura = 0.0f;
+    }
+    teta = atan(raio / (altura > 0.0f ? altura : 1.0f));
+}
+
+void Cone::aplicarEscalaUniforme(float s) {
+    if (s <= 0.0f) return;
+
+    // Mantém a base (cb) fixa e escala o cone em torno de cb.
+    // Isso muda o tamanho (altura e raio) sem "arrastar" o objeto pelo mundo.
+    raio *= s;
+
+    Vector cbv = subtrai_pontos(v, cb);
+    Vector cbvEsc = calcula_esc_por_vetor(s, cbv);
+    v = Point(cb.x + cbvEsc.i, cb.y + cbvEsc.j, cb.z + cbvEsc.k);
+
+    recalcularDerivados();
+}
+
+void Cone::aplicarEscalaNoPivoObjeto(const Vetor& escala, const Point& pivo) {
+    // 1) Escala os pontos que definem o cone.
+    cb = Objeto::aplicarEscalaNoPivo(cb, escala, pivo);
+    v = Objeto::aplicarEscalaNoPivo(v, escala, pivo);
+
+    // 2) Atualiza raio com um fator radial aproximado no plano perpendicular ao eixo.
+    Vector eixo = subtrai_pontos(v, cb);
+    float alt = calcula_norma(eixo);
+    Vector dcLocal(0.0f, 1.0f, 0.0f);
+    if (alt > 1e-6f) {
+        dcLocal = Vector(eixo.i / alt, eixo.j / alt, eixo.k / alt);
+    }
+
+    // Base ortonormal (u,v) perpendicular ao eixo para medir o "alongamento" radial.
+    Vector ref = (std::fabs(dcLocal.i) < 0.9f) ? Vector(1.0f, 0.0f, 0.0f) : Vector(0.0f, 1.0f, 0.0f);
+    Vector u = produto_vetorial(dcLocal, ref);
+    float nu = calcula_norma(u);
+    if (nu <= 1e-6f) nu = 1.0f;
+    u = calcula_esc_por_vetor(1.0f / nu, u);
+    Vector vperp = produto_vetorial(dcLocal, u);
+    float nv = calcula_norma(vperp);
+    if (nv <= 1e-6f) nv = 1.0f;
+    vperp = calcula_esc_por_vetor(1.0f / nv, vperp);
+
+    const float sx = escala.i;
+    const float sy = escala.j;
+    const float sz = escala.k;
+    auto lenEsc = [&](const Vector& a) {
+        Vector svec(sx * a.i, sy * a.j, sz * a.k);
+        return calcula_norma(svec);
+        };
+
+    const float fu = lenEsc(u);
+    const float fv = lenEsc(vperp);
+    const float fatorRadial = 0.5f * (fu + fv);
+    if (fatorRadial > 1e-6f) {
+        raio *= fatorRadial;
+    }
+
+    // 3) Recalcula parâmetros derivados (dc, altura, teta).
+    recalcularDerivados();
 }
 
 float Cone::CalcularIntersecao(const Point& origem, const Vector& dir) const {

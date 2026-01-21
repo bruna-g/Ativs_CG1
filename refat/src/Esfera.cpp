@@ -16,6 +16,25 @@ Esfera::Esfera(const Point& centro_e, const float raio_e, const Material& materi
     : centro(centro_e), raio(raio_e), material(material_p) {
 }
 
+void Esfera::aplicarEscalaUniforme(float s) {
+    if (s <= 0.0f) return;
+    raio *= s;
+}
+
+void Esfera::aplicarEscalaNoPivoObjeto(const Vetor& escala, const Point& pivo) {
+    centro = Objeto::aplicarEscalaNoPivo(centro, escala, pivo);
+
+    const float sx = std::fabs(escala.i);
+    const float sy = std::fabs(escala.j);
+    const float sz = std::fabs(escala.k);
+
+    const float eps = 1e-6f;
+    const bool uniforme = (std::fabs(sx - sy) < eps) && (std::fabs(sy - sz) < eps);
+    const float s = uniforme ? sx : std::max(sx, std::max(sy, sz));
+
+    raio *= s;
+}
+
 Vector Esfera::CalcularNormal(const Point& P) const {
     Vector n = subtrai_pontos(P, centro);
     float norma = calcula_norma(n);

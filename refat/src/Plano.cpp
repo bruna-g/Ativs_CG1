@@ -126,6 +126,26 @@ bool Plano::verificarIntersecao(Vetor p0, Vetor dr) {
     return true;
 }
 
+void Plano::aplicarEscalaNoPivoObjeto(const Vetor& escala, const Point& pivo) {
+    // Escalar um ponto no plano reposiciona o plano.
+    p_pi = Objeto::aplicarEscalaNoPivo(p_pi, escala, pivo);
+
+    // Para transformar normal corretamente em escala não-uniforme: n' = normalize(inv(S)^T * n)
+    // Como S é diagonal, inv(S)^T == inv(S).
+    const float sx = escala.i;
+    const float sy = escala.j;
+    const float sz = escala.k;
+
+    Vector n2 = n;
+    if (std::fabs(sx) > 1e-8f) n2.i = n2.i / sx;
+    if (std::fabs(sy) > 1e-8f) n2.j = n2.j / sy;
+    if (std::fabs(sz) > 1e-8f) n2.k = n2.k / sz;
+
+    float nn = calcula_norma(n2);
+    if (nn <= 1e-8f) return;
+    n = calcula_esc_por_vetor(1.0f / nn, n2);
+}
+
 Vetor Plano::calcularNormal(Vetor /*posicao*/) {
     // Normal constante do plano.
     float nn = std::sqrt(n.i * n.i + n.j * n.j + n.k * n.k);
