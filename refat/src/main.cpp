@@ -22,10 +22,10 @@
 using namespace std;
 
 // Configuração da janela de visualização
-int nCol = 500;
-int nLin = 500;
+int nCol = 1000;
+int nLin = 1000;
 
-Point eye(175.f, 130.f, 275.f);
+Point eye(175.f, 110.f, 275.f);
 Point at(175.f, 95.f, 100.f);
 Vector up(0.f, 1.f, 0.f);
 float distanciaFocal = 30.0f;
@@ -175,6 +175,45 @@ Color KCone3(0.f, 0.6f, 0.2f);
 Material mat_cone3;
 //----------------------------------------------//
 
+// nave
+Point cb_nave(175.f, 120.f, 130.f);
+float raio_nave = 80.f;
+float altura_nave = 60.f;
+Vector aux_v_nave = calcula_esc_por_vetor(altura_nave, dc);
+Point v_nave(cb_nave.x + aux_v_nave.i, cb_nave.y + aux_v_nave.j, cb_nave.z + aux_v_nave.k);
+Cone nave(cb_nave, v_nave, raio_nave);
+Color Ka_nave(0.15f, 0.15f, 0.15f); // Ka - Ambiente
+Color Kd_nave(0.5f, 0.5f, 0.5f); // Kd - Difuso
+Color Ke_nave(0.9f, 0.9f, 0.9f); // Ke - Especular
+Material mat_nave;
+
+// Esfera1_nave
+float rEsfera1_nave = 4.0f;
+Point centroEsfera1_nave(150.f, 130.f + rEsfera1_nave, 190.f);
+Color K_e1_nave(1.f, 0.f, 0.f);  // Vermelho
+Color K_d1_nave(1.f, 0.f, 0.f);  // Vermelho
+Color K_a1_nave(1.f, 0.1f, 0.f);  // Vermelho
+float m_e1_nave = 10.0f;
+Esfera esfera1_nave(centroEsfera1_nave, rEsfera1_nave);
+
+// Esfera2_nave
+float rEsfera2_nave = 4.0f;
+Point centroEsfera2_nave(175.f, 130.f + rEsfera2_nave, 196.6f);
+Color K_e2_nave(1.f, 0.f, 0.f);  // Vermelho
+Color K_d2_nave(1.f, 0.f, 0.f);  // Vermelho
+Color K_a2_nave(1.f, 0.1f, 0.f);  // Vermelho
+float m_e2_nave = 10.0f;
+Esfera esfera2_nave(centroEsfera2_nave, rEsfera2_nave);
+
+// Esfera3_nave
+float rEsfera3_nave = 4.0f;
+Point centroEsfera3_nave(200.f, 130.f + rEsfera3_nave, 190.f);
+Color K_e3_nave(1.f, 0.f, 0.f);  // Vermelho
+Color K_d3_nave(1.f, 0.f, 0.f);  // Vermelho
+Color K_a3_nave(1.f, 0.1f, 0.f);  // Vermelho
+float m_e3_nave = 10.0f;
+Esfera esfera3_nave(centroEsfera3_nave, rEsfera3_nave);
+
 // Cubo (como malha)
 Malha cuboMalha;
 
@@ -196,6 +235,24 @@ int main() {
     esfera.setKd(Vetor(K_e.r, K_e.g, K_e.b));
     esfera.setKe(Vetor(K_e.r, K_e.g, K_e.b));
     esfera.setShininess(m_e);
+
+    // esfera 1 da nave
+    esfera1_nave.setKa(Vetor(K_a1_nave.r, K_a1_nave.g, K_a1_nave.b));
+    esfera1_nave.setKd(Vetor(K_d1_nave.r, K_d1_nave.g, K_d1_nave.b));
+    esfera1_nave.setKe(Vetor(K_e1_nave.r, K_e1_nave.g, K_e1_nave.b));
+    esfera1_nave.setShininess(m_e1_nave);
+
+    // esfera 2 da nave
+    esfera2_nave.setKa(Vetor(K_a2_nave.r, K_a2_nave.g, K_a2_nave.b));
+    esfera2_nave.setKd(Vetor(K_d2_nave.r, K_d2_nave.g, K_d2_nave.b));
+    esfera2_nave.setKe(Vetor(K_e2_nave.r, K_e2_nave.g, K_e2_nave.b));
+    esfera2_nave.setShininess(m_e2_nave);
+
+    // esfera 3 da nave
+    esfera3_nave.setKa(Vetor(K_a3_nave.r, K_a3_nave.g, K_a3_nave.b));
+    esfera3_nave.setKd(Vetor(K_d3_nave.r, K_d3_nave.g, K_d3_nave.b));
+    esfera3_nave.setKe(Vetor(K_e3_nave.r, K_e3_nave.g, K_e3_nave.b));
+    esfera3_nave.setShininess(m_e3_nave);
 
     // Chão com textura
     mat_chao.usarTextura = true;
@@ -256,6 +313,11 @@ int main() {
     cone3.setKe(Vetor(KCone3.r, KCone3.g, KCone3.b));
     cone3.setShininess(m_e);
 
+    nave.setKa(Vetor(Ka_nave.r, Ka_nave.g, Ka_nave.b));
+    nave.setKd(Vetor(Kd_nave.r, Kd_nave.g, Kd_nave.b));
+    nave.setKe(Vetor(Ke_nave.r, Ke_nave.g, Ke_nave.b));
+    nave.setShininess(150.0f);
+
     // Cubo como malha
     Color K_cubo(1.f, 0.078f, 0.576f);
     cuboMalha = Cubo::criarCubo(
@@ -303,7 +365,11 @@ int main() {
                 Cone2,
                 Cone3,
                 Cubo,
-                Esfera
+                Esfera,
+                Nave,
+                Esfera1_nave,
+                Esfera2_nave,
+                Esfera3_nave
             };
             Hit hit = Hit::None;
 
@@ -324,7 +390,11 @@ int main() {
             // Objetos
             float t_cil = cilindro.CalcularIntersecao(Po, dr_e);
             float ti_cone = cone.CalcularIntersecao(Po, dr_e);
+
             float ti_esf = esfera.CalcularIntersecao(Po, dr_e);
+            float ti_esf1_nave = esfera1_nave.CalcularIntersecao(Po, dr_e);
+            float ti_esf2_nave = esfera2_nave.CalcularIntersecao(Po, dr_e);
+            float ti_esf3_nave = esfera3_nave.CalcularIntersecao(Po, dr_e);
 
             float t_cil2 = cilindro2.CalcularIntersecao(Po, dr_e);
             float ti_cone2 = cone2.CalcularIntersecao(Po, dr_e);
@@ -339,6 +409,8 @@ int main() {
                 t_cubo = static_cast<float>(cuboMalha.getDistancia());
             }
 
+            float ti_nave = nave.CalcularIntersecao(Po, dr_e);
+
             // considerar(ti_f, Hit::Fundo);
             considerar(ti_c, Hit::Chao);
             // considerar(ti_e, Hit::Esq);
@@ -350,10 +422,12 @@ int main() {
             considerar(ti_cone, Hit::Cone);
             considerar(ti_cone2, Hit::Cone2);
             considerar(ti_cone3, Hit::Cone3);
+            considerar(ti_nave, Hit::Nave);
             // considerar(t_cubo, Hit::Cubo);
             // considerar(ti_esf, Hit::Esfera);
-
-
+            considerar(ti_esf1_nave, Hit::Esfera1_nave);
+            considerar(ti_esf2_nave, Hit::Esfera2_nave);
+            considerar(ti_esf3_nave, Hit::Esfera3_nave);
             Color cor(46, 68, 130);  // Cor de fundo (azul escuro)
 
             switch (hit) {
@@ -390,8 +464,20 @@ int main() {
             case Hit::Cone3:
                 cor = cone3.CalcularCor(cena, t_best, dr_e);
                 break;
+            case Hit::Nave:
+                cor = nave.CalcularCor(cena, t_best, dr_e);
+                break;
             case Hit::Esfera:
                 cor = esfera.CalcularCor(cena, t_best, dr_e);
+                break;
+            case Hit::Esfera1_nave:
+                cor = esfera1_nave.CalcularCor(cena, t_best, dr_e);
+                break;
+            case Hit::Esfera2_nave:
+                cor = esfera2_nave.CalcularCor(cena, t_best, dr_e);
+                break;
+            case Hit::Esfera3_nave:
+                cor = esfera3_nave.CalcularCor(cena, t_best, dr_e);
                 break;
             case Hit::Cubo: {
                 Vetor PiV = cuboMalha.getPontoIntersecao();
