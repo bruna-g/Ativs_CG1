@@ -22,11 +22,11 @@
 using namespace std;
 
 // Configuração da janela de visualização
-int nCol = 1000;
-int nLin = 1000;
+int nCol = 800;
+int nLin = 800;
 
-Point eye(175.f, 110.f, 275.f);
-Point at(175.f, 95.f, 100.f);
+Point eye(175.f, 180.f, 300.f);
+Point at(175.f, 150.f, 200.f);
 Vector up(0.f, 1.f, 0.f);
 float distanciaFocal = 30.0f;
 
@@ -176,7 +176,7 @@ Material mat_cone3;
 //----------------------------------------------//
 
 // nave
-Point cb_nave(175.f, 120.f, 130.f);
+Point cb_nave(175.f, 200.f, 130.f);
 float raio_nave = 80.f;
 float altura_nave = 60.f;
 Vector aux_v_nave = calcula_esc_por_vetor(altura_nave, dc);
@@ -189,7 +189,7 @@ Material mat_nave;
 
 // Esfera1_nave
 float rEsfera1_nave = 4.0f;
-Point centroEsfera1_nave(150.f, 130.f + rEsfera1_nave, 190.f);
+Point centroEsfera1_nave(150.f, 205.f + rEsfera1_nave, 190.f);
 Color K_e1_nave(1.f, 0.f, 0.f);  // Vermelho
 Color K_d1_nave(1.f, 0.f, 0.f);  // Vermelho
 Color K_a1_nave(1.f, 0.1f, 0.f);  // Vermelho
@@ -198,7 +198,7 @@ Esfera esfera1_nave(centroEsfera1_nave, rEsfera1_nave);
 
 // Esfera2_nave
 float rEsfera2_nave = 4.0f;
-Point centroEsfera2_nave(175.f, 130.f + rEsfera2_nave, 196.6f);
+Point centroEsfera2_nave(175.f, 205.f + rEsfera2_nave, 196.6f);
 Color K_e2_nave(1.f, 0.f, 0.f);  // Vermelho
 Color K_d2_nave(1.f, 0.f, 0.f);  // Vermelho
 Color K_a2_nave(1.f, 0.1f, 0.f);  // Vermelho
@@ -207,7 +207,7 @@ Esfera esfera2_nave(centroEsfera2_nave, rEsfera2_nave);
 
 // Esfera3_nave
 float rEsfera3_nave = 4.0f;
-Point centroEsfera3_nave(200.f, 130.f + rEsfera3_nave, 190.f);
+Point centroEsfera3_nave(200.f, 205.f + rEsfera3_nave, 190.f);
 Color K_e3_nave(1.f, 0.f, 0.f);  // Vermelho
 Color K_d3_nave(1.f, 0.f, 0.f);  // Vermelho
 Color K_a3_nave(1.f, 0.1f, 0.f);  // Vermelho
@@ -333,7 +333,8 @@ int main() {
     cena.observador = camera.getEye();
     cena.luz = LuzPontual{ P_F, I_F };
     cena.luzAmbiente = I_A;
-    cena.objetosSombra = { &cilindro, &cone, &cilindro2, &cone2, &cilindro3, &cone3 };
+    cena.objetosSombra = { &cilindro, &cone, &cilindro2, &cone2, &cilindro3, &cone3, &nave,
+        &esfera1_nave, &esfera2_nave, &esfera3_nave };
     cena.texturaMadeira = texturaMadeira;
     cena.expoenteEspecular = m_e;
     gCena = &cena;
@@ -382,16 +383,11 @@ int main() {
 
             // Interseção com os planos
             float ti_c = plano_chao.CalcularIntersecao(Po, dr_e);
-            // float ti_f = plano_fundo.CalcularIntersecao(Po, dr_e);
-            // float ti_e = plano_esq.CalcularIntersecao(Po, dr_e);
-            // float ti_d = plano_dir.CalcularIntersecao(Po, dr_e);
-            // float ti_t = plano_teto.CalcularIntersecao(Po, dr_e);
 
             // Objetos
             float t_cil = cilindro.CalcularIntersecao(Po, dr_e);
             float ti_cone = cone.CalcularIntersecao(Po, dr_e);
 
-            float ti_esf = esfera.CalcularIntersecao(Po, dr_e);
             float ti_esf1_nave = esfera1_nave.CalcularIntersecao(Po, dr_e);
             float ti_esf2_nave = esfera2_nave.CalcularIntersecao(Po, dr_e);
             float ti_esf3_nave = esfera3_nave.CalcularIntersecao(Po, dr_e);
@@ -411,11 +407,7 @@ int main() {
 
             float ti_nave = nave.CalcularIntersecao(Po, dr_e);
 
-            // considerar(ti_f, Hit::Fundo);
             considerar(ti_c, Hit::Chao);
-            // considerar(ti_e, Hit::Esq);
-            // considerar(ti_d, Hit::Dir);
-            // considerar(ti_t, Hit::Teto);
             considerar(t_cil, Hit::Cilindro);
             considerar(t_cil2, Hit::Cilindro2);
             considerar(t_cil3, Hit::Cilindro3);
@@ -423,11 +415,10 @@ int main() {
             considerar(ti_cone2, Hit::Cone2);
             considerar(ti_cone3, Hit::Cone3);
             considerar(ti_nave, Hit::Nave);
-            // considerar(t_cubo, Hit::Cubo);
-            // considerar(ti_esf, Hit::Esfera);
             considerar(ti_esf1_nave, Hit::Esfera1_nave);
             considerar(ti_esf2_nave, Hit::Esfera2_nave);
             considerar(ti_esf3_nave, Hit::Esfera3_nave);
+
             Color cor(46, 68, 130);  // Cor de fundo (azul escuro)
 
             switch (hit) {
@@ -437,15 +428,6 @@ int main() {
             case Hit::Chao:
                 cor = plano_chao.CalcularCor(cena, dr_e);
                 break;
-                // case Hit::Esq:
-                //     cor = plano_esq.CalcularCor(cena, dr_e);
-                //     break;
-                // case Hit::Dir:
-                //     cor = plano_dir.CalcularCor(cena, dr_e);
-                //     break;
-                // case Hit::Teto:
-                //     cor = plano_teto.CalcularCor(cena, dr_e);
-                //     break;
             case Hit::Cilindro:
                 cor = cilindro.CalcularCor(cena, t_best, dr_e);
                 break;
