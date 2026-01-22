@@ -103,6 +103,10 @@ Plano plano_teto(P_pi_teto, n_teto, mat_teto);
 Color I_F(0.7f, 0.7f, 0.7f);
 Point P_F(-20.f, 185.f, 350.f);
 
+// Dica: para deixar as árvores com iluminação mais parecida, coloque a luz bem longe
+// e aproximadamente centrada no "grupo" de árvores (vira quase uma luz direcional).
+// Point P_F(175.f, 300.f, 1000.f);
+
 // Luz ambiente
 Color I_A(0.3f, 0.3f, 0.3f);
 
@@ -320,24 +324,24 @@ int main() {
     cilindro3.setKe(Vetor(KCil_e3.r, KCil_e3.g, KCil_e3.b));
     cilindro3.setShininess(5);
 
-    cilindro4.setKa(Vetor(KCil_a3.r, KCil_a3.g, KCil_a3.b));
-    cilindro4.setKd(Vetor(KCil_d3.r, KCil_d3.g, KCil_d3.b));
-    cilindro4.setKe(Vetor(KCil_e3.r, KCil_e3.g, KCil_e3.b));
+    cilindro4.setKa(Vetor(KCil_a4.r, KCil_a4.g, KCil_a4.b));
+    cilindro4.setKd(Vetor(KCil_d4.r, KCil_d4.g, KCil_d4.b));
+    cilindro4.setKe(Vetor(KCil_e4.r, KCil_e4.g, KCil_e4.b));
     cilindro4.setShininess(m_e);
 
-    cilindro5.setKa(Vetor(KCil_a3.r, KCil_a3.g, KCil_a3.b));
-    cilindro5.setKd(Vetor(KCil_d3.r, KCil_d3.g, KCil_d3.b));
-    cilindro5.setKe(Vetor(KCil_e3.r, KCil_e3.g, KCil_e3.b));
+    cilindro5.setKa(Vetor(KCil_a5.r, KCil_a5.g, KCil_a5.b));
+    cilindro5.setKd(Vetor(KCil_d5.r, KCil_d5.g, KCil_d5.b));
+    cilindro5.setKe(Vetor(KCil_e5.r, KCil_e5.g, KCil_e5.b));
     cilindro5.setShininess(m_e);
 
-    cilindro6.setKa(Vetor(KCil_a3.r, KCil_a3.g, KCil_a3.b));
-    cilindro6.setKd(Vetor(KCil_d3.r, KCil_d3.g, KCil_d3.b));
-    cilindro6.setKe(Vetor(KCil_e3.r, KCil_e3.g, KCil_e3.b));
+    cilindro6.setKa(Vetor(KCil_a6.r, KCil_a6.g, KCil_a6.b));
+    cilindro6.setKd(Vetor(KCil_d6.r, KCil_d6.g, KCil_d6.b));
+    cilindro6.setKe(Vetor(KCil_e6.r, KCil_e6.g, KCil_e6.b));
     cilindro6.setShininess(m_e);
 
-    cilindro7.setKa(Vetor(KCil_a3.r, KCil_a3.g, KCil_a3.b));
-    cilindro7.setKd(Vetor(KCil_d3.r, KCil_d3.g, KCil_d3.b));
-    cilindro7.setKe(Vetor(KCil_e3.r, KCil_e3.g, KCil_e3.b));
+    cilindro7.setKa(Vetor(KCil_a7.r, KCil_a7.g, KCil_a7.b));
+    cilindro7.setKd(Vetor(KCil_d7.r, KCil_d7.g, KCil_d7.b));
+    cilindro7.setKe(Vetor(KCil_e7.r, KCil_e7.g, KCil_e7.b));
     cilindro7.setShininess(m_e);
 
     cone.setKa(Vetor(KCone.r, KCone.g, KCone.b));
