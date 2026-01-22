@@ -670,7 +670,7 @@ int main() {
             case Hit::Esfera3_nave:
                 cor = esfera3_nave.CalcularCor(cena, t_best, dr_e);
                 break;
-            case Hit::Cubo: {
+                case Hit::Cubo: {
                 Vetor PiV = cuboMalha.getPontoIntersecao();
                 Vetor nV = cuboMalha.calcularNormal(PiV);
                 Plano plano_cubo(Point(PiV.i, PiV.j, PiV.k), Vector(nV.i, nV.j, nV.k), Material());
