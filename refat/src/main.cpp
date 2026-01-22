@@ -453,6 +453,11 @@ int main() {
 
             float ti_nave = nave.CalcularIntersecao(Po, dr_e);
 
+            float t_cil4 = cilindro4.CalcularIntersecao(Po, dr_e);
+            float t_cil5 = cilindro5.CalcularIntersecao(Po, dr_e);
+            float t_cil6 = cilindro6.CalcularIntersecao(Po, dr_e);
+            float t_cil7 = cilindro7.CalcularIntersecao(Po, dr_e);
+
             considerar(ti_c, Hit::Chao);
             considerar(t_cil, Hit::Cilindro);
             considerar(t_cil2, Hit::Cilindro2);
