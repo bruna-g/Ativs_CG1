@@ -183,8 +183,8 @@ Vector aux_v_nave = calcula_esc_por_vetor(altura_nave, dc);
 Point v_nave(cb_nave.x + aux_v_nave.i, cb_nave.y + aux_v_nave.j, cb_nave.z + aux_v_nave.k);
 Cone nave(cb_nave, v_nave, raio_nave);
 Color Ka_nave(0.15f, 0.15f, 0.15f); // Ka - Ambiente
-Color Kd_nave(0.5f, 0.5f, 0.5f); // Kd - Difuso
-Color Ke_nave(0.9f, 0.9f, 0.9f); // Ke - Especular
+Color Kd_nave(0.65f, 0.68f, 0.70f); // Kd - Difuso
+Color Ke_nave(0.0f, 0.0f, 0.0f); // Ke - Especular
 Material mat_nave;
 
 // Esfera1_nave
@@ -263,40 +263,20 @@ int main() {
     plano_chao.setKe(Vetor(KC_e.r, KC_e.g, KC_e.b));
     plano_chao.setShininess(m_e);
 
-    plano_fundo.setKa(Vetor(KF_d.r, KF_d.g, KF_d.b));
-    plano_fundo.setKd(Vetor(KF_d.r, KF_d.g, KF_d.b));
-    plano_fundo.setKe(Vetor(KF_e.r, KF_e.g, KF_e.b));
-    plano_fundo.setShininess(m_e);
-
-    plano_esq.setKa(Vetor(KE_d.r, KE_d.g, KE_d.b));
-    plano_esq.setKd(Vetor(KE_d.r, KE_d.g, KE_d.b));
-    plano_esq.setKe(Vetor(KE_e.r, KE_e.g, KE_e.b));
-    plano_esq.setShininess(m_e);
-
-    plano_dir.setKa(Vetor(KD_d.r, KD_d.g, KD_d.b));
-    plano_dir.setKd(Vetor(KD_d.r, KD_d.g, KD_d.b));
-    plano_dir.setKe(Vetor(KD_e.r, KD_e.g, KD_e.b));
-    plano_dir.setShininess(m_e);
-
-    plano_teto.setKa(Vetor(KT_d.r, KT_d.g, KT_d.b));
-    plano_teto.setKd(Vetor(KT_d.r, KT_d.g, KT_d.b));
-    plano_teto.setKe(Vetor(KT_e.r, KT_e.g, KT_e.b));
-    plano_teto.setShininess(m_e);
-
     cilindro.setKa(Vetor(KCil_a.r, KCil_a.g, KCil_a.b));
     cilindro.setKd(Vetor(KCil_d.r, KCil_d.g, KCil_d.b));
     cilindro.setKe(Vetor(KCil_e.r, KCil_e.g, KCil_e.b));
-    cilindro.setShininess(m_e);
+    cilindro.setShininess(5);
 
     cilindro2.setKa(Vetor(KCil_a2.r, KCil_a2.g, KCil_a2.b));
     cilindro2.setKd(Vetor(KCil_d2.r, KCil_d2.g, KCil_d2.b));
     cilindro2.setKe(Vetor(KCil_e2.r, KCil_e2.g, KCil_e2.b));
-    cilindro2.setShininess(m_e);
+    cilindro2.setShininess(5);
 
     cilindro3.setKa(Vetor(KCil_a3.r, KCil_a3.g, KCil_a3.b));
     cilindro3.setKd(Vetor(KCil_d3.r, KCil_d3.g, KCil_d3.b));
     cilindro3.setKe(Vetor(KCil_e3.r, KCil_e3.g, KCil_e3.b));
-    cilindro3.setShininess(m_e);
+    cilindro3.setShininess(5);
 
     cone.setKa(Vetor(KCone.r, KCone.g, KCone.b));
     cone.setKd(Vetor(KCone.r, KCone.g, KCone.b));
@@ -316,7 +296,7 @@ int main() {
     nave.setKa(Vetor(Ka_nave.r, Ka_nave.g, Ka_nave.b));
     nave.setKd(Vetor(Kd_nave.r, Kd_nave.g, Kd_nave.b));
     nave.setKe(Vetor(Ke_nave.r, Ke_nave.g, Ke_nave.b));
-    nave.setShininess(150.0f);
+    nave.setShininess(80.0f);
 
     // Cubo como malha
     Color K_cubo(1.f, 0.078f, 0.576f);
@@ -447,8 +427,23 @@ int main() {
                 cor = cone3.CalcularCor(cena, t_best, dr_e);
                 break;
             case Hit::Nave:
-                cor = nave.CalcularCor(cena, t_best, dr_e);
+            {
+                // Se o ponto estiver no disco da base da nave, pinta de branco.
+                // (Caso contrário, usa o sombreamento normal do cone.)
+                Point Pi = calcula_eq_ray(Po, t_best, dr_e);
+                Vector dist_centro = subtrai_pontos(Pi, nave.cb);
+                float altura_Pi = calcula_prod_esc(dist_centro, nave.dc);
+                float dist2 = calcula_prod_esc(dist_centro, dist_centro);
+
+                const float epsBase = 1e-3f;
+                if (std::fabs(altura_Pi) < epsBase && dist2 <= nave.raio * nave.raio + epsBase) {
+                    cor = Color(45, 50, 60);
+                }
+                else {
+                    cor = nave.CalcularCor(cena, t_best, dr_e);
+                }
                 break;
+            }
             case Hit::Esfera:
                 cor = esfera.CalcularCor(cena, t_best, dr_e);
                 break;
