@@ -101,13 +101,13 @@ Plano plano_teto(P_pi_teto, n_teto, mat_teto);
 
 // Fonte luminosa
 Color I_F(0.7f, 0.7f, 0.7f);
-// Point P_F(-20.f, 185.f, 450.f);
+Point P_F(-20.f, 185.f, 450.f);
 
 // Dica: para deixar as árvores com iluminação mais parecida, coloque a luz bem longe
 // e aproximadamente centrada no "grupo" de árvores (vira quase uma luz direcional).
 // Colocar a luz abaixo da base das copas (y < 60) evita que o cone projete sombra no tronco.
 // E deixar bem longe (z grande) reduz variação de direção entre as 3 árvores.
-Point P_F(175.f, 180.f, 500.f);
+// Point P_F(175.f, 180.f, 500.f);
 
 // Luz ambiente
 Color I_A(0.3f, 0.3f, 0.3f);
@@ -670,7 +670,7 @@ int main() {
             case Hit::Esfera3_nave:
                 cor = esfera3_nave.CalcularCor(cena, t_best, dr_e);
                 break;
-                case Hit::Cubo: {
+            case Hit::Cubo: {
                 Vetor PiV = cuboMalha.getPontoIntersecao();
                 Vetor nV = cuboMalha.calcularNormal(PiV);
                 Plano plano_cubo(Point(PiV.i, PiV.j, PiV.k), Vector(nV.i, nV.j, nV.k), Material());
