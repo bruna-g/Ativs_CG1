@@ -20,13 +20,13 @@ void Cilindro::aplicarEscalaUniforme(float s) {
     altura *= s;
 }
 
-void Cilindro::aplicarEscalaNoPivoObjeto(const Vetor& escala) {
+void Cilindro::aplicarEscalaNoPivoObjeto(const Vetor& escala, const Point& pivo) {
     // Topo atual (cb + altura*dc)
     Point topo(cb.x + dc.i * altura, cb.y + dc.j * altura, cb.z + dc.k * altura);
 
     // 1) Escala base e topo em torno do pivô
-    cb = Objeto::aplicarEscalaNoPivo(cb, escala, Point(0.0f, 0.0f, 0.0f));
-    topo = Objeto::aplicarEscalaNoPivo(topo, escala, Point(0.0f, 0.0f, 0.0f));
+    cb = Objeto::aplicarEscalaNoPivo(cb, escala, pivo);
+    topo = Objeto::aplicarEscalaNoPivo(topo, escala, pivo);
 
     // 2) Atualiza eixo (dc) e altura
     Vector eixo = subtrai_pontos(topo, cb);

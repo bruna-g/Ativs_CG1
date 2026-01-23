@@ -36,7 +36,7 @@ public:
 
     // Padronizado: aplica escala (possivelmente não-uniforme) no PRÓPRIO objeto
     // em torno de um pivô (pivo), atualizando seus parâmetros internos.
-    virtual void aplicarEscalaNoPivoObjeto(const Vetor& escala) = 0;
+    virtual void aplicarEscalaNoPivoObjeto(const Vetor& escala, const Point& pivo) = 0;
 
     virtual void aplicarEscalaUniforme(float s) = 0;
 

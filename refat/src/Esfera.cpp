@@ -21,8 +21,8 @@ void Esfera::aplicarEscalaUniforme(float s) {
     raio *= s;
 }
 
-void Esfera::aplicarEscalaNoPivoObjeto(const Vetor& escala) {
-    centro = Objeto::aplicarEscalaNoPivo(centro, escala, Point(0.0f, 0.0f, 0.0f));
+void Esfera::aplicarEscalaNoPivoObjeto(const Vetor& escala, const Point& pivo) {
+    centro = Objeto::aplicarEscalaNoPivo(centro, escala, pivo);
 
     const float sx = std::fabs(escala.i);
     const float sy = std::fabs(escala.j);
