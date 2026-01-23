@@ -101,13 +101,13 @@ Plano plano_teto(P_pi_teto, n_teto, mat_teto);
 
 // Fonte luminosa
 Color I_F(0.7f, 0.7f, 0.7f);
-Point P_F(-20.f, 185.f, 450.f);
+// Point P_F(-20.f, 185.f, 450.f);
 
 // Dica: para deixar as árvores com iluminação mais parecida, coloque a luz bem longe
 // e aproximadamente centrada no "grupo" de árvores (vira quase uma luz direcional).
 // Colocar a luz abaixo da base das copas (y < 60) evita que o cone projete sombra no tronco.
 // E deixar bem longe (z grande) reduz variação de direção entre as 3 árvores.
-// Point P_F(175.f, 180.f, 500.f);
+Point P_F(175.f, 180.f, 500.f);
 
 // Luz ambiente
 Color I_A(0.3f, 0.3f, 0.3f);
@@ -305,6 +305,19 @@ Cone chifre_dir(cb_chifre_dir, v_chifre_dir, raio_chifre);
 Color K_chifre(0.9f, 0.68f, 0.55f);
 float m_chifre = 25.0f;
 
+// Cauda (cilindro atrás do corpo, levemente inclinado para baixo)
+const float raio_cauda = 1.6f;
+const float altura_cauda = 18.0f;
+const float cubo_meia_largura_x = (cubo_lado * 0.5f) * cubo_escala_x;
+Point cb_cauda(
+    cubo_centro.x + cubo_meia_largura_x - 0.5f,
+    cubo_centro.y + 10.0f,
+    cubo_centro.z);
+Vector dc_cauda(0.9285f, -0.3714f, 0.0f);
+Cilindro cauda(cb_cauda, raio_cauda, altura_cauda, dc_cauda);
+Color K_cauda(0.45f, 0.25f, 0.10f);
+float m_cauda = 15.0f;
+
 // Cubo (como malha)
 Malha cuboMalha;
 
@@ -361,6 +374,12 @@ int main() {
     chifre_dir.setKd(Vetor(K_chifre.r, K_chifre.g, K_chifre.b));
     chifre_dir.setKe(Vetor(K_chifre.r, K_chifre.g, K_chifre.b));
     chifre_dir.setShininess(m_chifre);
+
+    // cauda
+    cauda.setKa(Vetor(K_cauda.r, K_cauda.g, K_cauda.b));
+    cauda.setKd(Vetor(K_cauda.r, K_cauda.g, K_cauda.b));
+    cauda.setKe(Vetor(K_cauda.r, K_cauda.g, K_cauda.b));
+    cauda.setShininess(m_cauda);
 
     // Chão com textura
     mat_chao.usarTextura = true;
@@ -456,7 +475,7 @@ int main() {
     cena.luzAmbiente = I_A;
     cena.objetosSombra = { &cilindro, &cone, &cilindro2, &cone2, &cilindro3, &cone3, &nave,
         &esfera1_nave, &esfera2_nave, &esfera3_nave, &cilindro4, &cilindro5, &cilindro6, &cilindro7, &cuboMalha, &esfera_cabeca,
-        &chifre_esq, &chifre_dir };
+        &chifre_esq, &chifre_dir, &cauda };
     cena.texturaMadeira = texturaMadeira;
     cena.expoenteEspecular = m_e;
     gCena = &cena;
@@ -488,6 +507,7 @@ int main() {
                 Cilindro5,
                 Cilindro6,
                 Cilindro7,
+                Cauda,
                 Cone,
                 Cone2,
                 Cone3,
@@ -544,6 +564,7 @@ int main() {
             float t_cil5 = cilindro5.CalcularIntersecao(Po, dr_e);
             float t_cil6 = cilindro6.CalcularIntersecao(Po, dr_e);
             float t_cil7 = cilindro7.CalcularIntersecao(Po, dr_e);
+            float t_cauda = cauda.CalcularIntersecao(Po, dr_e);
 
             considerar(ti_c, Hit::Chao);
             considerar(t_cil, Hit::Cilindro);
@@ -553,6 +574,7 @@ int main() {
             considerar(t_cil5, Hit::Cilindro5);
             considerar(t_cil6, Hit::Cilindro6);
             considerar(t_cil7, Hit::Cilindro7);
+            considerar(t_cauda, Hit::Cauda);
             considerar(ti_cone, Hit::Cone);
             considerar(ti_cone2, Hit::Cone2);
             considerar(ti_cone3, Hit::Cone3);
@@ -594,6 +616,9 @@ int main() {
                 break;
             case Hit::Cilindro7:
                 cor = cilindro7.CalcularCor(cena, t_best, dr_e);
+                break;
+            case Hit::Cauda:
+                cor = cauda.CalcularCor(cena, t_best, dr_e);
                 break;
             case Hit::Cone:
                 cor = cone.CalcularCor(cena, t_best, dr_e);
