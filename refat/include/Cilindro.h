@@ -40,10 +40,18 @@ public:
     Point aplicarEscala(const Point& ponto, const Vetor& escala) const {
         return Objeto::aplicarEscala(ponto, escala);
     }
+
+    void rotacionarX(float angulo, Cilindro cilindro);
+    void rotacionarY(float angulo);
+    void rotacionarZ(float angulo);
+
 };
 
 // Funções relacionadas ao Cilindro
 Vector calcula_n_cilindro(Point P, Cilindro cilindro);
 float calcula_t_Cilindro(Cilindro cilindro, Vector dr, Point Po);
+void rotacionarArbitrario(const Vector& eixo, float angulo);
+
+Point calcularCentro(Cilindro cilindro);
 
 #endif // CILINDRO_H

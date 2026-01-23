@@ -309,6 +309,8 @@ int main() {
         m_e
     );
 
+    cilindro2.rotacionarX(60.0f, cilindro2);
+
     Cena cena;
     cena.observador = camera.getEye();
     cena.luz = LuzPontual{ P_F, I_F };

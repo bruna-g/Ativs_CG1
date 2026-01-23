@@ -2,6 +2,7 @@
 #include "../include/Cena.h"
 #include "../include/Color.h"
 #include "../include/Utils.h"
+#include "../include/Matriz4x4.h"
 #include <cmath>
 #include <algorithm>
 #include <limits>
@@ -63,6 +64,23 @@ void Cilindro::aplicarEscalaNoPivoObjeto(const Vetor& escala) {
         raio *= fatorRadial;
     }
 }
+
+Point calcularCentro(Cilindro cilindro) {
+    Vetor dcH = calcula_esc_por_vetor(cilindro.altura/2.0f, cilindro.dc);
+    Point soma = soma_ponto_vetor(cilindro.cb, dcH);
+    return soma;
+}
+
+void Cilindro::rotacionarX(float angulo, Cilindro cilindro) {
+    Point centro = calcularCentro(cilindro);
+    cilindro.cb = cilindro.aplicarTranslacao(cilindro.cb, Vector(-centro.x, -centro.y, -centro.z));
+    
+    Matriz4x4 R = Matriz4x4::rotacaoX(angulo);
+    cilindro.cb = R.multiplicarPonto(cilindro.cb);
+    
+    cilindro.cb = cilindro.aplicarTranslacao(cilindro.cb, Vector(centro.x, centro.y, centro.z));
+}
+
 
 Vector Cilindro::CalcularNormal(const Point& P) const {
     Point cbCopy = cb;
