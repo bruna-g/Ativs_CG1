@@ -281,6 +281,30 @@ Color K_a_cabeca(0.45f, 0.25f, 0.10f);
 float m_e_cabeca = 10.0f;
 Esfera esfera_cabeca(centroEsfera_cabeca, rEsfera_cabeca);
 
+// Chifres (2 cones pequenos na cabeça)
+const float raio_chifre = 2.5f;
+const float altura_chifre = 8.0f;
+Vector dc_chifre(0.f, 1.0f, 0.f);
+
+Point cb_chifre_esq(
+    centroEsfera_cabeca.x + rEsfera_cabeca * 0.20f,
+    centroEsfera_cabeca.y + rEsfera_cabeca * 0.80f,
+    centroEsfera_cabeca.z - rEsfera_cabeca * 0.35f);
+Point cb_chifre_dir(
+    centroEsfera_cabeca.x + rEsfera_cabeca * 0.20f,
+    centroEsfera_cabeca.y + rEsfera_cabeca * 0.80f,
+    centroEsfera_cabeca.z + rEsfera_cabeca * 0.35f);
+
+Vector aux_v_chifre = calcula_esc_por_vetor(altura_chifre, dc_chifre);
+Point v_chifre_esq(cb_chifre_esq.x + aux_v_chifre.i, cb_chifre_esq.y + aux_v_chifre.j, cb_chifre_esq.z + aux_v_chifre.k);
+Point v_chifre_dir(cb_chifre_dir.x + aux_v_chifre.i, cb_chifre_dir.y + aux_v_chifre.j, cb_chifre_dir.z + aux_v_chifre.k);
+
+Cone chifre_esq(cb_chifre_esq, v_chifre_esq, raio_chifre);
+Cone chifre_dir(cb_chifre_dir, v_chifre_dir, raio_chifre);
+
+Color K_chifre(0.9f, 0.68f, 0.55f);
+float m_chifre = 25.0f;
+
 // Cubo (como malha)
 Malha cuboMalha;
 
@@ -326,6 +350,17 @@ int main() {
     esfera_cabeca.setKd(Vetor(K_d_cabeca.r, K_d_cabeca.g, K_d_cabeca.b));
     esfera_cabeca.setKe(Vetor(K_e_cabeca.r, K_e_cabeca.g, K_e_cabeca.b));
     esfera_cabeca.setShininess(m_e_cabeca);
+
+    // chifres
+    chifre_esq.setKa(Vetor(K_chifre.r, K_chifre.g, K_chifre.b));
+    chifre_esq.setKd(Vetor(K_chifre.r, K_chifre.g, K_chifre.b));
+    chifre_esq.setKe(Vetor(K_chifre.r, K_chifre.g, K_chifre.b));
+    chifre_esq.setShininess(m_chifre);
+
+    chifre_dir.setKa(Vetor(K_chifre.r, K_chifre.g, K_chifre.b));
+    chifre_dir.setKd(Vetor(K_chifre.r, K_chifre.g, K_chifre.b));
+    chifre_dir.setKe(Vetor(K_chifre.r, K_chifre.g, K_chifre.b));
+    chifre_dir.setShininess(m_chifre);
 
     // Chão com textura
     mat_chao.usarTextura = true;
@@ -420,7 +455,8 @@ int main() {
     cena.luz = LuzPontual{ P_F, I_F };
     cena.luzAmbiente = I_A;
     cena.objetosSombra = { &cilindro, &cone, &cilindro2, &cone2, &cilindro3, &cone3, &nave,
-        &esfera1_nave, &esfera2_nave, &esfera3_nave, &cilindro4, &cilindro5, &cilindro6, &cilindro7, &cuboMalha, &esfera_cabeca };
+        &esfera1_nave, &esfera2_nave, &esfera3_nave, &cilindro4, &cilindro5, &cilindro6, &cilindro7, &cuboMalha, &esfera_cabeca,
+        &chifre_esq, &chifre_dir };
     cena.texturaMadeira = texturaMadeira;
     cena.expoenteEspecular = m_e;
     gCena = &cena;
@@ -455,6 +491,8 @@ int main() {
                 Cone,
                 Cone2,
                 Cone3,
+                Chifre_esq,
+                Chifre_dir,
                 Cubo,
                 Esfera,
                 Nave,
@@ -489,6 +527,9 @@ int main() {
             float t_cil3 = cilindro3.CalcularIntersecao(Po, dr_e);
             float ti_cone3 = cone3.CalcularIntersecao(Po, dr_e);
 
+            float ti_chifre_esq = chifre_esq.CalcularIntersecao(Po, dr_e);
+            float ti_chifre_dir = chifre_dir.CalcularIntersecao(Po, dr_e);
+
             float t_cubo = std::numeric_limits<float>::infinity();
             if (cuboMalha.verificarIntersecao(
                 Vetor(Po.x, Po.y, Po.z, 0.0f),
@@ -515,6 +556,8 @@ int main() {
             considerar(ti_cone, Hit::Cone);
             considerar(ti_cone2, Hit::Cone2);
             considerar(ti_cone3, Hit::Cone3);
+            considerar(ti_chifre_esq, Hit::Chifre_esq);
+            considerar(ti_chifre_dir, Hit::Chifre_dir);
             considerar(ti_nave, Hit::Nave);
             considerar(ti_esf1_nave, Hit::Esfera1_nave);
             considerar(ti_esf2_nave, Hit::Esfera2_nave);
@@ -560,6 +603,12 @@ int main() {
                 break;
             case Hit::Cone3:
                 cor = cone3.CalcularCor(cena, t_best, dr_e);
+                break;
+            case Hit::Chifre_esq:
+                cor = chifre_esq.CalcularCor(cena, t_best, dr_e);
+                break;
+            case Hit::Chifre_dir:
+                cor = chifre_dir.CalcularCor(cena, t_best, dr_e);
                 break;
             case Hit::Nave:
             {
