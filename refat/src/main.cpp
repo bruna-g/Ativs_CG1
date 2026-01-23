@@ -224,7 +224,7 @@ Material mat_cil7;
 //--------------------------------------//
 
 // nave
-Point cb_nave(175.f, 200.f, 130.f);
+Point cb_nave(165.f, 200.f, 125.f);
 float raio_nave = 80.f;
 float altura_nave = 60.f;
 Vector aux_v_nave = calcula_esc_por_vetor(altura_nave, dc);
@@ -237,7 +237,7 @@ Material mat_nave;
 
 // Esfera1_nave
 float rEsfera1_nave = 4.0f;
-Point centroEsfera1_nave(150.f, 205.f + rEsfera1_nave, 190.f);
+Point centroEsfera1_nave(140.f, 205.f + rEsfera1_nave, 185.f);
 Color K_e1_nave(1.f, 0.f, 0.f);  // Vermelho
 Color K_d1_nave(1.f, 0.f, 0.f);  // Vermelho
 Color K_a1_nave(1.f, 0.1f, 0.f);  // Vermelho
@@ -246,7 +246,7 @@ Esfera esfera1_nave(centroEsfera1_nave, rEsfera1_nave);
 
 // Esfera2_nave
 float rEsfera2_nave = 4.0f;
-Point centroEsfera2_nave(175.f, 205.f + rEsfera2_nave, 196.6f);
+Point centroEsfera2_nave(165.f, 205.f + rEsfera2_nave, 191.6f);
 Color K_e2_nave(1.f, 0.f, 0.f);  // Vermelho
 Color K_d2_nave(1.f, 0.f, 0.f);  // Vermelho
 Color K_a2_nave(1.f, 0.1f, 0.f);  // Vermelho
@@ -255,7 +255,7 @@ Esfera esfera2_nave(centroEsfera2_nave, rEsfera2_nave);
 
 // Esfera3_nave
 float rEsfera3_nave = 4.0f;
-Point centroEsfera3_nave(200.f, 205.f + rEsfera3_nave, 190.f);
+Point centroEsfera3_nave(190.f, 205.f + rEsfera3_nave, 185.f);
 Color K_e3_nave(1.f, 0.f, 0.f);  // Vermelho
 Color K_d3_nave(1.f, 0.f, 0.f);  // Vermelho
 Color K_a3_nave(1.f, 0.1f, 0.f);  // Vermelho
