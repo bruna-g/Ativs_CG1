@@ -61,9 +61,9 @@ Matriz4x4 Matriz4x4::rotacaoZ(float angulo) {
 
 Matriz4x4 Matriz4x4::rotacaoArbitraria(Vector eixo, float angulo) {
     Vector eixo_norm = normalizar(eixo);
-    Vector temp(1.f,0.f,0.f);
+    Vector temp(1.f, 0.f, 0.f);
     if (std::fabs(eixo_norm.i > 0.9f)) {
-        temp = Vector(0.f,1.f,0.f);
+        temp = Vector(0.f, 1.f, 0.f);
     }
 
     Vector local_x = normalizar(produto_vetorial(eixo_norm, temp));
@@ -82,7 +82,7 @@ Matriz4x4 Matriz4x4::rotacaoArbitraria(Vector eixo, float angulo) {
 
     Matriz4x4 M_inv_R = M_inversa.multiplicarMat(R);
     Matriz4x4 resultado = M_inv_R.multiplicarMat(M);
-    
+
     return resultado;
 }
 
@@ -100,10 +100,10 @@ Matriz4x4 Matriz4x4::multiplicarMat(Matriz4x4& outra) const {
 }
 
 Point Matriz4x4::multiplicarPonto(const Point& p) const {
-    float x = m[0][0]*p.x + m[0][1]*p.y + m[0][2]*p.z + m[0][3];
-    float y = m[1][0]*p.x + m[1][1]*p.y + m[1][2]*p.z + m[1][3];
-    float z = m[2][0]*p.x + m[2][1]*p.y + m[2][2]*p.z + m[2][3];
-    float w = m[3][0]*p.x + m[3][1]*p.y + m[3][2]*p.z + m[3][3];
+    float x = m[0][0] * p.x + m[0][1] * p.y + m[0][2] * p.z + m[0][3];
+    float y = m[1][0] * p.x + m[1][1] * p.y + m[1][2] * p.z + m[1][3];
+    float z = m[2][0] * p.x + m[2][1] * p.y + m[2][2] * p.z + m[2][3];
+    float w = m[3][0] * p.x + m[3][1] * p.y + m[3][2] * p.z + m[3][3];
     if (w != 1.0f) {
         x /= w;
         y /= w;
@@ -113,9 +113,9 @@ Point Matriz4x4::multiplicarPonto(const Point& p) const {
 }
 
 Vector Matriz4x4::multiplicarVetor(const Vector& v) const {
-    float i = m[0][0]*v.i + m[0][1]*v.j + m[0][2]*v.k;
-    float j = m[1][0]*v.i + m[1][1]*v.j + m[1][2]*v.k;
-    float k = m[2][0]*v.i + m[2][1]*v.j + m[2][2]*v.k;
+    float i = m[0][0] * v.i + m[0][1] * v.j + m[0][2] * v.k;
+    float j = m[1][0] * v.i + m[1][1] * v.j + m[1][2] * v.k;
+    float k = m[2][0] * v.i + m[2][1] * v.j + m[2][2] * v.k;
     return Vector(i, j, k);
 }
 
@@ -148,7 +148,7 @@ Matriz4x4 Matriz4x4::inversa(const Matriz4x4& matriz) {
     float c0 = matriz.m[2][0] * matriz.m[3][1] - matriz.m[3][0] * matriz.m[2][1];
 
     float det =
-          s0 * c5 - s1 * c4 + s2 * c3
+        s0 * c5 - s1 * c4 + s2 * c3
         + s3 * c2 - s4 * c1 + s5 * c0;
 
     if (fabs(det) < 1e-6f) {
@@ -157,25 +157,25 @@ Matriz4x4 Matriz4x4::inversa(const Matriz4x4& matriz) {
 
     float invDet = 1.0f / det;
 
-    inv.m[0][0] = ( matriz.m[1][1] * c5 - matriz.m[1][2] * c4 + matriz.m[1][3] * c3) * invDet;
+    inv.m[0][0] = (matriz.m[1][1] * c5 - matriz.m[1][2] * c4 + matriz.m[1][3] * c3) * invDet;
     inv.m[0][1] = (-matriz.m[0][1] * c5 + matriz.m[0][2] * c4 - matriz.m[0][3] * c3) * invDet;
-    inv.m[0][2] = ( matriz.m[3][1] * s5 - matriz.m[3][2] * s4 + matriz.m[3][3] * s3) * invDet;
+    inv.m[0][2] = (matriz.m[3][1] * s5 - matriz.m[3][2] * s4 + matriz.m[3][3] * s3) * invDet;
     inv.m[0][3] = (-matriz.m[2][1] * s5 + matriz.m[2][2] * s4 - matriz.m[2][3] * s3) * invDet;
 
     inv.m[1][0] = (-matriz.m[1][0] * c5 + matriz.m[1][2] * c2 - matriz.m[1][3] * c1) * invDet;
-    inv.m[1][1] = ( matriz.m[0][0] * c5 - matriz.m[0][2] * c2 + matriz.m[0][3] * c1) * invDet;
+    inv.m[1][1] = (matriz.m[0][0] * c5 - matriz.m[0][2] * c2 + matriz.m[0][3] * c1) * invDet;
     inv.m[1][2] = (-matriz.m[3][0] * s5 + matriz.m[3][2] * s2 - matriz.m[3][3] * s1) * invDet;
-    inv.m[1][3] = ( matriz.m[2][0] * s5 - matriz.m[2][2] * s2 + matriz.m[2][3] * s1) * invDet;
+    inv.m[1][3] = (matriz.m[2][0] * s5 - matriz.m[2][2] * s2 + matriz.m[2][3] * s1) * invDet;
 
-    inv.m[2][0] = ( matriz.m[1][0] * c4 - matriz.m[1][1] * c2 + matriz.m[1][3] * c0) * invDet;
+    inv.m[2][0] = (matriz.m[1][0] * c4 - matriz.m[1][1] * c2 + matriz.m[1][3] * c0) * invDet;
     inv.m[2][1] = (-matriz.m[0][0] * c4 + matriz.m[0][1] * c2 - matriz.m[0][3] * c0) * invDet;
-    inv.m[2][2] = ( matriz.m[3][0] * s4 - matriz.m[3][1] * s2 + matriz.m[3][3] * s0) * invDet;
+    inv.m[2][2] = (matriz.m[3][0] * s4 - matriz.m[3][1] * s2 + matriz.m[3][3] * s0) * invDet;
     inv.m[2][3] = (-matriz.m[2][0] * s4 + matriz.m[2][1] * s2 - matriz.m[2][3] * s0) * invDet;
 
     inv.m[3][0] = (-matriz.m[1][0] * c3 + matriz.m[1][1] * c1 - matriz.m[1][2] * c0) * invDet;
-    inv.m[3][1] = ( matriz.m[0][0] * c3 - matriz.m[0][1] * c1 + matriz.m[0][2] * c0) * invDet;
+    inv.m[3][1] = (matriz.m[0][0] * c3 - matriz.m[0][1] * c1 + matriz.m[0][2] * c0) * invDet;
     inv.m[3][2] = (-matriz.m[3][0] * s3 + matriz.m[3][1] * s1 - matriz.m[3][2] * s0) * invDet;
-    inv.m[3][3] = ( matriz.m[2][0] * s3 - matriz.m[2][1] * s1 + matriz.m[2][2] * s0) * invDet;
+    inv.m[3][3] = (matriz.m[2][0] * s3 - matriz.m[2][1] * s1 + matriz.m[2][2] * s0) * invDet;
 
     return inv;
 }
