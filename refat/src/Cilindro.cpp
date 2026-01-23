@@ -20,13 +20,13 @@ void Cilindro::aplicarEscalaUniforme(float s) {
     altura *= s;
 }
 
-void Cilindro::aplicarEscalaNoPivoObjeto(const Vetor& escala) {
+void Cilindro::aplicarEscalaNoPivoObjeto(const Vetor& escala, const Point& pivo) {
     // Topo atual (cb + altura*dc)
     Point topo(cb.x + dc.i * altura, cb.y + dc.j * altura, cb.z + dc.k * altura);
 
     // 1) Escala base e topo em torno do pivô
-    cb = Objeto::aplicarEscalaNoPivo(cb, escala, Point(0.0f, 0.0f, 0.0f));
-    topo = Objeto::aplicarEscalaNoPivo(topo, escala, Point(0.0f, 0.0f, 0.0f));
+    cb = Objeto::aplicarEscalaNoPivo(cb, escala, pivo);
+    topo = Objeto::aplicarEscalaNoPivo(topo, escala, pivo);
 
     // 2) Atualiza eixo (dc) e altura
     Vector eixo = subtrai_pontos(topo, cb);
@@ -119,9 +119,10 @@ Color Cilindro::CalcularCor(const Cena& cena, float t, const Vector& dir,
     const Color& K_a, const Color& K_d, const Color& K_e) const {
     Point P = calcula_eq_ray(cena.observador, t, dir);
 
-    bool naSombra = false;
-    float dist_Pi_Luz = calcula_norma(subtrai_pontos(cena.luz.pos, P));
-    if (t < dist_Pi_Luz) naSombra = true;
+    Vector l = calcula_l(cena.luz.pos, P);
+    Point P_mod(P.x + l.i * 1e-4f, P.y + l.j * 1e-4f, P.z + l.k * 1e-4f);
+    float dist_Pi_Luz = calcula_norma(subtrai_pontos(cena.luz.pos, P_mod));
+    bool naSombra = cena.estaNaSombra(P_mod, l, dist_Pi_Luz, const_cast<Cilindro*>(this));
 
     Color Ia(cena.luzAmbiente.r * K_a.r, cena.luzAmbiente.g * K_a.g, cena.luzAmbiente.b * K_a.b);
     if (naSombra) {
@@ -133,7 +134,6 @@ Color Cilindro::CalcularCor(const Cena& cena, float t, const Vector& dir,
     }
 
     Vector n = CalcularNormal(P);
-    Vector l = calcula_l(cena.luz.pos, P);
     Vector v(-dir.i, -dir.j, -dir.k);
     Vector r1 = calcula_esc_por_vetor(2.0f, calcula_esc_por_vetor(calcula_prod_esc(n, l), n));
     Vector r(r1.i - l.i, r1.j - l.j, r1.k - l.k);
@@ -166,9 +166,10 @@ Color Cilindro::CalcularCor(const Cena& cena, float t, const Vector& dir) const 
     Color Kd(kdV.i, kdV.j, kdV.k);
     Color Ke(keV.i, keV.j, keV.k);
 
-    bool naSombra = false;
-    float dist_Pi_Luz = calcula_norma(subtrai_pontos(cena.luz.pos, P));
-    if (t < dist_Pi_Luz) naSombra = true;
+    Vector l = calcula_l(cena.luz.pos, P);
+    Point P_mod(P.x + l.i * 1e-4f, P.y + l.j * 1e-4f, P.z + l.k * 1e-4f);
+    float dist_Pi_Luz = calcula_norma(subtrai_pontos(cena.luz.pos, P_mod));
+    bool naSombra = cena.estaNaSombra(P_mod, l, dist_Pi_Luz, const_cast<Cilindro*>(this));
 
     Color Ia(cena.luzAmbiente.r * Ka.r, cena.luzAmbiente.g * Ka.g, cena.luzAmbiente.b * Ka.b);
     if (naSombra) {
@@ -180,7 +181,6 @@ Color Cilindro::CalcularCor(const Cena& cena, float t, const Vector& dir) const 
     }
 
     Vector n = CalcularNormal(P);
-    Vector l = calcula_l(cena.luz.pos, P);
     Vector v(-dir.i, -dir.j, -dir.k);
     Vector r1 = calcula_esc_por_vetor(2.0f, calcula_esc_por_vetor(calcula_prod_esc(n, l), n));
     Vector r(r1.i - l.i, r1.j - l.j, r1.k - l.k);

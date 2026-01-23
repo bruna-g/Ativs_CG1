@@ -126,9 +126,9 @@ bool Plano::verificarIntersecao(Vetor p0, Vetor dr) {
     return true;
 }
 
-void Plano::aplicarEscalaNoPivoObjeto(const Vetor& escala) {
+void Plano::aplicarEscalaNoPivoObjeto(const Vetor& escala, const Point& pivo) {
     // Escalar um ponto no plano reposiciona o plano.
-    p_pi = Objeto::aplicarEscalaNoPivo(p_pi, escala, Point(0.0f, 0.0f, 0.0f));
+    p_pi = Objeto::aplicarEscalaNoPivo(p_pi, escala, pivo);
 
     // Para transformar normal corretamente em escala não-uniforme: n' = normalize(inv(S)^T * n)
     // Como S é diagonal, inv(S)^T == inv(S).
@@ -148,7 +148,7 @@ void Plano::aplicarEscalaNoPivoObjeto(const Vetor& escala) {
 
 void Plano::aplicarEscalaUniforme(float s) {
     if (s <= 0.0f) return;
-    aplicarEscalaNoPivoObjeto(Vetor(s, s, s));
+    aplicarEscalaNoPivoObjeto(Vetor(s, s, s), Point(0.0f, 0.0f, 0.0f));
 }
 
 Vetor Plano::calcularNormal(Vetor /*posicao*/) {

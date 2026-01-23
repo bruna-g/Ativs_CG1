@@ -22,8 +22,8 @@
 using namespace std;
 
 // Configuração da janela de visualização
-int nCol = 800;
-int nLin = 800;
+int nCol = 600;
+int nLin = 600;
 
 Point eye(175.f, 180.f, 300.f);
 Point at(175.f, 150.f, 200.f);
@@ -101,7 +101,13 @@ Plano plano_teto(P_pi_teto, n_teto, mat_teto);
 
 // Fonte luminosa
 Color I_F(0.7f, 0.7f, 0.7f);
-Point P_F(15.f, 200.f, 270.f);
+// Point P_F(-20.f, 185.f, 450.f);
+
+// Dica: para deixar as árvores com iluminação mais parecida, coloque a luz bem longe
+// e aproximadamente centrada no "grupo" de árvores (vira quase uma luz direcional).
+// Colocar a luz abaixo da base das copas (y < 60) evita que o cone projete sombra no tronco.
+// E deixar bem longe (z grande) reduz variação de direção entre as 3 árvores.
+Point P_F(175.f, 180.f, 500.f);
 
 // Luz ambiente
 Color I_A(0.3f, 0.3f, 0.3f);
@@ -174,6 +180,48 @@ Cone cone3(cb_cone3, v_cone3, raio_cone3);
 Color KCone3(0.f, 0.6f, 0.2f);
 Material mat_cone3;
 //----------------------------------------------//
+//-----------------Vaca---------------------//
+// Cilindro
+Point centroCilindro4(150.f, 00.f, 110.f);
+float raio_cil4 = 4.f;
+float altura_cil4 = 20.f;
+Vector dc4(0.f, 1.0f, 0.f);
+Cilindro cilindro4(centroCilindro4, raio_cil4, altura_cil4, dc4);
+Color KCil_d4(0.8f, 0.8f, 0.8f);
+Color KCil_e4(0.8f, 0.8f, 0.8f);
+Color KCil_a4(0.8f, 0.8f, 0.8f);
+Material mat_cil4;
+
+Point centroCilindro5(150.f, 00.f, 140.f);
+float raio_cil5 = 4.f;
+float altura_cil5 = 20.f;
+Vector dc5(0.f, 1.0f, 0.f);
+Cilindro cilindro5(centroCilindro5, raio_cil5, altura_cil5, dc5);
+Color KCil_d5(0.8f, 0.8f, 0.8f);
+Color KCil_e5(0.8f, 0.8f, 0.8f);
+Color KCil_a5(0.8f, 0.8f, 0.8f);
+Material mat_cil5;
+
+Point centroCilindro6(190.f, 00.f, 110.f);
+float raio_cil6 = 4.f;
+float altura_cil6 = 20.f;
+Vector dc6(0.f, 1.0f, 0.f);
+Cilindro cilindro6(centroCilindro6, raio_cil6, altura_cil6, dc6);
+Color KCil_d6(0.8f, 0.8f, 0.8f);
+Color KCil_e6(0.8f, 0.8f, 0.8f);
+Color KCil_a6(0.8f, 0.8f, 0.8f);
+Material mat_cil6;
+
+Point centroCilindro7(190.f, 00.f, 140.f);
+float raio_cil7 = 4.f;
+float altura_cil7 = 20.f;
+Vector dc7(0.f, 1.0f, 0.f);
+Cilindro cilindro7(centroCilindro7, raio_cil7, altura_cil7, dc7);
+Color KCil_d7(0.8f, 0.8f, 0.8f);
+Color KCil_e7(0.8f, 0.8f, 0.8f);
+Color KCil_a7(0.8f, 0.8f, 0.8f);
+Material mat_cil7;
+//--------------------------------------//
 
 // nave
 Point cb_nave(175.f, 200.f, 130.f);
@@ -213,6 +261,62 @@ Color K_d3_nave(1.f, 0.f, 0.f);  // Vermelho
 Color K_a3_nave(1.f, 0.1f, 0.f);  // Vermelho
 float m_e3_nave = 10.0f;
 Esfera esfera3_nave(centroEsfera3_nave, rEsfera3_nave);
+
+// Parâmetros do cubo (corpo da vaca)
+const Point cubo_centro(170.f, 20.f, 125.f);
+const float cubo_lado = 35.0f;
+const float cubo_escala_x = 1.8f;
+const float cubo_escala_y = 1.0f;
+const float cubo_escala_z = 1.2f;
+
+// Esfera cabeça (encostada na face esquerda do cubo após a escala)
+float rEsfera_cabeca = 15.0f;
+Point centroEsfera_cabeca(
+    cubo_centro.x - (cubo_lado * 0.5f) * cubo_escala_x - rEsfera_cabeca,
+    cubo_centro.y + rEsfera_cabeca,
+    cubo_centro.z);
+Color K_e_cabeca(0.45f, 0.25f, 0.10f);
+Color K_d_cabeca(0.45f, 0.25f, 0.10f);
+Color K_a_cabeca(0.45f, 0.25f, 0.10f);
+float m_e_cabeca = 10.0f;
+Esfera esfera_cabeca(centroEsfera_cabeca, rEsfera_cabeca);
+
+// Chifres (2 cones pequenos na cabeça)
+const float raio_chifre = 2.5f;
+const float altura_chifre = 8.0f;
+Vector dc_chifre(0.f, 1.0f, 0.f);
+
+Point cb_chifre_esq(
+    centroEsfera_cabeca.x + rEsfera_cabeca * 0.20f,
+    centroEsfera_cabeca.y + rEsfera_cabeca * 0.80f,
+    centroEsfera_cabeca.z - rEsfera_cabeca * 0.35f);
+Point cb_chifre_dir(
+    centroEsfera_cabeca.x + rEsfera_cabeca * 0.20f,
+    centroEsfera_cabeca.y + rEsfera_cabeca * 0.80f,
+    centroEsfera_cabeca.z + rEsfera_cabeca * 0.35f);
+
+Vector aux_v_chifre = calcula_esc_por_vetor(altura_chifre, dc_chifre);
+Point v_chifre_esq(cb_chifre_esq.x + aux_v_chifre.i, cb_chifre_esq.y + aux_v_chifre.j, cb_chifre_esq.z + aux_v_chifre.k);
+Point v_chifre_dir(cb_chifre_dir.x + aux_v_chifre.i, cb_chifre_dir.y + aux_v_chifre.j, cb_chifre_dir.z + aux_v_chifre.k);
+
+Cone chifre_esq(cb_chifre_esq, v_chifre_esq, raio_chifre);
+Cone chifre_dir(cb_chifre_dir, v_chifre_dir, raio_chifre);
+
+Color K_chifre(0.9f, 0.68f, 0.55f);
+float m_chifre = 25.0f;
+
+// Cauda (cilindro atrás do corpo, levemente inclinado para baixo)
+const float raio_cauda = 1.6f;
+const float altura_cauda = 18.0f;
+const float cubo_meia_largura_x = (cubo_lado * 0.5f) * cubo_escala_x;
+Point cb_cauda(
+    cubo_centro.x + cubo_meia_largura_x - 0.5f,
+    cubo_centro.y + 10.0f,
+    cubo_centro.z);
+Vector dc_cauda(0.9285f, -0.3714f, 0.0f);
+Cilindro cauda(cb_cauda, raio_cauda, altura_cauda, dc_cauda);
+Color K_cauda(0.45f, 0.25f, 0.10f);
+float m_cauda = 15.0f;
 
 // Cubo (como malha)
 Malha cuboMalha;
@@ -254,6 +358,29 @@ int main() {
     esfera3_nave.setKe(Vetor(K_e3_nave.r, K_e3_nave.g, K_e3_nave.b));
     esfera3_nave.setShininess(m_e3_nave);
 
+    // esfera 3 da nave
+    esfera_cabeca.setKa(Vetor(K_a_cabeca.r, K_a_cabeca.g, K_a_cabeca.b));
+    esfera_cabeca.setKd(Vetor(K_d_cabeca.r, K_d_cabeca.g, K_d_cabeca.b));
+    esfera_cabeca.setKe(Vetor(K_e_cabeca.r, K_e_cabeca.g, K_e_cabeca.b));
+    esfera_cabeca.setShininess(m_e_cabeca);
+
+    // chifres
+    chifre_esq.setKa(Vetor(K_chifre.r, K_chifre.g, K_chifre.b));
+    chifre_esq.setKd(Vetor(K_chifre.r, K_chifre.g, K_chifre.b));
+    chifre_esq.setKe(Vetor(K_chifre.r, K_chifre.g, K_chifre.b));
+    chifre_esq.setShininess(m_chifre);
+
+    chifre_dir.setKa(Vetor(K_chifre.r, K_chifre.g, K_chifre.b));
+    chifre_dir.setKd(Vetor(K_chifre.r, K_chifre.g, K_chifre.b));
+    chifre_dir.setKe(Vetor(K_chifre.r, K_chifre.g, K_chifre.b));
+    chifre_dir.setShininess(m_chifre);
+
+    // cauda
+    cauda.setKa(Vetor(K_cauda.r, K_cauda.g, K_cauda.b));
+    cauda.setKd(Vetor(K_cauda.r, K_cauda.g, K_cauda.b));
+    cauda.setKe(Vetor(K_cauda.r, K_cauda.g, K_cauda.b));
+    cauda.setShininess(m_cauda);
+
     // Chão com textura
     mat_chao.usarTextura = true;
     mat_chao.textura = texturaMadeira;
@@ -278,6 +405,26 @@ int main() {
     cilindro3.setKe(Vetor(KCil_e3.r, KCil_e3.g, KCil_e3.b));
     cilindro3.setShininess(5);
 
+    cilindro4.setKa(Vetor(KCil_a4.r, KCil_a4.g, KCil_a4.b));
+    cilindro4.setKd(Vetor(KCil_d4.r, KCil_d4.g, KCil_d4.b));
+    cilindro4.setKe(Vetor(KCil_e4.r, KCil_e4.g, KCil_e4.b));
+    cilindro4.setShininess(m_e);
+
+    cilindro5.setKa(Vetor(KCil_a5.r, KCil_a5.g, KCil_a5.b));
+    cilindro5.setKd(Vetor(KCil_d5.r, KCil_d5.g, KCil_d5.b));
+    cilindro5.setKe(Vetor(KCil_e5.r, KCil_e5.g, KCil_e5.b));
+    cilindro5.setShininess(m_e);
+
+    cilindro6.setKa(Vetor(KCil_a6.r, KCil_a6.g, KCil_a6.b));
+    cilindro6.setKd(Vetor(KCil_d6.r, KCil_d6.g, KCil_d6.b));
+    cilindro6.setKe(Vetor(KCil_e6.r, KCil_e6.g, KCil_e6.b));
+    cilindro6.setShininess(m_e);
+
+    cilindro7.setKa(Vetor(KCil_a7.r, KCil_a7.g, KCil_a7.b));
+    cilindro7.setKd(Vetor(KCil_d7.r, KCil_d7.g, KCil_d7.b));
+    cilindro7.setKe(Vetor(KCil_e7.r, KCil_e7.g, KCil_e7.b));
+    cilindro7.setShininess(m_e);
+
     cone.setKa(Vetor(KCone.r, KCone.g, KCone.b));
     cone.setKd(Vetor(KCone.r, KCone.g, KCone.b));
     cone.setKe(Vetor(KCone.r, KCone.g, KCone.b));
@@ -299,22 +446,34 @@ int main() {
     nave.setShininess(80.0f);
 
     // Cubo como malha
-    Color K_cubo(1.f, 0.078f, 0.576f);
+    Color K_cubo(0.45f, 0.25f, 0.10f);
     cuboMalha = Cubo::criarCubo(
-        Vetor(100.f, 0.f, 100.f, 0.0f),
-        40.0,
+        Vetor(cubo_centro.x, cubo_centro.y, cubo_centro.z, 0.0f),
+        cubo_lado,
         Vetor(K_cubo.r, K_cubo.g, K_cubo.b, 0.0f),
         Vetor(K_cubo.r, K_cubo.g, K_cubo.b, 0.0f),
         Vetor(K_cubo.r, K_cubo.g, K_cubo.b, 0.0f),
         m_e
     );
 
+    cuboMalha.aplicarEscalaNoPivoObjeto(
+        Vetor(cubo_escala_x, cubo_escala_y, cubo_escala_z),
+        cubo_centro);
+
+
+    // Vetor deslocCone(20.f, 0.f, 0.f); // +X => direita
+    // cone.cb = cone.aplicarTranslacao(cone.cb, deslocCone);
+    // cone.v = cone.aplicarTranslacao(cone.v, deslocCone);
+    // cone.recalcularDerivados(); // opcional, mas seguro
+
+
     Cena cena;
     cena.observador = camera.getEye();
     cena.luz = LuzPontual{ P_F, I_F };
     cena.luzAmbiente = I_A;
     cena.objetosSombra = { &cilindro, &cone, &cilindro2, &cone2, &cilindro3, &cone3, &nave,
-        &esfera1_nave, &esfera2_nave, &esfera3_nave };
+        &esfera1_nave, &esfera2_nave, &esfera3_nave, &cilindro4, &cilindro5, &cilindro6, &cilindro7, &cuboMalha, &esfera_cabeca,
+        &chifre_esq, &chifre_dir, &cauda };
     cena.texturaMadeira = texturaMadeira;
     cena.expoenteEspecular = m_e;
     gCena = &cena;
@@ -342,15 +501,23 @@ int main() {
                 Cilindro,
                 Cilindro2,
                 Cilindro3,
+                Cilindro4,
+                Cilindro5,
+                Cilindro6,
+                Cilindro7,
+                Cauda,
                 Cone,
                 Cone2,
                 Cone3,
+                Chifre_esq,
+                Chifre_dir,
                 Cubo,
                 Esfera,
                 Nave,
                 Esfera1_nave,
                 Esfera2_nave,
-                Esfera3_nave
+                Esfera3_nave,
+                Esfera_cabeca
             };
             Hit hit = Hit::None;
 
@@ -378,26 +545,45 @@ int main() {
             float t_cil3 = cilindro3.CalcularIntersecao(Po, dr_e);
             float ti_cone3 = cone3.CalcularIntersecao(Po, dr_e);
 
-            // float t_cubo = std::numeric_limits<float>::infinity();
-            // if (cuboMalha.verificarIntersecao(
-            //     Vetor(Po.x, Po.y, Po.z, 0.0f),
-            //     Vetor(dr_e.i, dr_e.j, dr_e.k, 0.0f))) {
-            //     t_cubo = static_cast<float>(cuboMalha.getDistancia());
-            // }
+            float ti_chifre_esq = chifre_esq.CalcularIntersecao(Po, dr_e);
+            float ti_chifre_dir = chifre_dir.CalcularIntersecao(Po, dr_e);
+
+            float t_cubo = std::numeric_limits<float>::infinity();
+            if (cuboMalha.verificarIntersecao(
+                Vetor(Po.x, Po.y, Po.z, 0.0f),
+                Vetor(dr_e.i, dr_e.j, dr_e.k, 0.0f))) {
+                t_cubo = static_cast<float>(cuboMalha.getDistancia());
+            }
+            float ti_cabeca = esfera_cabeca.CalcularIntersecao(Po, dr_e);
 
             float ti_nave = nave.CalcularIntersecao(Po, dr_e);
+
+            float t_cil4 = cilindro4.CalcularIntersecao(Po, dr_e);
+            float t_cil5 = cilindro5.CalcularIntersecao(Po, dr_e);
+            float t_cil6 = cilindro6.CalcularIntersecao(Po, dr_e);
+            float t_cil7 = cilindro7.CalcularIntersecao(Po, dr_e);
+            float t_cauda = cauda.CalcularIntersecao(Po, dr_e);
 
             considerar(ti_c, Hit::Chao);
             considerar(t_cil, Hit::Cilindro);
             considerar(t_cil2, Hit::Cilindro2);
             considerar(t_cil3, Hit::Cilindro3);
+            considerar(t_cil4, Hit::Cilindro4);
+            considerar(t_cil5, Hit::Cilindro5);
+            considerar(t_cil6, Hit::Cilindro6);
+            considerar(t_cil7, Hit::Cilindro7);
+            considerar(t_cauda, Hit::Cauda);
             considerar(ti_cone, Hit::Cone);
             considerar(ti_cone2, Hit::Cone2);
             considerar(ti_cone3, Hit::Cone3);
+            considerar(ti_chifre_esq, Hit::Chifre_esq);
+            considerar(ti_chifre_dir, Hit::Chifre_dir);
             considerar(ti_nave, Hit::Nave);
             considerar(ti_esf1_nave, Hit::Esfera1_nave);
             considerar(ti_esf2_nave, Hit::Esfera2_nave);
             considerar(ti_esf3_nave, Hit::Esfera3_nave);
+            considerar(t_cubo, Hit::Cubo);
+            considerar(ti_cabeca, Hit::Esfera_cabeca);
 
             Color cor(46, 68, 130);  // Cor de fundo (azul escuro)
 
@@ -417,6 +603,21 @@ int main() {
             case Hit::Cilindro3:
                 cor = cilindro3.CalcularCor(cena, t_best, dr_e);
                 break;
+            case Hit::Cilindro4:
+                cor = cilindro4.CalcularCor(cena, t_best, dr_e);
+                break;
+            case Hit::Cilindro5:
+                cor = cilindro5.CalcularCor(cena, t_best, dr_e);
+                break;
+            case Hit::Cilindro6:
+                cor = cilindro6.CalcularCor(cena, t_best, dr_e);
+                break;
+            case Hit::Cilindro7:
+                cor = cilindro7.CalcularCor(cena, t_best, dr_e);
+                break;
+            case Hit::Cauda:
+                cor = cauda.CalcularCor(cena, t_best, dr_e);
+                break;
             case Hit::Cone:
                 cor = cone.CalcularCor(cena, t_best, dr_e);
                 break;
@@ -425,6 +626,12 @@ int main() {
                 break;
             case Hit::Cone3:
                 cor = cone3.CalcularCor(cena, t_best, dr_e);
+                break;
+            case Hit::Chifre_esq:
+                cor = chifre_esq.CalcularCor(cena, t_best, dr_e);
+                break;
+            case Hit::Chifre_dir:
+                cor = chifre_dir.CalcularCor(cena, t_best, dr_e);
                 break;
             case Hit::Nave:
             {
@@ -456,17 +663,20 @@ int main() {
             case Hit::Esfera3_nave:
                 cor = esfera3_nave.CalcularCor(cena, t_best, dr_e);
                 break;
-                // case Hit::Cubo: {
-                //     Vetor PiV = cuboMalha.getPontoIntersecao();
-                //     Vetor nV = cuboMalha.calcularNormal(PiV);
-                //     Plano plano_cubo(Point(PiV.i, PiV.j, PiV.k), Vector(nV.i, nV.j, nV.k), Material());
-                //     plano_cubo.setKa(cuboMalha.getKa());
-                //     plano_cubo.setKd(cuboMalha.getKd());
-                //     plano_cubo.setKe(cuboMalha.getKe());
-                //     plano_cubo.setShininess(cuboMalha.getShininess());
-                //     cor = plano_cubo.CalcularCor(cena, dr_e);
-                //     break;
-                // }
+            case Hit::Cubo: {
+                Vetor PiV = cuboMalha.getPontoIntersecao();
+                Vetor nV = cuboMalha.calcularNormal(PiV);
+                Plano plano_cubo(Point(PiV.i, PiV.j, PiV.k), Vector(nV.i, nV.j, nV.k), Material());
+                plano_cubo.setKa(cuboMalha.getKa());
+                plano_cubo.setKd(cuboMalha.getKd());
+                plano_cubo.setKe(cuboMalha.getKe());
+                plano_cubo.setShininess(cuboMalha.getShininess());
+                cor = plano_cubo.CalcularCor(cena, dr_e);
+                break;
+            }
+            case Hit::Esfera_cabeca:
+                cor = esfera_cabeca.CalcularCor(cena, t_best, dr_e);
+                break;
             case Hit::None:
             default:
                 break;

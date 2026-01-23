@@ -21,8 +21,8 @@ void Esfera::aplicarEscalaUniforme(float s) {
     raio *= s;
 }
 
-void Esfera::aplicarEscalaNoPivoObjeto(const Vetor& escala) {
-    centro = Objeto::aplicarEscalaNoPivo(centro, escala, Point(0.0f, 0.0f, 0.0f));
+void Esfera::aplicarEscalaNoPivoObjeto(const Vetor& escala, const Point& pivo) {
+    centro = Objeto::aplicarEscalaNoPivo(centro, escala, pivo);
 
     const float sx = std::fabs(escala.i);
     const float sy = std::fabs(escala.j);
@@ -73,9 +73,10 @@ Color Esfera::CalcularCor(const Cena& cena, float t, const Vector& dir,
     const Color& K_a, const Color& K_d, const Color& K_e) const {
     Point P = calcula_eq_ray(cena.observador, t, dir);
 
-    bool naSombra = false;
-    float dist_Pi_Luz = calcula_norma(subtrai_pontos(cena.luz.pos, P));
-    if (t < dist_Pi_Luz) naSombra = true;
+    Vector l = calcula_l(cena.luz.pos, P);
+    Point P_mod(P.x + l.i * 1e-4f, P.y + l.j * 1e-4f, P.z + l.k * 1e-4f);
+    float dist_Pi_Luz = calcula_norma(subtrai_pontos(cena.luz.pos, P_mod));
+    bool naSombra = cena.estaNaSombra(P_mod, l, dist_Pi_Luz, const_cast<Esfera*>(this));
 
     Color Ia(cena.luzAmbiente.r * K_a.r, cena.luzAmbiente.g * K_a.g, cena.luzAmbiente.b * K_a.b);
     if (naSombra) {
@@ -87,7 +88,6 @@ Color Esfera::CalcularCor(const Cena& cena, float t, const Vector& dir,
     }
 
     Vector n = CalcularNormal(P);
-    Vector l = calcula_l(cena.luz.pos, P);
     Vector v(-dir.i, -dir.j, -dir.k);
     Vector r1 = calcula_esc_por_vetor(2.0f, calcula_esc_por_vetor(calcula_prod_esc(n, l), n));
     Vector r(r1.i - l.i, r1.j - l.j, r1.k - l.k);
@@ -117,9 +117,10 @@ Color Esfera::CalcularCor(const Cena& cena, float t, const Vector& dir,
 Color Esfera::CalcularCor(const Cena& cena, float t, const Vector& dir) const {
     Point P = calcula_eq_ray(cena.observador, t, dir);
 
-    bool naSombra = false;
-    float dist_Pi_Luz = calcula_norma(subtrai_pontos(cena.luz.pos, P));
-    if (t < dist_Pi_Luz) naSombra = true;
+    Vector l = calcula_l(cena.luz.pos, P);
+    Point P_mod(P.x + l.i * 1e-4f, P.y + l.j * 1e-4f, P.z + l.k * 1e-4f);
+    float dist_Pi_Luz = calcula_norma(subtrai_pontos(cena.luz.pos, P_mod));
+    bool naSombra = cena.estaNaSombra(P_mod, l, dist_Pi_Luz, const_cast<Esfera*>(this));
 
     Vetor kaV = getKa();
     Vetor kdV = getKd();
@@ -138,7 +139,6 @@ Color Esfera::CalcularCor(const Cena& cena, float t, const Vector& dir) const {
     }
 
     Vector n = CalcularNormal(P);
-    Vector l = calcula_l(cena.luz.pos, P);
     Vector v(-dir.i, -dir.j, -dir.k);
     Vector r1 = calcula_esc_por_vetor(2.0f, calcula_esc_por_vetor(calcula_prod_esc(n, l), n));
     Vector r(r1.i - l.i, r1.j - l.j, r1.k - l.k);

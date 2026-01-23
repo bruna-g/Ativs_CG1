@@ -46,10 +46,10 @@ void Cone::aplicarEscalaUniforme(float s) {
     recalcularDerivados();
 }
 
-void Cone::aplicarEscalaNoPivoObjeto(const Vetor& escala) {
+void Cone::aplicarEscalaNoPivoObjeto(const Vetor& escala, const Point& pivo) {
     // 1) Escala os pontos que definem o cone.
-    cb = Objeto::aplicarEscalaNoPivo(cb, escala, Point(0.0f, 0.0f, 0.0f));
-    v = Objeto::aplicarEscalaNoPivo(v, escala, Point(0.0f, 0.0f, 0.0f));
+    cb = Objeto::aplicarEscalaNoPivo(cb, escala, pivo);
+    v = Objeto::aplicarEscalaNoPivo(v, escala, pivo);
 
     // 2) Atualiza raio com um fator radial aproximado no plano perpendicular ao eixo.
     Vector eixo = subtrai_pontos(v, cb);
