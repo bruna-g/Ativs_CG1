@@ -1,4 +1,4 @@
-#include "Malha.h"
+#include "../include/Malha.h"
 #include <cmath>
 #include <limits>
 
@@ -202,17 +202,19 @@ Vetor Malha::calcularNormal(Vetor /*posicao*/) {
     return normal;
 }
 
-void Malha::aplicarEscalaNoPivoObjeto(const Vetor& escala) {
+void Malha::aplicarEscalaNoPivoObjeto(const Vetor& escala, const Point& pivo) {
     const float sx = escala.i;
     const float sy = escala.j;
     const float sz = escala.k;
-    
+
     for (auto& vert : vertices) {
         Vetor& p = vert.pos;
+        Point pt(p.i, p.j, p.k);
+        Point pt2 = Objeto::aplicarEscalaNoPivo(pt, Vetor(sx, sy, sz), pivo);
         p = Vetor(
-            p.i * sx,
-            p.j * sy,
-            p.k * sz,
+            pt2.x,
+            pt2.y,
+            pt2.z,
             p.q
         );
     }

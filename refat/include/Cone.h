@@ -36,7 +36,7 @@ public:
 
     bool verificarIntersecao(Vetor p0, Vetor dr) override;
     Vetor calcularNormal(Vetor posicao) override;
-    void aplicarEscalaNoPivoObjeto(const Vetor& escala) override;
+    void aplicarEscalaNoPivoObjeto(const Vetor& escala, const Point& pivo) override;
 
     Point aplicarTranslacao(const Point& ponto, const Vetor& translacao) const {
         return Objeto::aplicarTranslacao(ponto, translacao);
