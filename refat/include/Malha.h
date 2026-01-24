@@ -59,6 +59,13 @@ public:
         return Objeto::aplicarEscala(ponto, escala);
     }
 
+    void rotacionarX(float angulo);
+    void rotacionarY(float angulo);
+    void rotacionarZ(float angulo);
+    void rotacaoArbitraria(Vector eixo, float angulo);
+
+    Point calcularCentro();
+
 private:
     bool rayTriangleIntersect(const Vetor& origem, const Vetor& dir,
         const Vetor& v0, const Vetor& v1, const Vetor& v2,

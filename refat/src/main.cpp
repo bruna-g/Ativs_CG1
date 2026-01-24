@@ -182,7 +182,7 @@ Material mat_cone3;
 //----------------------------------------------//
 //-----------------Vaca---------------------//
 // Cilindro
-Point centroCilindro4(150.f, 00.f, 110.f);
+Point centroCilindro4(150.f, 20.f, 110.f);
 float raio_cil4 = 4.f;
 float altura_cil4 = 20.f;
 Vector dc4(0.f, 1.0f, 0.f);
@@ -192,7 +192,7 @@ Color KCil_e4(0.8f, 0.8f, 0.8f);
 Color KCil_a4(0.8f, 0.8f, 0.8f);
 Material mat_cil4;
 
-Point centroCilindro5(150.f, 00.f, 140.f);
+Point centroCilindro5(150.f, 20.f, 140.f);
 float raio_cil5 = 4.f;
 float altura_cil5 = 20.f;
 Vector dc5(0.f, 1.0f, 0.f);
@@ -202,7 +202,7 @@ Color KCil_e5(0.8f, 0.8f, 0.8f);
 Color KCil_a5(0.8f, 0.8f, 0.8f);
 Material mat_cil5;
 
-Point centroCilindro6(190.f, 00.f, 110.f);
+Point centroCilindro6(125.f, 45.f, 110.f);
 float raio_cil6 = 4.f;
 float altura_cil6 = 20.f;
 Vector dc6(0.f, 1.0f, 0.f);
@@ -212,7 +212,7 @@ Color KCil_e6(0.8f, 0.8f, 0.8f);
 Color KCil_a6(0.8f, 0.8f, 0.8f);
 Material mat_cil6;
 
-Point centroCilindro7(190.f, 00.f, 140.f);
+Point centroCilindro7(125.f, 45.f, 140.f);
 float raio_cil7 = 4.f;
 float altura_cil7 = 20.f;
 Vector dc7(0.f, 1.0f, 0.f);
@@ -221,6 +221,66 @@ Color KCil_d7(0.8f, 0.8f, 0.8f);
 Color KCil_e7(0.8f, 0.8f, 0.8f);
 Color KCil_a7(0.8f, 0.8f, 0.8f);
 Material mat_cil7;
+
+// Parâmetros do cubo (corpo da vaca)
+const Point cubo_centro(170.f, 40.f, 125.f);
+const float cubo_lado = 35.0f;
+const float cubo_escala_x = 1.8f;
+const float cubo_escala_y = 1.0f;
+const float cubo_escala_z = 1.2f;
+
+// Esfera cabeça (encostada na face esquerda do cubo após a escala)
+float rEsfera_cabeca = 15.0f;
+Point centroEsfera_cabeca(135.f, 90.f, 125.f);
+Color K_e_cabeca(0.45f, 0.25f, 0.10f);
+Color K_d_cabeca(0.45f, 0.25f, 0.10f);
+Color K_a_cabeca(0.45f, 0.25f, 0.10f);
+float m_e_cabeca = 10.0f;
+Esfera esfera_cabeca(centroEsfera_cabeca, rEsfera_cabeca);
+
+// Chifres (2 cones pequenos na cabeça)
+const float raio_chifre = 2.5f;
+const float altura_chifre = 8.0f;
+Vector dc_chifre(0.f, 1.0f, 0.f);
+
+Point cb_chifre_esq(
+    centroEsfera_cabeca.x + rEsfera_cabeca * 0.20f,
+    centroEsfera_cabeca.y + rEsfera_cabeca * 0.80f,
+    centroEsfera_cabeca.z - rEsfera_cabeca * 0.35f);
+Point cb_chifre_dir(
+    centroEsfera_cabeca.x + rEsfera_cabeca * 0.20f,
+    centroEsfera_cabeca.y + rEsfera_cabeca * 0.80f,
+    centroEsfera_cabeca.z + rEsfera_cabeca * 0.35f);
+
+Vector aux_v_chifre = calcula_esc_por_vetor(altura_chifre, dc_chifre);
+Point v_chifre_esq(cb_chifre_esq.x + aux_v_chifre.i, cb_chifre_esq.y + aux_v_chifre.j, cb_chifre_esq.z + aux_v_chifre.k);
+Point v_chifre_dir(cb_chifre_dir.x + aux_v_chifre.i, cb_chifre_dir.y + aux_v_chifre.j, cb_chifre_dir.z + aux_v_chifre.k);
+
+Cone chifre_esq(cb_chifre_esq, v_chifre_esq, raio_chifre);
+Cone chifre_dir(cb_chifre_dir, v_chifre_dir, raio_chifre);
+
+Color K_chifre(0.9f, 0.68f, 0.55f);
+float m_chifre = 25.0f;
+
+// Cauda (cilindro atrás do corpo, levemente inclinado para baixo)
+const float raio_cauda = 1.6f;
+const float altura_cauda = 18.0f;
+const float cubo_meia_largura_x = (cubo_lado * 0.5f) * cubo_escala_x;
+Point cb_cauda(
+    cubo_centro.x + cubo_meia_largura_x - 0.5f,
+    cubo_centro.y + 10.0f,
+    cubo_centro.z);
+Vector dc_cauda(0.f, 1.f, 0.0f);
+Cilindro cauda(cb_cauda, raio_cauda, altura_cauda, dc_cauda);
+Color K_cauda(0.45f, 0.25f, 0.10f);
+float m_cauda = 15.0f;
+
+// Cubo (como malha)
+Malha cuboMalha;
+
+Matriz3x3 M_id(1.0f, 0.0f, 0.0f,
+    0.0f, 1.0f, 0.0f,
+    0.0f, 0.0f, 1.0f);
 //--------------------------------------//
 
 // nave
@@ -262,68 +322,7 @@ Color K_a3_nave(1.f, 0.1f, 0.f);  // Vermelho
 float m_e3_nave = 10.0f;
 Esfera esfera3_nave(centroEsfera3_nave, rEsfera3_nave);
 
-// Parâmetros do cubo (corpo da vaca)
-const Point cubo_centro(170.f, 20.f, 125.f);
-const float cubo_lado = 35.0f;
-const float cubo_escala_x = 1.8f;
-const float cubo_escala_y = 1.0f;
-const float cubo_escala_z = 1.2f;
 
-// Esfera cabeça (encostada na face esquerda do cubo após a escala)
-float rEsfera_cabeca = 15.0f;
-Point centroEsfera_cabeca(
-    cubo_centro.x - (cubo_lado * 0.5f) * cubo_escala_x - rEsfera_cabeca,
-    cubo_centro.y + rEsfera_cabeca,
-    cubo_centro.z);
-Color K_e_cabeca(0.45f, 0.25f, 0.10f);
-Color K_d_cabeca(0.45f, 0.25f, 0.10f);
-Color K_a_cabeca(0.45f, 0.25f, 0.10f);
-float m_e_cabeca = 10.0f;
-Esfera esfera_cabeca(centroEsfera_cabeca, rEsfera_cabeca);
-
-// Chifres (2 cones pequenos na cabeça)
-const float raio_chifre = 2.5f;
-const float altura_chifre = 8.0f;
-Vector dc_chifre(0.f, 1.0f, 0.f);
-
-Point cb_chifre_esq(
-    centroEsfera_cabeca.x + rEsfera_cabeca * 0.20f,
-    centroEsfera_cabeca.y + rEsfera_cabeca * 0.80f,
-    centroEsfera_cabeca.z - rEsfera_cabeca * 0.35f);
-Point cb_chifre_dir(
-    centroEsfera_cabeca.x + rEsfera_cabeca * 0.20f,
-    centroEsfera_cabeca.y + rEsfera_cabeca * 0.80f,
-    centroEsfera_cabeca.z + rEsfera_cabeca * 0.35f);
-
-Vector aux_v_chifre = calcula_esc_por_vetor(altura_chifre, dc_chifre);
-Point v_chifre_esq(cb_chifre_esq.x + aux_v_chifre.i, cb_chifre_esq.y + aux_v_chifre.j, cb_chifre_esq.z + aux_v_chifre.k);
-Point v_chifre_dir(cb_chifre_dir.x + aux_v_chifre.i, cb_chifre_dir.y + aux_v_chifre.j, cb_chifre_dir.z + aux_v_chifre.k);
-
-Cone chifre_esq(cb_chifre_esq, v_chifre_esq, raio_chifre);
-Cone chifre_dir(cb_chifre_dir, v_chifre_dir, raio_chifre);
-
-Color K_chifre(0.9f, 0.68f, 0.55f);
-float m_chifre = 25.0f;
-
-// Cauda (cilindro atrás do corpo, levemente inclinado para baixo)
-const float raio_cauda = 1.6f;
-const float altura_cauda = 18.0f;
-const float cubo_meia_largura_x = (cubo_lado * 0.5f) * cubo_escala_x;
-Point cb_cauda(
-    cubo_centro.x + cubo_meia_largura_x - 0.5f,
-    cubo_centro.y + 10.0f,
-    cubo_centro.z);
-Vector dc_cauda(0.9285f, -0.3714f, 0.0f);
-Cilindro cauda(cb_cauda, raio_cauda, altura_cauda, dc_cauda);
-Color K_cauda(0.45f, 0.25f, 0.10f);
-float m_cauda = 15.0f;
-
-// Cubo (como malha)
-Malha cuboMalha;
-
-Matriz3x3 M_id(1.0f, 0.0f, 0.0f,
-    0.0f, 1.0f, 0.0f,
-    0.0f, 0.0f, 1.0f);
 
 int main() {
     SDL_Window* window = nullptr;
@@ -455,19 +454,25 @@ int main() {
         Vetor(K_cubo.r, K_cubo.g, K_cubo.b, 0.0f),
         m_e
     );
-
     cuboMalha.aplicarEscalaNoPivoObjeto(
         Vetor(cubo_escala_x, cubo_escala_y, cubo_escala_z),
         cubo_centro);
 
+    cuboMalha.rotacionarZ(-45.0f);
 
     // Vetor deslocCone(20.f, 0.f, 0.f); // +X => direita
     // cone.cb = cone.aplicarTranslacao(cone.cb, deslocCone);
     // cone.v = cone.aplicarTranslacao(cone.v, deslocCone);
     // cone.recalcularDerivados(); // opcional, mas seguro
 
+    cilindro4.rotacionarZ(-45.0f);
+    cilindro5.rotacionarZ(-45.0f);
+    cilindro6.rotacionarZ(-45.0f);
+    cilindro7.rotacionarZ(-45.0f);
+    cauda.rotacionarZ(-45.0f);
 
-    cilindro2.rotacionarX(60.0f, cilindro2);
+    chifre_esq.rotacionarZ(-45.0f);
+    chifre_dir.rotacionarZ(-45.0f);
 
     Cena cena;
     cena.observador = camera.getEye();

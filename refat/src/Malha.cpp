@@ -1,6 +1,7 @@
 #include "../include/Malha.h"
 #include <cmath>
 #include <limits>
+#include <Matriz4x4.h>
 
 Malha::Malha() : arestas(), faces(), vertices(), normal(0.0f, 0.0f, 0.0f), al() {
 }
@@ -51,6 +52,126 @@ void Malha::aplicarEscalaUniforme(float s) {
         }
     }
     atualizarNormalGlobal();
+}
+
+void Malha::rotacionarX(float angulo) {
+    Point centro = calcularCentro();
+    Matriz4x4 R = Matriz4x4::rotacaoX(angulo);
+
+    for (auto& vertice : vertices) {
+        Vetor& v = vertice.pos;
+        Point p(v.i, v.j, v.k);
+        p = aplicarTranslacao(p, Vector(-centro.x, -centro.y, -centro.z));
+
+        p = R.multiplicarPonto(p);
+
+        p = aplicarTranslacao(p, Vector(centro.x, centro.y, centro.z));
+
+        vertice.pos.i = p.x;
+        vertice.pos.j = p.y;
+        vertice.pos.k = p.z;
+    }
+
+    for (auto& face : faces) {
+        if (face.indices.size() >= 3) {
+            face.normal = calcularNormalFace(face);
+        }
+    }
+    atualizarNormalGlobal();
+}
+
+void Malha::rotacionarY(float angulo) {
+    Point centro = calcularCentro();
+    Matriz4x4 R = Matriz4x4::rotacaoY(angulo);
+
+    for (auto& vertice : vertices) {
+        Vetor& v = vertice.pos;
+        Point p(v.i, v.j, v.k);
+        p = aplicarTranslacao(p, Vector(-centro.x, -centro.y, -centro.z));
+
+        p = R.multiplicarPonto(p);
+
+        p = aplicarTranslacao(p, Vector(centro.x, centro.y, centro.z));
+
+        vertice.pos.i = p.x;
+        vertice.pos.j = p.y;
+        vertice.pos.k = p.z;
+    }
+
+    for (auto& face : faces) {
+        if (face.indices.size() >= 3) {
+            face.normal = calcularNormalFace(face);
+        }
+    }
+    atualizarNormalGlobal();
+}
+
+void Malha::rotacionarZ(float angulo) {
+    Point centro = calcularCentro();
+    Matriz4x4 R = Matriz4x4::rotacaoZ(angulo);
+
+    for (auto& vertice : vertices) {
+        Vetor& v = vertice.pos;
+        Point p(v.i, v.j, v.k);
+        p = aplicarTranslacao(p, Vector(-centro.x, -centro.y, -centro.z));
+
+        p = R.multiplicarPonto(p);
+
+        p = aplicarTranslacao(p, Vector(centro.x, centro.y, centro.z));
+
+        vertice.pos.i = p.x;
+        vertice.pos.j = p.y;
+        vertice.pos.k = p.z;
+    }
+
+    for (auto& face : faces) {
+        if (face.indices.size() >= 3) {
+            face.normal = calcularNormalFace(face);
+        }
+    }
+    atualizarNormalGlobal();
+}
+
+void Malha::rotacaoArbitraria(Vector eixo, float angulo) {
+    Point centro = calcularCentro();
+    Matriz4x4 R = Matriz4x4::rotacaoArbitraria(eixo, angulo);
+
+    for (auto& vertice : vertices) {
+        Vetor& v = vertice.pos;
+        Point p(v.i, v.j, v.k);
+        p = aplicarTranslacao(p, Vector(-centro.x, -centro.y, -centro.z));
+
+        p = R.multiplicarPonto(p);
+
+        p = aplicarTranslacao(p, Vector(centro.x, centro.y, centro.z));
+
+        vertice.pos.i = p.x;
+        vertice.pos.j = p.y;
+        vertice.pos.k = p.z;
+    }
+
+    for (auto& face : faces) {
+        if (face.indices.size() >= 3) {
+            face.normal = calcularNormalFace(face);
+        }
+    }
+    atualizarNormalGlobal();
+}
+
+Point Malha::calcularCentro() {
+    if (this->vertices.empty()) {
+        return Point(0, 0, 0);
+    }
+
+    float somaX = 0, somaY = 0, somaZ = 0;
+    for (const auto& vertice : vertices) {
+        somaX += vertice.pos.i;
+        somaY += vertice.pos.j;
+        somaZ += vertice.pos.k;
+    }
+
+    int n = vertices.size();
+    return Point(somaX / n, somaY / n, somaZ / n);
 }
 
 bool Malha::rayTriangleIntersect(const Vetor& origem, const Vetor& dir,

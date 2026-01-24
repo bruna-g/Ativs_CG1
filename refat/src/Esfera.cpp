@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <Matriz4x4.h>
 
 Esfera::Esfera(const Point& centro_e, const float raio_e)
     : centro(centro_e), raio(raio_e), material() {
@@ -163,6 +164,54 @@ Color Esfera::CalcularCor(const Cena& cena, float t, const Vector& dir) const {
     int G = static_cast<int>(roundf(I.g * 255.0f));
     int B = static_cast<int>(roundf(I.b * 255.0f));
     return Color(R, G, B);
+}
+
+void Esfera::rotacionarX(float angulo) {
+    Point pivo = this->centro;
+    // Transladar para a origem
+    this->centro = this->aplicarTranslacao(this->centro, Vector(-pivo.x, -pivo.y, -pivo.z));
+    Matriz4x4 R = Matriz4x4::rotacaoX(angulo);
+
+    // Aplicar rotação na base e no eixo
+    this->centro = R.multiplicarPonto(this->centro);
+    // Transladar de volta para a posição original
+    this->centro = this->aplicarTranslacao(this->centro, Vector(pivo.x, pivo.y, pivo.z));
+}
+
+void Esfera::rotacionarY(float angulo) {
+    Point pivo = this->centro;
+    // Transladar para a origem
+    this->centro = this->aplicarTranslacao(this->centro, Vector(-pivo.x, -pivo.y, -pivo.z));
+    Matriz4x4 R = Matriz4x4::rotacaoY(angulo);
+
+    // Aplicar rotação na base e no eixo
+    this->centro = R.multiplicarPonto(this->centro);
+    // Transladar de volta para a posição original
+    this->centro = this->aplicarTranslacao(this->centro, Vector(pivo.x, pivo.y, pivo.z));
+}
+
+void Esfera::rotacionarZ(float angulo) {
+    Point pivo = this->centro;
+    // Transladar para a origem
+    this->centro = this->aplicarTranslacao(this->centro, Vector(-pivo.x, -pivo.y, -pivo.z));
+    Matriz4x4 R = Matriz4x4::rotacaoZ(angulo);
+
+    // Aplicar rotação na base e no eixo
+    this->centro = R.multiplicarPonto(this->centro);
+    // Transladar de volta para a posição original
+    this->centro = this->aplicarTranslacao(this->centro, Vector(pivo.x, pivo.y, pivo.z));
+}
+
+void Esfera::rotacaoArbitraria(Vector eixo, float angulo) {
+    Point pivo = this->centro;
+    // Transladar para a origem
+    this->centro = this->aplicarTranslacao(this->centro, Vector(-pivo.x, -pivo.y, -pivo.z));
+    Matriz4x4 R = Matriz4x4::rotacaoArbitraria(eixo, angulo);
+
+    // Aplicar rotação na base e no eixo
+    this->centro = R.multiplicarPonto(this->centro);
+    // Transladar de volta para a posição original
+    this->centro = this->aplicarTranslacao(this->centro, Vector(pivo.x, pivo.y, pivo.z));
 }
 
 bool Esfera::verificarIntersecao(Vetor p0, Vetor dr) {

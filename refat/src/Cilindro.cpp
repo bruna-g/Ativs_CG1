@@ -71,14 +71,78 @@ Point calcularCentro(Cilindro cilindro) {
     return soma;
 }
 
-void Cilindro::rotacionarX(float angulo, Cilindro cilindro) {
-    Point centro = calcularCentro(cilindro);
-    cilindro.cb = cilindro.aplicarTranslacao(cilindro.cb, Vector(-centro.x, -centro.y, -centro.z));
-    
+// void Cilindro::rotacionarX(float angulo, Cilindro cilindro) {
+//     //Point centro = calcularCentro(cilindro);
+//     cilindro.cb = cilindro.aplicarTranslacao(cilindro.cb, Vector(-cilindro.cb.x, -cilindro.cb.y, -cilindro.cb.z));
+
+//     Matriz4x4 R = Matriz4x4::rotacaoX(angulo);
+
+//     cilindro.cb = R.multiplicarPonto(cilindro.cb);
+
+//     Matriz4x4 R_inversa = Matriz4x4::inversa(R);
+//     Matriz4x4 R_normal = Matriz4x4::transposta(R_inversa);
+//     Vector dc_aux = R_normal.multiplicarVetor(cilindro.dc);
+//     cilindro.dc = normalizar(dc_aux);
+
+//     cilindro.cb = cilindro.aplicarTranslacao(cilindro.cb, Vector(cilindro.cb.x, cilindro.cb.y, cilindro.cb.z));
+
+// }
+
+void Cilindro::rotacionarX(float angulo) {
+    Point pivo = this->cb;
+    // Transladar para a origem
+    this->cb = this->aplicarTranslacao(this->cb, Vector(-pivo.x, -pivo.y, -pivo.z));
     Matriz4x4 R = Matriz4x4::rotacaoX(angulo);
-    cilindro.cb = R.multiplicarPonto(cilindro.cb);
-    
-    cilindro.cb = cilindro.aplicarTranslacao(cilindro.cb, Vector(centro.x, centro.y, centro.z));
+
+    // Aplicar rotação na base e no eixo
+    this->cb = R.multiplicarPonto(this->cb);
+    this->dc = R.multiplicarVetor(this->dc);
+    this->dc = normalizar(this->dc);
+    // Transladar de volta para a posição original
+    this->cb = this->aplicarTranslacao(this->cb, Vector(pivo.x, pivo.y, pivo.z));
+}
+
+void Cilindro::rotacionarY(float angulo) {
+    Point pivo = this->cb;
+    // Transladar para a origem
+    this->cb = this->aplicarTranslacao(this->cb, Vector(-pivo.x, -pivo.y, -pivo.z));
+    Matriz4x4 R = Matriz4x4::rotacaoY(angulo);
+
+    // Aplicar rotação na base e no eixo
+    this->cb = R.multiplicarPonto(this->cb);
+    this->dc = R.multiplicarVetor(this->dc);
+    this->dc = normalizar(this->dc);
+    // Transladar de volta para a posição original
+    this->cb = this->aplicarTranslacao(this->cb, Vector(pivo.x, pivo.y, pivo.z));
+}
+
+void Cilindro::rotacionarZ(float angulo) {
+    Point pivo = this->cb;
+    // Transladar para a origem
+    this->cb = this->aplicarTranslacao(this->cb, Vector(-pivo.x, -pivo.y, -pivo.z));
+    Matriz4x4 R = Matriz4x4::rotacaoZ(angulo);
+
+    // Aplicar rotação na base e no eixo
+    this->cb = R.multiplicarPonto(this->cb);
+    this->dc = R.multiplicarVetor(this->dc);
+    this->dc = normalizar(this->dc);
+    // Transladar de volta para a posição original
+    this->cb = this->aplicarTranslacao(this->cb, Vector(pivo.x, pivo.y, pivo.z));
+}
+
+void Cilindro::rotacaoArbitraria(Vector eixo, float angulo){
+    Point pivo = this->cb;
+    // Transladar para a origem
+    this->cb = this->aplicarTranslacao(this->cb, Vector(-pivo.x, -pivo.y, -pivo.z));
+    Matriz4x4 R = Matriz4x4::rotacaoArbitraria(eixo, angulo);
+
+    // Aplicar rotação na base e no eixo
+    this->cb = R.multiplicarPonto(this->cb);
+    this->dc = R.multiplicarVetor(this->dc);
+    this->dc = normalizar(this->dc);
+    // Transladar de volta para a posição original
+    this->cb = this->aplicarTranslacao(this->cb, Vector(pivo.x, pivo.y, pivo.z));
+
 }
 
 

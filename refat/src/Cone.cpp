@@ -5,6 +5,7 @@
 #include "../include/Matriz3x3.h"
 #include "../include/Vector.h"
 #include "../include/Utils.h"
+#include "../include/Matriz4x4.h"
 #include <cmath>
 #include <algorithm>
 #include <limits>
@@ -17,6 +18,74 @@ Cone::Cone(const Point& cb_c, const Point& v_c, const float raio_c)
 Cone::Cone(const Point& cb_c, const Point& v_c, const float raio_c, const Material& material_p)
     : Cone(cb_c, v_c, raio_c) {
     material = material_p;
+}
+
+void Cone::rotacionarX(float angulo) {
+    Point pivo = this->cb;
+    // Transladar para a origem
+    this->cb = this->aplicarTranslacao(this->cb, Vector(-pivo.x, -pivo.y, -pivo.z));
+    this->v = this->aplicarTranslacao(this->v, Vector(-pivo.x, -pivo.y, -pivo.z));
+    Matriz4x4 R = Matriz4x4::rotacaoX(angulo);
+
+    // Aplicar rotação na base e no eixo
+    this->cb = R.multiplicarPonto(this->cb);
+    this->v = R.multiplicarPonto(this->v);
+    this->dc = R.multiplicarVetor(this->dc);
+    this->dc = normalizar(this->dc);
+    // Transladar de volta para a posição original
+    this->cb = this->aplicarTranslacao(this->cb, Vector(pivo.x, pivo.y, pivo.z));
+    this->v = this->aplicarTranslacao(this->v, Vector(pivo.x, pivo.y, pivo.z));
+}
+
+void Cone::rotacionarY(float angulo) {
+    Point pivo = this->cb;
+    // Transladar para a origem
+    this->cb = this->aplicarTranslacao(this->cb, Vector(-pivo.x, -pivo.y, -pivo.z));
+    this->v = this->aplicarTranslacao(this->v, Vector(-pivo.x, -pivo.y, -pivo.z));
+    Matriz4x4 R = Matriz4x4::rotacaoY(angulo);
+
+    // Aplicar rotação na base e no eixo
+    this->cb = R.multiplicarPonto(this->cb);
+    this->v = R.multiplicarPonto(this->v);
+    this->dc = R.multiplicarVetor(this->dc);
+    this->dc = normalizar(this->dc);
+    // Transladar de volta para a posição original
+    this->cb = this->aplicarTranslacao(this->cb, Vector(pivo.x, pivo.y, pivo.z));
+    this->v = this->aplicarTranslacao(this->v, Vector(pivo.x, pivo.y, pivo.z));
+}
+
+void Cone::rotacionarZ(float angulo) {
+    Point pivo = this->cb;
+    // Transladar para a origem
+    this->cb = this->aplicarTranslacao(this->cb, Vector(-pivo.x, -pivo.y, -pivo.z));
+    this->v = this->aplicarTranslacao(this->v, Vector(-pivo.x, -pivo.y, -pivo.z));
+    Matriz4x4 R = Matriz4x4::rotacaoZ(angulo);
+
+    // Aplicar rotação na base e no eixo
+    this->cb = R.multiplicarPonto(this->cb);
+    this->v = R.multiplicarPonto(this->v);
+    this->dc = R.multiplicarVetor(this->dc);
+    this->dc = normalizar(this->dc);
+    // Transladar de volta para a posição original
+    this->cb = this->aplicarTranslacao(this->cb, Vector(pivo.x, pivo.y, pivo.z));
+    this->v = this->aplicarTranslacao(this->v, Vector(pivo.x, pivo.y, pivo.z));
+}
+
+void Cone::rotacaoArbitraria(Vector eixo, float angulo) {
+    Point pivo = this->cb;
+    // Transladar para a origem
+    this->cb = this->aplicarTranslacao(this->cb, Vector(-pivo.x, -pivo.y, -pivo.z));
+    this->v = this->aplicarTranslacao(this->v, Vector(-pivo.x, -pivo.y, -pivo.z));
+    Matriz4x4 R = Matriz4x4::rotacaoArbitraria(eixo, angulo);
+
+    // Aplicar rotação na base e no eixo
+    this->cb = R.multiplicarPonto(this->cb);
+    this->v = R.multiplicarPonto(this->v);
+    this->dc = R.multiplicarVetor(this->dc);
+    this->dc = normalizar(this->dc);
+    // Transladar de volta para a posição original
+    this->cb = this->aplicarTranslacao(this->cb, Vector(pivo.x, pivo.y, pivo.z));
+    this->v = this->aplicarTranslacao(this->v, Vector(pivo.x, pivo.y, pivo.z));
 }
 
 void Cone::recalcularDerivados() {
