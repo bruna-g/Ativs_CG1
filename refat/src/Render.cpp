@@ -14,6 +14,8 @@
 #include "Textura.hpp"
 #include "Utils.h"
 
+#include <cmath>
+
 // Dependências globais (continuam sendo definidas em main.cpp)
 extern int nCol;
 extern int nLin;
@@ -53,6 +55,7 @@ extern Malha cuboMalha;
 
 // Textura da vaca (definida em main.cpp)
 extern Textura* texturaVaca;
+extern Textura* texturaCeu;
 
 void renderScene(SDL_Renderer* renderer, const Cena& cena) {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -197,6 +200,24 @@ void renderScene(SDL_Renderer* renderer, const Cena& cena) {
                 break;
             case Hit::None:
             default:
+                if (texturaCeu != nullptr) {
+                    const std::size_t w = texturaCeu->get_largura_pixels();
+                    const std::size_t h = texturaCeu->get_altura_pixels();
+
+                    if (w > 0 && h > 0) {
+                        const float u = (nCol > 1) ? (static_cast<float>(coluna) / static_cast<float>(nCol - 1)) : 0.0f;
+                        const float v = (nLin > 1) ? (static_cast<float>(linha) / static_cast<float>(nLin - 1)) : 0.0f;
+
+                        std::size_t tx = static_cast<std::size_t>(u * static_cast<float>(w - 1));
+                        std::size_t ty = static_cast<std::size_t>(v * static_cast<float>(h - 1));
+                        if (tx >= w) tx = w - 1;
+                        if (ty >= h) ty = h - 1;
+
+                        // Observação: get_cor_pixel usa (linha, coluna).
+                        rgb px = texturaCeu->get_cor_pixel(ty, tx);
+                        cor = Color(static_cast<float>(px[0]), static_cast<float>(px[1]), static_cast<float>(px[2]));
+                    }
+                }
                 break;
             }
 

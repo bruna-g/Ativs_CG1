@@ -61,6 +61,7 @@ float m_e = 10.0f;
 // Textura de madeira
 Textura* texturaMadeira = nullptr;
 Textura* texturaVaca = nullptr;
+Textura* texturaCeu = nullptr;
 static Cena* gCena = nullptr;
 
 // Chão
@@ -386,6 +387,7 @@ int main() {
     SDL_SetWindowTitle(window, "Trabalho Final - CG");
     texturaMadeira = new Textura("madeira", "madeira.bmp");
     texturaVaca = new Textura("vaca", "vaca.bmp");
+    texturaCeu = new Textura("ceu", "ceu.bmp");
 
     // Materiais / propriedades via Objeto (Ka/Kd/Ke/shininess)
     // esfera.setKa(Vetor(K_e.r, K_e.g, K_e.b));
