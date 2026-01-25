@@ -110,6 +110,10 @@ Plano plano_teto(P_pi_teto, n_teto, mat_teto);
 Color I_F(0.7f, 0.7f, 0.7f);
 Point P_F(-20.f, 185.f, 450.f);
 
+// Lua (esfera branca no mesmo ponto da luz)
+float r_lua = 25.0f;
+Esfera lua(P_F, r_lua);
+
 // Dica: para deixar as árvores com iluminação mais parecida, coloque a luz bem longe
 // e aproximadamente centrada no "grupo" de árvores (vira quase uma luz direcional).
 // Colocar a luz abaixo da base das copas (y < 60) evita que o cone projete sombra no tronco.
@@ -419,6 +423,12 @@ int main() {
     esfera_cabeca.setKe(Vetor(K_e_cabeca.r, K_e_cabeca.g, K_e_cabeca.b));
     esfera_cabeca.setShininess(m_e_cabeca);
 
+    // Lua (branca)
+    lua.setKa(Vetor(4.0f, 4.0f, 4.0f));
+    lua.setKd(Vetor(1.0f, 1.0f, 1.0f));
+    lua.setKe(Vetor(0.0f, 0.0f, 0.0f));
+    lua.setShininess(10.0f);
+
     // Textura da vaca (cabeça)
     // esfera_cabeca.material.usarTextura = true;
     // esfera_cabeca.material.textura = texturaVaca;
@@ -575,7 +585,7 @@ int main() {
     cena.luz = LuzPontual{ P_F, I_F };
     cena.luzAmbiente = I_A;
     cena.objetosSombra = { &cilindro, &cone, &cilindro2, &cone2, &cilindro3, &cone3, &nave,
-        &esfera1_nave, &esfera2_nave, &esfera3_nave, &cilindro4, &cilindro5, &cilindro6, &cilindro7, &cuboMalha, &esfera_cabeca,
+        &esfera1_nave, &esfera2_nave, &esfera3_nave, &cilindro4, &cilindro5, &cilindro6, &cilindro7, &cilindro8, &cuboMalha, &esfera_cabeca,
         &chifre_esq, &chifre_dir, &cauda, &cone8, &cilindro9, &cone8, &cone9 };
     cena.texturaMadeira = texturaMadeira;
     cena.expoenteEspecular = m_e;

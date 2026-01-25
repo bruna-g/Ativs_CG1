@@ -41,6 +41,7 @@ extern Cilindro cilindro8;
 extern Cilindro cilindro9;
 extern Cilindro cauda;
 extern Malha cuboMalha;
+extern Esfera lua;
 
 PickResult gSelecionado;
 
@@ -76,6 +77,7 @@ const char* hitToString(Hit hit) {
     case Hit::Esfera2_nave: return "Esfera2_nave";
     case Hit::Esfera3_nave: return "Esfera3_nave";
     case Hit::Esfera_cabeca: return "Esfera_cabeca";
+    case Hit::Lua: return "Lua";
     default: return "(desconhecido)";
     }
 }
@@ -123,6 +125,8 @@ PickResult pickRay(const Point& Po, const Vector& dr_e) {
     float ti_cabeca = esfera_cabeca.CalcularIntersecao(Po, dr_e);
     float ti_nave = nave.CalcularIntersecao(Po, dr_e);
 
+    float ti_lua = lua.CalcularIntersecao(Po, dr_e);
+
     float t_cil4 = cilindro4.CalcularIntersecao(Po, dr_e);
     float t_cil5 = cilindro5.CalcularIntersecao(Po, dr_e);
     float t_cil6 = cilindro6.CalcularIntersecao(Po, dr_e);
@@ -153,6 +157,7 @@ PickResult pickRay(const Point& Po, const Vector& dr_e) {
     considerar(ti_esf3_nave, Hit::Esfera3_nave, &esfera3_nave);
     considerar(t_cubo, Hit::Cubo, &cuboMalha);
     considerar(ti_cabeca, Hit::Esfera_cabeca, &esfera_cabeca);
+    considerar(ti_lua, Hit::Lua, &lua);
 
     return result;
 }
@@ -220,6 +225,9 @@ void aplicarTranslacaoSelecionado(Hit hit, const Vetor& delta) {
         break;
     case Hit::Esfera_cabeca:
         esfera_cabeca.centro = esfera_cabeca.aplicarTranslacao(esfera_cabeca.centro, delta);
+        break;
+    case Hit::Lua:
+        lua.centro = lua.aplicarTranslacao(lua.centro, delta);
         break;
     case Hit::Cilindro:
         cilindro.cb = cilindro.aplicarTranslacao(cilindro.cb, delta);
@@ -415,6 +423,9 @@ void aplicarEscalaVetorSelecionado(Hit hit, const Vetor& escala) {
         break;
     case Hit::Esfera_cabeca:
         esfera_cabeca.aplicarEscalaNoPivoObjeto(escala, esfera_cabeca.centro);
+        break;
+    case Hit::Lua:
+        lua.aplicarEscalaNoPivoObjeto(escala, lua.centro);
         break;
     case Hit::Cilindro:
         cilindro.aplicarEscalaNoPivoObjeto(escala, cilindro.cb);

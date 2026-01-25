@@ -38,7 +38,8 @@ enum class Hit {
     Esfera1_nave,
     Esfera2_nave,
     Esfera3_nave,
-    Esfera_cabeca
+    Esfera_cabeca,
+    Lua
 };
 
 struct PickResult {

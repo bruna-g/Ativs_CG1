@@ -50,6 +50,7 @@ extern Esfera esfera1_nave;
 extern Esfera esfera2_nave;
 extern Esfera esfera3_nave;
 extern Esfera esfera_cabeca;
+extern Esfera lua;
 
 extern Malha cuboMalha;
 
@@ -197,6 +198,9 @@ void renderScene(SDL_Renderer* renderer, const Cena& cena) {
             }
             case Hit::Esfera_cabeca:
                 cor = esfera_cabeca.CalcularCor(cena, t_best, dr_e);
+                break;
+            case Hit::Lua:
+                cor = lua.CalcularCor(cena, t_best, dr_e);
                 break;
             case Hit::None:
             default:
