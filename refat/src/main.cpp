@@ -4,6 +4,8 @@
 #include <fstream>
 #include <algorithm>
 #include <limits>
+#include <sstream>
+#include <cctype>
 #include <SDL2/SDL.h>
 #include "../include/Textura.hpp"
 #include "../include/Color.h"
@@ -19,6 +21,9 @@
 #include "../include/Cena.h"
 #include "../include/Material.h"
 #include "../include/Camera.h"
+#include "../include/Objeto.h"
+#include "../include/Picking.h"
+#include "../include/Render.h"
 using namespace std;
 
 // Configuração da janela de visualização
@@ -47,14 +52,15 @@ float Dy = hJanela / nLin;
 Point Po(0.f, 10.f, 0.f);
 
 // Esfera (topoete da árvore)
-float rEsfera = 5.0f;
-Point centroEsfera(100.f, 150.f + rEsfera, 100.f);
-Color K_e(0.8f, 0.6f, 0.2f);
+// float rEsfera = 5.0f;
+// Point centroEsfera(100.f, 150.f + rEsfera, 100.f);
+// Color K_e(0.8f, 0.6f, 0.2f);
 float m_e = 10.0f;
-Esfera esfera(centroEsfera, rEsfera);
+// Esfera esfera(centroEsfera, rEsfera);
 
 // Textura de madeira
 Textura* texturaMadeira = nullptr;
+Textura* texturaVaca = nullptr;
 static Cena* gCena = nullptr;
 
 // Chão
@@ -232,9 +238,9 @@ const float cubo_escala_z = 1.2f;
 // Esfera cabeça (encostada na face esquerda do cubo após a escala)
 float rEsfera_cabeca = 15.0f;
 Point centroEsfera_cabeca(135.f, 90.f, 125.f);
-Color K_e_cabeca(0.45f, 0.25f, 0.10f);
-Color K_d_cabeca(0.45f, 0.25f, 0.10f);
-Color K_a_cabeca(0.45f, 0.25f, 0.10f);
+Color K_e_cabeca(1.0f, 1.0f, 1.0f);
+Color K_d_cabeca(1.0f, 1.0f, 1.0f);
+Color K_a_cabeca(1.0f, 1.0f, 1.0f);
 float m_e_cabeca = 10.0f;
 Esfera esfera_cabeca(centroEsfera_cabeca, rEsfera_cabeca);
 
@@ -332,12 +338,13 @@ int main() {
     SDL_CreateWindowAndRenderer(nCol, nLin, 0, &window, &renderer);
     SDL_SetWindowTitle(window, "Trabalho Final - CG");
     texturaMadeira = new Textura("madeira", "madeira.bmp");
+    texturaVaca = new Textura("vaca", "vaca.bmp");
 
     // Materiais / propriedades via Objeto (Ka/Kd/Ke/shininess)
-    esfera.setKa(Vetor(K_e.r, K_e.g, K_e.b));
-    esfera.setKd(Vetor(K_e.r, K_e.g, K_e.b));
-    esfera.setKe(Vetor(K_e.r, K_e.g, K_e.b));
-    esfera.setShininess(m_e);
+    // esfera.setKa(Vetor(K_e.r, K_e.g, K_e.b));
+    // esfera.setKd(Vetor(K_e.r, K_e.g, K_e.b));
+    // esfera.setKe(Vetor(K_e.r, K_e.g, K_e.b));
+    // esfera.setShininess(m_e);
 
     // esfera 1 da nave
     esfera1_nave.setKa(Vetor(K_a1_nave.r, K_a1_nave.g, K_a1_nave.b));
@@ -363,6 +370,11 @@ int main() {
     esfera_cabeca.setKe(Vetor(K_e_cabeca.r, K_e_cabeca.g, K_e_cabeca.b));
     esfera_cabeca.setShininess(m_e_cabeca);
 
+    // Textura da vaca (cabeça)
+    // esfera_cabeca.material.usarTextura = true;
+    // esfera_cabeca.material.textura = texturaVaca;
+    // esfera_cabeca.material.texturaScale = 1.0f;
+
     // chifres
     chifre_esq.setKa(Vetor(K_chifre.r, K_chifre.g, K_chifre.b));
     chifre_esq.setKd(Vetor(K_chifre.r, K_chifre.g, K_chifre.b));
@@ -379,6 +391,11 @@ int main() {
     cauda.setKd(Vetor(K_cauda.r, K_cauda.g, K_cauda.b));
     cauda.setKe(Vetor(K_cauda.r, K_cauda.g, K_cauda.b));
     cauda.setShininess(m_cauda);
+
+    // Textura da vaca (cauda)
+    cauda.material.usarTextura = true;
+    cauda.material.textura = texturaVaca;
+    cauda.material.texturaScale = 1.0f;
 
     // Chão com textura
     mat_chao.usarTextura = true;
@@ -460,6 +477,8 @@ int main() {
 
     cuboMalha.rotacionarZ(-45.0f);
 
+    // Textura da vaca (corpo / cuboMalha) será aplicada no Render.cpp
+
     // Vetor deslocCone(20.f, 0.f, 0.f); // +X => direita
     // cone.cb = cone.aplicarTranslacao(cone.cb, deslocCone);
     // cone.v = cone.aplicarTranslacao(cone.v, deslocCone);
@@ -493,221 +512,7 @@ int main() {
     cena.expoenteEspecular = m_e;
     gCena = &cena;
 
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_RenderClear(renderer);
-
-    // Ray casting
-    for (int linha = 0; linha < nLin; linha++) {
-        float y = camera.getYMax() - (linha + 0.5f) * Dy;  // CORRIGIDO
-        for (int coluna = 0; coluna < nCol; coluna++) {
-            float x = camera.getXMin() + (coluna + 0.5f) * Dx;  // TAMBÉM CORRIGIDO PARA CONSISTÊNCIA
-
-            Vector dr_e = camera.gerarRaio(x, y);
-            Point Po = camera.getEye();
-
-            float t_best = std::numeric_limits<float>::infinity();
-            enum class Hit {
-                None,
-                Fundo,
-                Chao,
-                Esq,
-                Dir,
-                Teto,
-                Cilindro,
-                Cilindro2,
-                Cilindro3,
-                Cilindro4,
-                Cilindro5,
-                Cilindro6,
-                Cilindro7,
-                Cauda,
-                Cone,
-                Cone2,
-                Cone3,
-                Chifre_esq,
-                Chifre_dir,
-                Cubo,
-                Esfera,
-                Nave,
-                Esfera1_nave,
-                Esfera2_nave,
-                Esfera3_nave,
-                Esfera_cabeca
-            };
-            Hit hit = Hit::None;
-
-            auto considerar = [&](float t, Hit h) {
-                if (t > 1e-4f && std::isfinite(t) && t < t_best) {
-                    t_best = t;
-                    hit = h;
-                }
-                };
-
-            // Interseção com os planos
-            float ti_c = plano_chao.CalcularIntersecao(Po, dr_e);
-
-            // Objetos
-            float t_cil = cilindro.CalcularIntersecao(Po, dr_e);
-            float ti_cone = cone.CalcularIntersecao(Po, dr_e);
-
-            float ti_esf1_nave = esfera1_nave.CalcularIntersecao(Po, dr_e);
-            float ti_esf2_nave = esfera2_nave.CalcularIntersecao(Po, dr_e);
-            float ti_esf3_nave = esfera3_nave.CalcularIntersecao(Po, dr_e);
-
-            float t_cil2 = cilindro2.CalcularIntersecao(Po, dr_e);
-            float ti_cone2 = cone2.CalcularIntersecao(Po, dr_e);
-
-            float t_cil3 = cilindro3.CalcularIntersecao(Po, dr_e);
-            float ti_cone3 = cone3.CalcularIntersecao(Po, dr_e);
-
-            float ti_chifre_esq = chifre_esq.CalcularIntersecao(Po, dr_e);
-            float ti_chifre_dir = chifre_dir.CalcularIntersecao(Po, dr_e);
-
-            float t_cubo = std::numeric_limits<float>::infinity();
-            if (cuboMalha.verificarIntersecao(
-                Vetor(Po.x, Po.y, Po.z, 0.0f),
-                Vetor(dr_e.i, dr_e.j, dr_e.k, 0.0f))) {
-                t_cubo = static_cast<float>(cuboMalha.getDistancia());
-            }
-            float ti_cabeca = esfera_cabeca.CalcularIntersecao(Po, dr_e);
-
-            float ti_nave = nave.CalcularIntersecao(Po, dr_e);
-
-            float t_cil4 = cilindro4.CalcularIntersecao(Po, dr_e);
-            float t_cil5 = cilindro5.CalcularIntersecao(Po, dr_e);
-            float t_cil6 = cilindro6.CalcularIntersecao(Po, dr_e);
-            float t_cil7 = cilindro7.CalcularIntersecao(Po, dr_e);
-            float t_cauda = cauda.CalcularIntersecao(Po, dr_e);
-
-            considerar(ti_c, Hit::Chao);
-            considerar(t_cil, Hit::Cilindro);
-            considerar(t_cil2, Hit::Cilindro2);
-            considerar(t_cil3, Hit::Cilindro3);
-            considerar(t_cil4, Hit::Cilindro4);
-            considerar(t_cil5, Hit::Cilindro5);
-            considerar(t_cil6, Hit::Cilindro6);
-            considerar(t_cil7, Hit::Cilindro7);
-            considerar(t_cauda, Hit::Cauda);
-            considerar(ti_cone, Hit::Cone);
-            considerar(ti_cone2, Hit::Cone2);
-            considerar(ti_cone3, Hit::Cone3);
-            considerar(ti_chifre_esq, Hit::Chifre_esq);
-            considerar(ti_chifre_dir, Hit::Chifre_dir);
-            considerar(ti_nave, Hit::Nave);
-            considerar(ti_esf1_nave, Hit::Esfera1_nave);
-            considerar(ti_esf2_nave, Hit::Esfera2_nave);
-            considerar(ti_esf3_nave, Hit::Esfera3_nave);
-            considerar(t_cubo, Hit::Cubo);
-            considerar(ti_cabeca, Hit::Esfera_cabeca);
-
-            Color cor(46, 68, 130);  // Cor de fundo (azul escuro)
-
-            switch (hit) {
-            case Hit::Fundo:
-                cor = plano_fundo.CalcularCor(cena, dr_e);
-                break;
-            case Hit::Chao:
-                cor = plano_chao.CalcularCor(cena, dr_e);
-                break;
-            case Hit::Cilindro:
-                cor = cilindro.CalcularCor(cena, t_best, dr_e);
-                break;
-            case Hit::Cilindro2:
-                cor = cilindro2.CalcularCor(cena, t_best, dr_e);
-                break;
-            case Hit::Cilindro3:
-                cor = cilindro3.CalcularCor(cena, t_best, dr_e);
-                break;
-            case Hit::Cilindro4:
-                cor = cilindro4.CalcularCor(cena, t_best, dr_e);
-                break;
-            case Hit::Cilindro5:
-                cor = cilindro5.CalcularCor(cena, t_best, dr_e);
-                break;
-            case Hit::Cilindro6:
-                cor = cilindro6.CalcularCor(cena, t_best, dr_e);
-                break;
-            case Hit::Cilindro7:
-                cor = cilindro7.CalcularCor(cena, t_best, dr_e);
-                break;
-            case Hit::Cauda:
-                cor = cauda.CalcularCor(cena, t_best, dr_e);
-                break;
-            case Hit::Cone:
-                cor = cone.CalcularCor(cena, t_best, dr_e);
-                break;
-            case Hit::Cone2:
-                cor = cone2.CalcularCor(cena, t_best, dr_e);
-                break;
-            case Hit::Cone3:
-                cor = cone3.CalcularCor(cena, t_best, dr_e);
-                break;
-            case Hit::Chifre_esq:
-                cor = chifre_esq.CalcularCor(cena, t_best, dr_e);
-                break;
-            case Hit::Chifre_dir:
-                cor = chifre_dir.CalcularCor(cena, t_best, dr_e);
-                break;
-            case Hit::Nave:
-            {
-                // Se o ponto estiver no disco da base da nave, pinta de branco.
-                // (Caso contrário, usa o sombreamento normal do cone.)
-                Point Pi = calcula_eq_ray(Po, t_best, dr_e);
-                Vector dist_centro = subtrai_pontos(Pi, nave.cb);
-                float altura_Pi = calcula_prod_esc(dist_centro, nave.dc);
-                float dist2 = calcula_prod_esc(dist_centro, dist_centro);
-
-                const float epsBase = 1e-3f;
-                if (std::fabs(altura_Pi) < epsBase && dist2 <= nave.raio * nave.raio + epsBase) {
-                    cor = Color(45, 50, 60);
-                }
-                else {
-                    cor = nave.CalcularCor(cena, t_best, dr_e);
-                }
-                break;
-            }
-            case Hit::Esfera:
-                cor = esfera.CalcularCor(cena, t_best, dr_e);
-                break;
-            case Hit::Esfera1_nave:
-                cor = esfera1_nave.CalcularCor(cena, t_best, dr_e);
-                break;
-            case Hit::Esfera2_nave:
-                cor = esfera2_nave.CalcularCor(cena, t_best, dr_e);
-                break;
-            case Hit::Esfera3_nave:
-                cor = esfera3_nave.CalcularCor(cena, t_best, dr_e);
-                break;
-            case Hit::Cubo: {
-                Vetor PiV = cuboMalha.getPontoIntersecao();
-                Vetor nV = cuboMalha.calcularNormal(PiV);
-                Plano plano_cubo(Point(PiV.i, PiV.j, PiV.k), Vector(nV.i, nV.j, nV.k), Material());
-                plano_cubo.setKa(cuboMalha.getKa());
-                plano_cubo.setKd(cuboMalha.getKd());
-                plano_cubo.setKe(cuboMalha.getKe());
-                plano_cubo.setShininess(cuboMalha.getShininess());
-                cor = plano_cubo.CalcularCor(cena, dr_e);
-                break;
-            }
-            case Hit::Esfera_cabeca:
-                cor = esfera_cabeca.CalcularCor(cena, t_best, dr_e);
-                break;
-            case Hit::None:
-            default:
-                break;
-            }
-
-            SDL_SetRenderDrawColor(renderer,
-                static_cast<int>(cor.r),
-                static_cast<int>(cor.g),
-                static_cast<int>(cor.b),
-                255);
-            SDL_RenderDrawPoint(renderer, coluna, linha);
-
-        }
-    }
-
-    SDL_RenderPresent(renderer);
+    renderScene(renderer, cena);
 
     // Escuta eventos para manter janela aberta
     SDL_Event event;
@@ -716,6 +521,139 @@ int main() {
         while (SDL_PollEvent(&event) != 0) {
             if (event.type == SDL_QUIT)
                 isRunning = false;
+
+            if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
+                gSelecionado = pickFromScreen(event.button.x, event.button.y, nCol, nLin);
+                if (gSelecionado.hit == Hit::None) {
+                    std::cout << "Selecionado: None" << std::endl;
+                }
+                else {
+                    std::cout << "Selecionado: " << hitToString(gSelecionado.hit)
+                        << " | t=" << gSelecionado.t << std::endl;
+                    imprimirAjudaSelecao();
+                }
+            }
+
+            if (event.type == SDL_KEYDOWN) {
+                // Evita repetir comando quando a tecla fica pressionada (auto-repeat do SDL).
+                if (event.key.repeat != 0) {
+                    continue;
+                }
+
+                if (event.key.keysym.sym == SDLK_h) {
+                    imprimirAjudaSelecao();
+                    continue;
+                }
+
+                if (gSelecionado.hit == Hit::None || gSelecionado.objeto == nullptr) {
+                    if (event.key.keysym.sym == SDLK_c || event.key.keysym.sym == SDLK_m ||
+                        event.key.keysym.sym == SDLK_t || event.key.keysym.sym == SDLK_r ||
+                        event.key.keysym.sym == SDLK_s || event.key.keysym.sym == SDLK_v) {
+                        std::cout << "Nenhum objeto selecionado. Clique em um objeto primeiro." << std::endl;
+                    }
+                    continue;
+                }
+
+                if (event.key.keysym.sym == SDLK_c) {
+                    float r = 0.0f, g = 0.0f, b = 0.0f;
+                    if (ler3Floats("Digite cor (r g b) em [0..1] ou [0..255]: ", r, g, b)) {
+                        setCorObjeto(gSelecionado.objeto, r, g, b);
+                        renderScene(renderer, cena);
+                        refocarJanela(window);
+                    }
+                    else {
+                        std::cout << "Entrada invalida. Exemplo: 0.2 0.7 0.2" << std::endl;
+                        refocarJanela(window);
+                    }
+                }
+                else if (event.key.keysym.sym == SDLK_m) {
+                    float ka_r = 0.0f, ka_g = 0.0f, ka_b = 0.0f;
+                    float ke_r = 0.0f, ke_g = 0.0f, ke_b = 0.0f;
+                    float shininess = 1.0f;
+
+                    if (!ler3Floats("Ka (r g b) em [0..1] ou [0..255]: ", ka_r, ka_g, ka_b)) {
+                        std::cout << "Entrada invalida. Exemplo: 0.2 0.2 0.2" << std::endl;
+                        refocarJanela(window);
+                        continue;
+                    }
+
+                    if (!ler3Floats("Ke (r g b) em [0..1] ou [0..255]: ", ke_r, ke_g, ke_b)) {
+                        std::cout << "Entrada invalida. Exemplo: 0.0 0.0 0.0" << std::endl;
+                        refocarJanela(window);
+                        continue;
+                    }
+
+                    if (!lerFloat("Shininess (> 0): ", shininess) || shininess <= 0.0f) {
+                        std::cout << "Entrada invalida. Exemplo: 30" << std::endl;
+                        refocarJanela(window);
+                        continue;
+                    }
+
+                    aplicarMaterialCustom(gSelecionado.objeto,
+                        ka_r, ka_g, ka_b,
+                        ke_r, ke_g, ke_b,
+                        shininess);
+                    renderScene(renderer, cena);
+                    refocarJanela(window);
+                }
+                else if (event.key.keysym.sym == SDLK_t) {
+                    float dx = 0.0f, dy = 0.0f, dz = 0.0f;
+                    if (ler3Floats("Translacao (dx dy dz): ", dx, dy, dz)) {
+                        aplicarTranslacaoSelecionado(gSelecionado.hit, Vetor(dx, dy, dz, 0.0f));
+                        renderScene(renderer, cena);
+                        refocarJanela(window);
+                    }
+                    else {
+                        std::cout << "Entrada invalida. Exemplo: 10 0 -5" << std::endl;
+                        refocarJanela(window);
+                    }
+                }
+                else if (event.key.keysym.sym == SDLK_r) {
+                    char eixo = 'z';
+                    float ang = 0.0f;
+                    if (lerCharEFloat("Rotacao: eixo (x/y/z) e angulo (graus): ", eixo, ang)) {
+                        eixo = static_cast<char>(std::tolower(static_cast<unsigned char>(eixo)));
+                        if (eixo != 'x' && eixo != 'y' && eixo != 'z') eixo = 'z';
+                        aplicarRotacaoSelecionado(gSelecionado.hit, eixo, ang);
+                        renderScene(renderer, cena);
+                        refocarJanela(window);
+                    }
+                    else {
+                        std::cout << "Entrada invalida. Exemplo: z 15" << std::endl;
+                        refocarJanela(window);
+                    }
+                }
+                else if (event.key.keysym.sym == SDLK_s) {
+                    float s = 1.0f;
+                    if (lerFloat("Escala uniforme (fator > 0): ", s)) {
+                        aplicarEscalaSelecionado(gSelecionado.hit, s);
+                        renderScene(renderer, cena);
+                        refocarJanela(window);
+                    }
+                    else {
+                        std::cout << "Entrada invalida. Exemplo: 1.25" << std::endl;
+                        refocarJanela(window);
+                    }
+                }
+                else if (event.key.keysym.sym == SDLK_v) {
+                    float sx = 1.0f, sy = 1.0f, sz = 1.0f;
+                    if (!ler3Floats("Escala vetorial (sx sy sz). Use 1 para manter um eixo: ", sx, sy, sz)) {
+                        std::cout << "Entrada invalida. Exemplo: 2 1 1" << std::endl;
+                        refocarJanela(window);
+                        continue;
+                    }
+
+                    if (sx <= 0.0f || sy <= 0.0f || sz <= 0.0f) {
+                        std::cout << "Escala vetorial invalida: sx, sy, sz precisam ser > 0. Exemplo: 3 1 1" << std::endl;
+                        refocarJanela(window);
+                        continue;
+                    }
+
+                    aplicarEscalaVetorSelecionado(gSelecionado.hit, Vetor(sx, sy, sz, 0.0f));
+                    renderScene(renderer, cena);
+                    refocarJanela(window);
+                }
+            }
         }
     }
 

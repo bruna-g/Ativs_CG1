@@ -46,6 +46,8 @@ set(REFAT_COMMON_SOURCES
   "${REFAT_SRC_DIR}/Textura.cpp"
   "${REFAT_SRC_DIR}/Camera.cpp"
   "${REFAT_SRC_DIR}/Malha.cpp"
+  "${REFAT_SRC_DIR}/Picking.cpp"
+  "${REFAT_SRC_DIR}/Render.cpp"
 )
 
 # Executável SDL (janela)

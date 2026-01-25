@@ -1,6 +1,7 @@
 #include "../include/Cilindro.h"
 #include "../include/Cena.h"
 #include "../include/Color.h"
+#include "../include/Textura.hpp"
 #include "../include/Utils.h"
 #include "../include/Matriz4x4.h"
 #include <cmath>
@@ -66,7 +67,7 @@ void Cilindro::aplicarEscalaNoPivoObjeto(const Vetor& escala, const Point& pivo)
 }
 
 Point calcularCentro(Cilindro cilindro) {
-    Vetor dcH = calcula_esc_por_vetor(cilindro.altura/2.0f, cilindro.dc);
+    Vetor dcH = calcula_esc_por_vetor(cilindro.altura / 2.0f, cilindro.dc);
     Point soma = soma_ponto_vetor(cilindro.cb, dcH);
     return soma;
 }
@@ -130,7 +131,7 @@ void Cilindro::rotacionarZ(float angulo) {
     this->cb = this->aplicarTranslacao(this->cb, Vector(pivo.x, pivo.y, pivo.z));
 }
 
-void Cilindro::rotacaoArbitraria(Vector eixo, float angulo){
+void Cilindro::rotacaoArbitraria(Vector eixo, float angulo) {
     Point pivo = this->cb;
     // Transladar para a origem
     this->cb = this->aplicarTranslacao(this->cb, Vector(-pivo.x, -pivo.y, -pivo.z));
@@ -147,54 +148,102 @@ void Cilindro::rotacaoArbitraria(Vector eixo, float angulo){
 
 
 Vector Cilindro::CalcularNormal(const Point& P) const {
-    Point cbCopy = cb;
-    Point pCopy = P;
-    Vector P_B = subtrai_pontos(pCopy, cbCopy);
-    float P_B_u = calcula_prod_esc(P_B, dc);
-    Vector P_B_u_u = calcula_esc_por_vetor(P_B_u, dc);
+    // Normal nas tampas: base aponta para -dc, topo para +dc.
+    // Normal na lateral: componente radial perpendicular ao eixo.
+    Vector axis = dc;
+    float nAxis = calcula_norma(axis);
+    if (nAxis <= 1e-8f) nAxis = 1.0f;
+    axis = calcula_esc_por_vetor(1.0f / nAxis, axis);
+
+    Vector P_B = subtrai_pontos(P, cb);
+    float h = calcula_prod_esc(P_B, axis);
+    const float eps = 1e-3f;
+
+    if (h <= eps) {
+        return Vector(-axis.i, -axis.j, -axis.k);
+    }
+    if (h >= altura - eps) {
+        return Vector(axis.i, axis.j, axis.k);
+    }
+
+    Vector P_B_u_u = calcula_esc_por_vetor(h, axis);
     Vector n = subtrai_vetores(P_B, P_B_u_u);
     float norma = calcula_norma(n);
+    if (norma <= 1e-8f) norma = 1.0f;
     return Vector(n.i / norma, n.j / norma, n.k / norma);
 }
 
 float Cilindro::CalcularIntersecao(const Point& origem, const Vector& dir) const {
-    Point cbCopy = cb;
-    Point origemCopy = origem;
-    Vector Po_B = subtrai_pontos(origemCopy, cbCopy);
-    Vector Po_B_u_u = calcula_esc_por_vetor(calcula_prod_esc(Po_B, dc), dc);
+    // Considera interseção com lateral + tampas (base e topo)
+    Vector axis = dc;
+    float nAxis = calcula_norma(axis);
+    if (nAxis <= 1e-8f) nAxis = 1.0f;
+    axis = calcula_esc_por_vetor(1.0f / nAxis, axis);
+
+    float tBest = INFINITY;
+
+    auto considerar = [&](float tCand) {
+        if (tCand > 1e-4f && std::isfinite(tCand) && tCand < tBest) tBest = tCand;
+        };
+
+    // --- Tampas (discos) ---
+    float dn = calcula_prod_esc(axis, dir);
+    if (std::fabs(dn) > 1e-8f) {
+        // Base: plano passando por cb
+        float tBase = calcula_prod_esc(subtrai_pontos(cb, origem), axis) / dn;
+        if (tBase > 1e-4f) {
+            Point Pbase = calcula_eq_ray(origem, tBase, dir);
+            Vector wBase = subtrai_pontos(Pbase, cb);
+            Vector rBase = subtrai_vetores(wBase, calcula_esc_por_vetor(calcula_prod_esc(wBase, axis), axis));
+            float dist2 = calcula_prod_esc(rBase, rBase);
+            if (dist2 <= raio * raio) considerar(tBase);
+        }
+
+        // Topo: plano passando por ct = cb + altura*axis
+        Point ct(cb.x + axis.i * altura, cb.y + axis.j * altura, cb.z + axis.k * altura);
+        float tTopo = calcula_prod_esc(subtrai_pontos(ct, origem), axis) / dn;
+        if (tTopo > 1e-4f) {
+            Point Ptopo = calcula_eq_ray(origem, tTopo, dir);
+            Vector wTopo = subtrai_pontos(Ptopo, ct);
+            Vector rTopo = subtrai_vetores(wTopo, calcula_esc_por_vetor(calcula_prod_esc(wTopo, axis), axis));
+            float dist2 = calcula_prod_esc(rTopo, rTopo);
+            if (dist2 <= raio * raio) considerar(tTopo);
+        }
+    }
+
+    // --- Lateral ---
+    Vector Po_B = subtrai_pontos(origem, cb);
+    Vector Po_B_u_u = calcula_esc_por_vetor(calcula_prod_esc(Po_B, axis), axis);
     Vector v = subtrai_vetores(Po_B, Po_B_u_u);
 
-    Vector d_u_u = calcula_esc_por_vetor(calcula_prod_esc(dir, dc), dc);
+    Vector d_u_u = calcula_esc_por_vetor(calcula_prod_esc(dir, axis), axis);
     Vector w = subtrai_vetores(dir, d_u_u);
 
     float a_delta = calcula_prod_esc(w, w);
     float b_delta = calcula_prod_esc(v, w);
     float c_delta = calcula_prod_esc(v, v) - raio * raio;
 
-    float delta = b_delta * b_delta - a_delta * c_delta;
-    if (delta < 0) return INFINITY;
+    // Se a_delta ~ 0, o raio é paralelo ao eixo (ou muito próximo): não cruza a lateral.
+    if (std::fabs(a_delta) > 1e-12f) {
+        float delta = b_delta * b_delta - a_delta * c_delta;
+        if (delta >= 0.0f) {
+            float sqrtD = std::sqrt(delta);
+            float t1 = (-b_delta + sqrtD) / (a_delta);
+            float t2 = (-b_delta - sqrtD) / (a_delta);
 
-    float t1 = (-b_delta + sqrt(delta)) / (a_delta);
-    float t2 = (-b_delta - sqrt(delta)) / (a_delta);
+            auto validarLateral = [&](float tCand) {
+                if (!(tCand > 1e-4f) || !std::isfinite(tCand)) return;
+                Point P = calcula_eq_ray(origem, tCand, dir);
+                float h = calcula_prod_esc(subtrai_pontos(P, cb), axis);
+                if (h >= 0.0f && h <= altura) considerar(tCand);
+                };
 
-    Point P1 = calcula_eq_ray(origem, t1, dir);
-    Point P2 = calcula_eq_ray(origem, t2, dir);
+            validarLateral(t1);
+            validarLateral(t2);
+        }
+    }
 
-    Point cbTmp1 = cb;
-    Point cbTmp2 = cb;
-    float P1_B_u = calcula_prod_esc(subtrai_pontos(P1, cbTmp1), dc);
-    float P2_B_u = calcula_prod_esc(subtrai_pontos(P2, cbTmp2), dc);
-
-    float t = -1.0f;
-    if ((P1_B_u >= 0 && P1_B_u <= altura && t1 > 0) &&
-        (P2_B_u >= 0 && P2_B_u <= altura && t2 > 0))
-        t = std::min(t1, t2);
-    else if (P1_B_u >= 0 && P1_B_u <= altura && t1 > 0)
-        t = t1;
-    else if (P2_B_u >= 0 && P2_B_u <= altura && t2 > 0)
-        t = t2;
-
-    return t;
+    return tBest;
 }
 
 Color Cilindro::CalcularCor(const Cena& cena, float t, const Vector& dir,
@@ -245,8 +294,56 @@ Color Cilindro::CalcularCor(const Cena& cena, float t, const Vector& dir) const 
     Vetor kdV = getKd();
     Vetor keV = getKe();
     Color Ka(kaV.i, kaV.j, kaV.k);
-    Color Kd(kdV.i, kdV.j, kdV.k);
+    Color KdBase(kdV.i, kdV.j, kdV.k);
     Color Ke(keV.i, keV.j, keV.k);
+
+    // Textura (mapeamento cilíndrico)
+    Color Kd = KdBase;
+    if (material.usarTextura && material.textura != nullptr) {
+        // Base ortonormal (u_axis, v_axis, dc)
+        Vector axis = dc;
+        float nAxis = calcula_norma(axis);
+        if (nAxis <= 1e-8f) nAxis = 1.0f;
+        axis = calcula_esc_por_vetor(1.0f / nAxis, axis);
+
+        Vector ref = (std::fabs(axis.i) < 0.9f) ? Vector(1.0f, 0.0f, 0.0f) : Vector(0.0f, 1.0f, 0.0f);
+        Vector u_axis = cross(ref, axis);
+        float nu = calcula_norma(u_axis);
+        if (nu <= 1e-8f) nu = 1.0f;
+        u_axis = calcula_esc_por_vetor(1.0f / nu, u_axis);
+        Vector v_axis = cross(axis, u_axis);
+
+        Vector w = subtrai_pontos(P, cb);
+        float hCoord = calcula_prod_esc(w, axis);
+        float vBase = (altura > 1e-6f) ? (hCoord / altura) : 0.0f;
+
+        float xCoord = calcula_prod_esc(w, u_axis);
+        float yCoord = calcula_prod_esc(w, v_axis);
+
+        const float pi = 3.14159265358979323846f;
+        float ang = std::atan2(yCoord, xCoord); // [-pi, pi]
+        float uBase = (ang / (2.0f * pi)) + 0.5f;
+
+        float rep = (material.texturaScale > 0.0f) ? material.texturaScale : 1.0f;
+        float u = uBase * rep;
+        float v = vBase * rep;
+
+        u = u - std::floor(u);
+        if (u < 0) u += 1.0f;
+        v = v - std::floor(v);
+        if (v < 0) v += 1.0f;
+
+        const size_t wpx = material.textura->get_largura_pixels();
+        const size_t hpx = material.textura->get_altura_pixels();
+        if (wpx > 0 && hpx > 0) {
+            size_t tx = static_cast<size_t>(u * wpx) % wpx;
+            size_t ty = static_cast<size_t>(v * hpx) % hpx;
+            rgb px = material.textura->get_cor_pixel(ty, tx);
+            Color texCol(px[0] / 255.0f, px[1] / 255.0f, px[2] / 255.0f);
+            Kd = texCol;
+            Ka = texCol;
+        }
+    }
 
     Vector l = calcula_l(cena.luz.pos, P);
     Point P_mod(P.x + l.i * 1e-4f, P.y + l.j * 1e-4f, P.z + l.k * 1e-4f);
