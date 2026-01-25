@@ -186,6 +186,53 @@ Cone cone3(cb_cone3, v_cone3, raio_cone3);
 Color KCone3(0.f, 0.6f, 0.2f);
 Material mat_cone3;
 //----------------------------------------------//
+
+//-----------------Arvore 4---------------------//
+// Cilindro (tronco da árvore)
+Point centroCilindro8(25.f, 00.f, 0.f);
+float raio_cil8 = 8.f;
+float altura_cil8 = 60.f;
+Vector dc8(0.f, 1.0f, 0.f);
+Cilindro cilindro8(centroCilindro8, raio_cil8, altura_cil8, dc8);
+Color KCil_d8(0.545f, 0.270f, 0.075f);
+Color KCil_e8(0.545f, 0.270f, 0.075f);
+Color KCil_a8(0.545f, 0.270f, 0.075f);
+Material mat_cil8;
+
+// Cone (copa da árvore)
+Point cb_cone8(25.f, 60.f, 0.f);
+float raio_cone8 = 40.f;
+float altura_cone8 = 50.f;
+Vector aux_v_cone8 = calcula_esc_por_vetor(altura_cone8, dc8);
+Point v_cone8(cb_cone8.x + aux_v_cone8.i, cb_cone8.y + aux_v_cone8.j, cb_cone8.z + aux_v_cone8.k);
+Cone cone8(cb_cone8, v_cone8, raio_cone8);
+Color KCone8(0.f, 0.6f, 0.2f);
+Material mat_cone8;
+//----------------------------------------------//
+
+//-----------------Arvore 5---------------------//
+// Cilindro (tronco da árvore)
+Point centroCilindro9(325.f, 00.f, 0.f);
+float raio_cil9 = 8.f;
+float altura_cil9 = 60.f;
+Vector dc9(0.f, 1.0f, 0.f);
+Cilindro cilindro9(centroCilindro9, raio_cil9, altura_cil9, dc9);
+Color KCil_d9(0.545f, 0.270f, 0.075f);
+Color KCil_e9(0.545f, 0.270f, 0.075f);
+Color KCil_a9(0.545f, 0.270f, 0.075f);
+Material mat_cil9;
+
+// Cone (copa da árvore)
+Point cb_cone9(325.f, 60.f, 0.f);
+float raio_cone9 = 40.f;
+float altura_cone9 = 50.f;
+Vector aux_v_cone9 = calcula_esc_por_vetor(altura_cone9, dc9);
+Point v_cone9(cb_cone9.x + aux_v_cone9.i, cb_cone9.y + aux_v_cone9.j, cb_cone9.z + aux_v_cone9.k);
+Cone cone9(cb_cone9, v_cone9, raio_cone9);
+Color KCone9(0.f, 0.6f, 0.2f);
+Material mat_cone9;
+//----------------------------------------------//
+
 //-----------------Vaca---------------------//
 // Cilindro
 Point centroCilindro4(150.f, 20.f, 110.f);
@@ -441,6 +488,16 @@ int main() {
     cilindro7.setKe(Vetor(KCil_e7.r, KCil_e7.g, KCil_e7.b));
     cilindro7.setShininess(m_e);
 
+    cilindro8.setKa(Vetor(KCil_a8.r, KCil_a8.g, KCil_a8.b));
+    cilindro8.setKd(Vetor(KCil_d8.r, KCil_d8.g, KCil_d8.b));
+    cilindro8.setKe(Vetor(KCil_e8.r, KCil_e8.g, KCil_e8.b));
+    cilindro8.setShininess(m_e);
+
+    cilindro9.setKa(Vetor(KCil_a9.r, KCil_a9.g, KCil_a9.b));
+    cilindro9.setKd(Vetor(KCil_d9.r, KCil_d9.g, KCil_d9.b));
+    cilindro9.setKe(Vetor(KCil_e9.r, KCil_e9.g, KCil_e9.b));
+    cilindro9.setShininess(m_e);
+
     cone.setKa(Vetor(KCone.r, KCone.g, KCone.b));
     cone.setKd(Vetor(KCone.r, KCone.g, KCone.b));
     cone.setKe(Vetor(KCone.r, KCone.g, KCone.b));
@@ -455,6 +512,16 @@ int main() {
     cone3.setKd(Vetor(KCone3.r, KCone3.g, KCone3.b));
     cone3.setKe(Vetor(KCone3.r, KCone3.g, KCone3.b));
     cone3.setShininess(m_e);
+
+    cone8.setKa(Vetor(KCone8.r, KCone8.g, KCone8.b));
+    cone8.setKd(Vetor(KCone8.r, KCone8.g, KCone8.b));
+    cone8.setKe(Vetor(KCone8.r, KCone8.g, KCone8.b));
+    cone8.setShininess(m_e);
+
+    cone9.setKa(Vetor(KCone9.r, KCone9.g, KCone9.b));
+    cone9.setKd(Vetor(KCone9.r, KCone9.g, KCone9.b));
+    cone9.setKe(Vetor(KCone9.r, KCone9.g, KCone9.b));
+    cone9.setShininess(m_e);
 
     nave.setKa(Vetor(Ka_nave.r, Ka_nave.g, Ka_nave.b));
     nave.setKd(Vetor(Kd_nave.r, Kd_nave.g, Kd_nave.b));
@@ -507,7 +574,7 @@ int main() {
     cena.luzAmbiente = I_A;
     cena.objetosSombra = { &cilindro, &cone, &cilindro2, &cone2, &cilindro3, &cone3, &nave,
         &esfera1_nave, &esfera2_nave, &esfera3_nave, &cilindro4, &cilindro5, &cilindro6, &cilindro7, &cuboMalha, &esfera_cabeca,
-        &chifre_esq, &chifre_dir, &cauda };
+        &chifre_esq, &chifre_dir, &cauda, &cone8, &cilindro9, &cone8, &cone9 };
     cena.texturaMadeira = texturaMadeira;
     cena.expoenteEspecular = m_e;
     gCena = &cena;

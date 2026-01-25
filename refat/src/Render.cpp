@@ -31,11 +31,15 @@ extern Cilindro cilindro4;
 extern Cilindro cilindro5;
 extern Cilindro cilindro6;
 extern Cilindro cilindro7;
+extern Cilindro cilindro8;
+extern Cilindro cilindro9;
 extern Cilindro cauda;
 
 extern Cone cone;
 extern Cone cone2;
 extern Cone cone3;
+extern Cone cone8;
+extern Cone cone9;
 extern Cone chifre_esq;
 extern Cone chifre_dir;
 extern Cone nave;
@@ -96,6 +100,12 @@ void renderScene(SDL_Renderer* renderer, const Cena& cena) {
             case Hit::Cilindro7:
                 cor = cilindro7.CalcularCor(cena, t_best, dr_e);
                 break;
+            case Hit::Cilindro8:
+                cor = cilindro8.CalcularCor(cena, t_best, dr_e);
+                break;
+            case Hit::Cilindro9:
+                cor = cilindro9.CalcularCor(cena, t_best, dr_e);
+                break;
             case Hit::Cauda:
                 cor = cauda.CalcularCor(cena, t_best, dr_e);
                 break;
@@ -107,6 +117,12 @@ void renderScene(SDL_Renderer* renderer, const Cena& cena) {
                 break;
             case Hit::Cone3:
                 cor = cone3.CalcularCor(cena, t_best, dr_e);
+                break;
+            case Hit::Cone8:
+                cor = cone8.CalcularCor(cena, t_best, dr_e);
+                break;
+            case Hit::Cone9:
+                cor = cone9.CalcularCor(cena, t_best, dr_e);
                 break;
             case Hit::Chifre_esq:
                 cor = chifre_esq.CalcularCor(cena, t_best, dr_e);

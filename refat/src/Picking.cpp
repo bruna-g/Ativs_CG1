@@ -27,6 +27,8 @@ extern Cilindro cilindro2;
 extern Cone cone2;
 extern Cilindro cilindro3;
 extern Cone cone3;
+extern Cone cone8;
+extern Cone cone9;
 extern Cone chifre_esq;
 extern Cone chifre_dir;
 extern Esfera esfera_cabeca;
@@ -35,6 +37,8 @@ extern Cilindro cilindro4;
 extern Cilindro cilindro5;
 extern Cilindro cilindro6;
 extern Cilindro cilindro7;
+extern Cilindro cilindro8;
+extern Cilindro cilindro9;
 extern Cilindro cauda;
 extern Malha cuboMalha;
 
@@ -55,10 +59,14 @@ const char* hitToString(Hit hit) {
     case Hit::Cilindro5: return "Cilindro5";
     case Hit::Cilindro6: return "Cilindro6";
     case Hit::Cilindro7: return "Cilindro7";
+    case Hit::Cilindro8: return "Cilindro8";
+    case Hit::Cilindro9: return "Cilindro9";
     case Hit::Cauda: return "Cauda";
     case Hit::Cone: return "Cone";
     case Hit::Cone2: return "Cone2";
     case Hit::Cone3: return "Cone3";
+    case Hit::Cone8: return "Cone8";
+    case Hit::Cone9: return "Cone9";
     case Hit::Chifre_esq: return "Chifre_esq";
     case Hit::Chifre_dir: return "Chifre_dir";
     case Hit::Cubo: return "Cubo";
@@ -97,6 +105,10 @@ PickResult pickRay(const Point& Po, const Vector& dr_e) {
 
     float t_cil3 = cilindro3.CalcularIntersecao(Po, dr_e);
     float ti_cone3 = cone3.CalcularIntersecao(Po, dr_e);
+    float t_cil8 = cilindro8.CalcularIntersecao(Po, dr_e);
+    float ti_cone8 = cone8.CalcularIntersecao(Po, dr_e);
+    float t_cil9 = cilindro9.CalcularIntersecao(Po, dr_e);
+    float ti_cone9 = cone9.CalcularIntersecao(Po, dr_e);
 
     float ti_chifre_esq = chifre_esq.CalcularIntersecao(Po, dr_e);
     float ti_chifre_dir = chifre_dir.CalcularIntersecao(Po, dr_e);
@@ -129,6 +141,10 @@ PickResult pickRay(const Point& Po, const Vector& dr_e) {
     considerar(ti_cone, Hit::Cone, &cone);
     considerar(ti_cone2, Hit::Cone2, &cone2);
     considerar(ti_cone3, Hit::Cone3, &cone3);
+    considerar(ti_cone8, Hit::Cone8, &cone8);
+    considerar(ti_cone9, Hit::Cone9, &cone9);
+    considerar(t_cil8, Hit::Cilindro8, &cilindro8);
+    considerar(t_cil9, Hit::Cilindro9, &cilindro9);
     considerar(ti_chifre_esq, Hit::Chifre_esq, &chifre_esq);
     considerar(ti_chifre_dir, Hit::Chifre_dir, &chifre_dir);
     considerar(ti_nave, Hit::Nave, &nave);
@@ -226,6 +242,12 @@ void aplicarTranslacaoSelecionado(Hit hit, const Vetor& delta) {
     case Hit::Cilindro7:
         cilindro7.cb = cilindro7.aplicarTranslacao(cilindro7.cb, delta);
         break;
+    case Hit::Cilindro8:
+        cilindro8.cb = cilindro8.aplicarTranslacao(cilindro8.cb, delta);
+        break;
+    case Hit::Cilindro9:
+        cilindro9.cb = cilindro9.aplicarTranslacao(cilindro9.cb, delta);
+        break;
     case Hit::Cauda:
         cauda.cb = cauda.aplicarTranslacao(cauda.cb, delta);
         break;
@@ -243,6 +265,16 @@ void aplicarTranslacaoSelecionado(Hit hit, const Vetor& delta) {
         cone3.cb = cone3.aplicarTranslacao(cone3.cb, delta);
         cone3.v = cone3.aplicarTranslacao(cone3.v, delta);
         cone3.recalcularDerivados();
+        break;
+    case Hit::Cone8:
+        cone8.cb = cone8.aplicarTranslacao(cone8.cb, delta);
+        cone8.v = cone8.aplicarTranslacao(cone8.v, delta);
+        cone8.recalcularDerivados();
+        break;
+    case Hit::Cone9:
+        cone9.cb = cone9.aplicarTranslacao(cone9.cb, delta);
+        cone9.v = cone9.aplicarTranslacao(cone9.v, delta);
+        cone9.recalcularDerivados();
         break;
     case Hit::Chifre_esq:
         chifre_esq.cb = chifre_esq.aplicarTranslacao(chifre_esq.cb, delta);
@@ -281,6 +313,8 @@ void aplicarRotacaoSelecionado(Hit hit, char eixo, float graus) {
     case Hit::Cilindro5:
     case Hit::Cilindro6:
     case Hit::Cilindro7:
+    case Hit::Cilindro8:
+    case Hit::Cilindro9:
     case Hit::Cauda: {
         Cilindro* c = nullptr;
         if (hit == Hit::Cilindro) c = &cilindro;
@@ -290,6 +324,8 @@ void aplicarRotacaoSelecionado(Hit hit, char eixo, float graus) {
         else if (hit == Hit::Cilindro5) c = &cilindro5;
         else if (hit == Hit::Cilindro6) c = &cilindro6;
         else if (hit == Hit::Cilindro7) c = &cilindro7;
+        else if (hit == Hit::Cilindro8) c = &cilindro8;
+        else if (hit == Hit::Cilindro9) c = &cilindro9;
         else if (hit == Hit::Cauda) c = &cauda;
         if (c == nullptr) break;
 
@@ -301,6 +337,8 @@ void aplicarRotacaoSelecionado(Hit hit, char eixo, float graus) {
     case Hit::Cone:
     case Hit::Cone2:
     case Hit::Cone3:
+    case Hit::Cone8:
+    case Hit::Cone9:
     case Hit::Chifre_esq:
     case Hit::Chifre_dir:
     case Hit::Nave: {
@@ -308,6 +346,8 @@ void aplicarRotacaoSelecionado(Hit hit, char eixo, float graus) {
         if (hit == Hit::Cone) c = &cone;
         else if (hit == Hit::Cone2) c = &cone2;
         else if (hit == Hit::Cone3) c = &cone3;
+        else if (hit == Hit::Cone8) c = &cone8;
+        else if (hit == Hit::Cone9) c = &cone9;
         else if (hit == Hit::Chifre_esq) c = &chifre_esq;
         else if (hit == Hit::Chifre_dir) c = &chifre_dir;
         else if (hit == Hit::Nave) c = &nave;
@@ -397,6 +437,12 @@ void aplicarEscalaVetorSelecionado(Hit hit, const Vetor& escala) {
     case Hit::Cilindro7:
         cilindro7.aplicarEscalaNoPivoObjeto(escala, cilindro7.cb);
         break;
+    case Hit::Cilindro8:
+        cilindro8.aplicarEscalaNoPivoObjeto(escala, cilindro8.cb);
+        break;
+    case Hit::Cilindro9:
+        cilindro9.aplicarEscalaNoPivoObjeto(escala, cilindro9.cb);
+        break;
     case Hit::Cauda:
         cauda.aplicarEscalaNoPivoObjeto(escala, cauda.cb);
         break;
@@ -408,6 +454,12 @@ void aplicarEscalaVetorSelecionado(Hit hit, const Vetor& escala) {
         break;
     case Hit::Cone3:
         cone3.aplicarEscalaNoPivoObjeto(escala, cone3.cb);
+        break;
+    case Hit::Cone8:
+        cone8.aplicarEscalaNoPivoObjeto(escala, cone8.cb);
+        break;
+    case Hit::Cone9:
+        cone9.aplicarEscalaNoPivoObjeto(escala, cone9.cb);
         break;
     case Hit::Chifre_esq:
         chifre_esq.aplicarEscalaNoPivoObjeto(escala, chifre_esq.cb);
