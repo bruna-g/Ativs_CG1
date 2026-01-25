@@ -474,6 +474,17 @@ int main() {
     chifre_esq.rotacionarZ(-45.0f);
     chifre_dir.rotacionarZ(-45.0f);
 
+    cuboMalha.aplicarEscalaNoPivoObjeto(
+        Vetor(cubo_escala_x, cubo_escala_y, cubo_escala_z),
+        cubo_centro);
+
+
+    // Vetor deslocCone(20.f, 0.f, 0.f); // +X => direita
+    // cone.cb = cone.aplicarTranslacao(cone.cb, deslocCone);
+    // cone.v = cone.aplicarTranslacao(cone.v, deslocCone);
+    // cone.recalcularDerivados(); // opcional, mas seguro
+
+
     Cena cena;
     cena.observador = camera.getEye();
     cena.luz = LuzPontual{ P_F, I_F };
