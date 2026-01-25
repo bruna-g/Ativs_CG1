@@ -60,6 +60,7 @@ float m_e = 10.0f;
 
 // Textura de madeira
 Textura* texturaMadeira = nullptr;
+Textura* texturaVaca = nullptr;
 static Cena* gCena = nullptr;
 
 // Chão
@@ -237,9 +238,9 @@ const float cubo_escala_z = 1.2f;
 // Esfera cabeça (encostada na face esquerda do cubo após a escala)
 float rEsfera_cabeca = 15.0f;
 Point centroEsfera_cabeca(135.f, 90.f, 125.f);
-Color K_e_cabeca(0.45f, 0.25f, 0.10f);
-Color K_d_cabeca(0.45f, 0.25f, 0.10f);
-Color K_a_cabeca(0.45f, 0.25f, 0.10f);
+Color K_e_cabeca(1.0f, 1.0f, 1.0f);
+Color K_d_cabeca(1.0f, 1.0f, 1.0f);
+Color K_a_cabeca(1.0f, 1.0f, 1.0f);
 float m_e_cabeca = 10.0f;
 Esfera esfera_cabeca(centroEsfera_cabeca, rEsfera_cabeca);
 
@@ -337,6 +338,7 @@ int main() {
     SDL_CreateWindowAndRenderer(nCol, nLin, 0, &window, &renderer);
     SDL_SetWindowTitle(window, "Trabalho Final - CG");
     texturaMadeira = new Textura("madeira", "madeira.bmp");
+    texturaVaca = new Textura("vaca", "vaca.bmp");
 
     // Materiais / propriedades via Objeto (Ka/Kd/Ke/shininess)
     // esfera.setKa(Vetor(K_e.r, K_e.g, K_e.b));
@@ -368,6 +370,11 @@ int main() {
     esfera_cabeca.setKe(Vetor(K_e_cabeca.r, K_e_cabeca.g, K_e_cabeca.b));
     esfera_cabeca.setShininess(m_e_cabeca);
 
+    // Textura da vaca (cabeça)
+    // esfera_cabeca.material.usarTextura = true;
+    // esfera_cabeca.material.textura = texturaVaca;
+    // esfera_cabeca.material.texturaScale = 1.0f;
+
     // chifres
     chifre_esq.setKa(Vetor(K_chifre.r, K_chifre.g, K_chifre.b));
     chifre_esq.setKd(Vetor(K_chifre.r, K_chifre.g, K_chifre.b));
@@ -384,6 +391,11 @@ int main() {
     cauda.setKd(Vetor(K_cauda.r, K_cauda.g, K_cauda.b));
     cauda.setKe(Vetor(K_cauda.r, K_cauda.g, K_cauda.b));
     cauda.setShininess(m_cauda);
+
+    // Textura da vaca (cauda)
+    cauda.material.usarTextura = true;
+    cauda.material.textura = texturaVaca;
+    cauda.material.texturaScale = 1.0f;
 
     // Chão com textura
     mat_chao.usarTextura = true;
@@ -464,6 +476,8 @@ int main() {
         cubo_centro);
 
     cuboMalha.rotacionarZ(-45.0f);
+
+    // Textura da vaca (corpo / cuboMalha) será aplicada no Render.cpp
 
     // Vetor deslocCone(20.f, 0.f, 0.f); // +X => direita
     // cone.cb = cone.aplicarTranslacao(cone.cb, deslocCone);

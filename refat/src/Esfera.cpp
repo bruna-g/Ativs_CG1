@@ -2,6 +2,7 @@
 
 #include "../include/Cena.h"
 #include "../include/Color.h"
+#include "../include/Textura.hpp"
 #include "../include/Utils.h"
 
 #include <algorithm>
@@ -127,8 +128,39 @@ Color Esfera::CalcularCor(const Cena& cena, float t, const Vector& dir) const {
     Vetor kdV = getKd();
     Vetor keV = getKe();
     Color Ka(kaV.i, kaV.j, kaV.k);
-    Color Kd(kdV.i, kdV.j, kdV.k);
+    Color KdBase(kdV.i, kdV.j, kdV.k);
     Color Ke(keV.i, keV.j, keV.k);
+
+    // Textura (mapeamento esférico)
+    Color Kd = KdBase;
+    if (material.usarTextura && material.textura != nullptr) {
+        Vector n = CalcularNormal(P);
+        // Coordenadas esféricas (u em [0,1), v em [0,1])
+        const float pi = 3.14159265358979323846f;
+        float u = 0.5f + std::atan2(n.k, n.i) / (2.0f * pi);
+        float v = 0.5f - std::asin(std::clamp(n.j, -1.0f, 1.0f)) / pi;
+
+        // Permite repetição via texturaScale (interpreta como multiplicador de repetição)
+        float rep = (material.texturaScale > 0.0f) ? material.texturaScale : 1.0f;
+        u = u * rep;
+        v = v * rep;
+
+        u = u - std::floor(u);
+        if (u < 0) u += 1.0f;
+        v = v - std::floor(v);
+        if (v < 0) v += 1.0f;
+
+        const size_t w = material.textura->get_largura_pixels();
+        const size_t h = material.textura->get_altura_pixels();
+        if (w > 0 && h > 0) {
+            size_t tx = static_cast<size_t>(u * w) % w;
+            size_t ty = static_cast<size_t>(v * h) % h;
+            rgb px = material.textura->get_cor_pixel(ty, tx);
+            Color texCol(px[0] / 255.0f, px[1] / 255.0f, px[2] / 255.0f);
+            Kd = texCol;
+            Ka = texCol; // também no ambiente
+        }
+    }
 
     Color Ia(cena.luzAmbiente.r * Ka.r, cena.luzAmbiente.g * Ka.g, cena.luzAmbiente.b * Ka.b);
     if (naSombra) {

@@ -1,6 +1,7 @@
 #include "../include/Cilindro.h"
 #include "../include/Cena.h"
 #include "../include/Color.h"
+#include "../include/Textura.hpp"
 #include "../include/Utils.h"
 #include "../include/Matriz4x4.h"
 #include <cmath>
@@ -66,7 +67,7 @@ void Cilindro::aplicarEscalaNoPivoObjeto(const Vetor& escala, const Point& pivo)
 }
 
 Point calcularCentro(Cilindro cilindro) {
-    Vetor dcH = calcula_esc_por_vetor(cilindro.altura/2.0f, cilindro.dc);
+    Vetor dcH = calcula_esc_por_vetor(cilindro.altura / 2.0f, cilindro.dc);
     Point soma = soma_ponto_vetor(cilindro.cb, dcH);
     return soma;
 }
@@ -130,7 +131,7 @@ void Cilindro::rotacionarZ(float angulo) {
     this->cb = this->aplicarTranslacao(this->cb, Vector(pivo.x, pivo.y, pivo.z));
 }
 
-void Cilindro::rotacaoArbitraria(Vector eixo, float angulo){
+void Cilindro::rotacaoArbitraria(Vector eixo, float angulo) {
     Point pivo = this->cb;
     // Transladar para a origem
     this->cb = this->aplicarTranslacao(this->cb, Vector(-pivo.x, -pivo.y, -pivo.z));
@@ -245,8 +246,56 @@ Color Cilindro::CalcularCor(const Cena& cena, float t, const Vector& dir) const 
     Vetor kdV = getKd();
     Vetor keV = getKe();
     Color Ka(kaV.i, kaV.j, kaV.k);
-    Color Kd(kdV.i, kdV.j, kdV.k);
+    Color KdBase(kdV.i, kdV.j, kdV.k);
     Color Ke(keV.i, keV.j, keV.k);
+
+    // Textura (mapeamento cilíndrico)
+    Color Kd = KdBase;
+    if (material.usarTextura && material.textura != nullptr) {
+        // Base ortonormal (u_axis, v_axis, dc)
+        Vector axis = dc;
+        float nAxis = calcula_norma(axis);
+        if (nAxis <= 1e-8f) nAxis = 1.0f;
+        axis = calcula_esc_por_vetor(1.0f / nAxis, axis);
+
+        Vector ref = (std::fabs(axis.i) < 0.9f) ? Vector(1.0f, 0.0f, 0.0f) : Vector(0.0f, 1.0f, 0.0f);
+        Vector u_axis = cross(ref, axis);
+        float nu = calcula_norma(u_axis);
+        if (nu <= 1e-8f) nu = 1.0f;
+        u_axis = calcula_esc_por_vetor(1.0f / nu, u_axis);
+        Vector v_axis = cross(axis, u_axis);
+
+        Vector w = subtrai_pontos(P, cb);
+        float hCoord = calcula_prod_esc(w, axis);
+        float vBase = (altura > 1e-6f) ? (hCoord / altura) : 0.0f;
+
+        float xCoord = calcula_prod_esc(w, u_axis);
+        float yCoord = calcula_prod_esc(w, v_axis);
+
+        const float pi = 3.14159265358979323846f;
+        float ang = std::atan2(yCoord, xCoord); // [-pi, pi]
+        float uBase = (ang / (2.0f * pi)) + 0.5f;
+
+        float rep = (material.texturaScale > 0.0f) ? material.texturaScale : 1.0f;
+        float u = uBase * rep;
+        float v = vBase * rep;
+
+        u = u - std::floor(u);
+        if (u < 0) u += 1.0f;
+        v = v - std::floor(v);
+        if (v < 0) v += 1.0f;
+
+        const size_t wpx = material.textura->get_largura_pixels();
+        const size_t hpx = material.textura->get_altura_pixels();
+        if (wpx > 0 && hpx > 0) {
+            size_t tx = static_cast<size_t>(u * wpx) % wpx;
+            size_t ty = static_cast<size_t>(v * hpx) % hpx;
+            rgb px = material.textura->get_cor_pixel(ty, tx);
+            Color texCol(px[0] / 255.0f, px[1] / 255.0f, px[2] / 255.0f);
+            Kd = texCol;
+            Ka = texCol;
+        }
+    }
 
     Vector l = calcula_l(cena.luz.pos, P);
     Point P_mod(P.x + l.i * 1e-4f, P.y + l.j * 1e-4f, P.z + l.k * 1e-4f);

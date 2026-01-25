@@ -11,6 +11,7 @@
 #include "Esfera.h"
 #include "Malha.h"
 #include "Material.h"
+#include "Textura.hpp"
 #include "Utils.h"
 
 // Dependências globais (continuam sendo definidas em main.cpp)
@@ -45,6 +46,9 @@ extern Esfera esfera3_nave;
 extern Esfera esfera_cabeca;
 
 extern Malha cuboMalha;
+
+// Textura da vaca (definida em main.cpp)
+extern Textura* texturaVaca;
 
 void renderScene(SDL_Renderer* renderer, const Cena& cena) {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -137,7 +141,34 @@ void renderScene(SDL_Renderer* renderer, const Cena& cena) {
             case Hit::Cubo: {
                 Vetor PiV = cuboMalha.getPontoIntersecao();
                 Vetor nV = cuboMalha.calcularNormal(PiV);
-                Plano plano_cubo(Point(PiV.i, PiV.j, PiV.k), Vector(nV.i, nV.j, nV.k), Material());
+
+                // Cria um plano auxiliar (mesma face atingida) para reaproveitar o shading do Plano,
+                // mas com um ponto de referência estável para o mapeamento de textura.
+                // Para um plano com normal n e passando por Pi: d = n·Pi.
+                // Escolhe um ponto p_pi no plano resolvendo uma coordenada (a de maior módulo).
+                const Vector nFace(nV.i, nV.j, nV.k);
+                const float d = nFace.i * PiV.i + nFace.j * PiV.j + nFace.k * PiV.k;
+                Point p_pi(0.0f, 0.0f, 0.0f);
+                const float ax = std::fabs(nFace.i);
+                const float ay = std::fabs(nFace.j);
+                const float az = std::fabs(nFace.k);
+                if (az >= ax && az >= ay && std::fabs(nFace.k) > 1e-6f) {
+                    p_pi = Point(0.0f, 0.0f, d / nFace.k);
+                }
+                else if (ay >= ax && std::fabs(nFace.j) > 1e-6f) {
+                    p_pi = Point(0.0f, d / nFace.j, 0.0f);
+                }
+                else if (std::fabs(nFace.i) > 1e-6f) {
+                    p_pi = Point(d / nFace.i, 0.0f, 0.0f);
+                }
+
+                Material mat_vaca;
+                mat_vaca.usarTextura = (texturaVaca != nullptr);
+                mat_vaca.textura = texturaVaca;
+                // Para o cubo, deixa a textura “1x por face” (pode ajustar depois)
+                mat_vaca.texturaScale = 0.02f;
+
+                Plano plano_cubo(p_pi, nFace, mat_vaca);
                 plano_cubo.setKa(cuboMalha.getKa());
                 plano_cubo.setKd(cuboMalha.getKd());
                 plano_cubo.setKe(cuboMalha.getKe());
