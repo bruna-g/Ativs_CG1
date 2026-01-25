@@ -395,10 +395,10 @@ int main() {
     SDL_Init(SDL_INIT_VIDEO);
     SDL_CreateWindowAndRenderer(nCol, nLin, 0, &window, &renderer);
     SDL_SetWindowTitle(window, "Trabalho Final - CG");
-    texturaMadeira = new Textura("madeira", "madeira.bmp");
+    //texturaMadeira = new Textura("madeira", "madeira.bmp");
     texturaVaca = new Textura("vaca", "vaca.bmp");
     texturaCeu = new Textura("ceu", "ceu.bmp");
-    //texturaMadeira = new Textura("grama", "grama.bmp");
+    texturaMadeira = new Textura("grama", "grama.bmp");
 
     // Materiais / propriedades via Objeto (Ka/Kd/Ke/shininess)
     // esfera.setKa(Vetor(K_e.r, K_e.g, K_e.b));

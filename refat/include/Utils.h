@@ -26,6 +26,6 @@ Vector subtrai_pontos(const Point& p1, const Point& p2);
 Vector subtrai_vetores(const Vector& v1, const Vector& v2);
 Vector calcula_dr(const Point& Po, const Point& Pj);
 Color CalcularCor(const Cena& cena, float t, const Vector& dir, 
-    const Color& K_a, const Color& K_d, const Color& K_e, Vector normal, Objeto* obj);
+    const Vector& K_a, const Vector& K_d, const Vector& K_e, Vector normal, Objeto* obj);
 
 #endif // UTILS_H

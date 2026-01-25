@@ -96,8 +96,12 @@ Vector produto_vetorial(const Vector& a, const Vector& b) {
 }
 
 Color CalcularCor(const Cena& cena, float t, const Vector& dir, 
-    const Color& K_a, const Color& K_d, const Color& K_e, Vector normal, Objeto* obj) {
+    const Vector& K_a, const Vector& K_d, const Vector& K_e, Vector normal, Objeto* obj) {
     Point P = calcula_eq_ray(cena.observador, t, dir);
+
+    Color Ka( K_a.i, K_a.j, K_a.k);
+    Color Kd( K_d.i, K_d.j, K_d.k);
+    Color Ke( K_e.i, K_e.j, K_e.k);
     
     bool naSombraSpot = false;
     Color I_spot(0.0f, 0.0f, 0.0f);
@@ -126,13 +130,13 @@ Color CalcularCor(const Cena& cena, float t, const Vector& dir,
         float cos_ang = cosf(cena.luzSpot.angulo * (3.14159265f / 180.0f));
         
         if(cos_dr_l >= cos_ang) {
-            Id_spot = Color(cena.luzSpot.intensidade.r*cos_dr_l * K_d.r * fd_spot,
-            cena.luzSpot.intensidade.g*cos_dr_l * K_d.g * fd_spot,
-            cena.luzSpot.intensidade.b*cos_dr_l * K_d.b * fd_spot);
+            Id_spot = Color(cena.luzSpot.intensidade.r*cos_dr_l * Kd.r * fd_spot,
+            cena.luzSpot.intensidade.g*cos_dr_l * Kd.g * fd_spot,
+            cena.luzSpot.intensidade.b*cos_dr_l * Kd.b * fd_spot);
 
-            Ie_spot = Color(cena.luzSpot.intensidade.r*cos_dr_l * K_e.r * fe_spot,
-                cena.luzSpot.intensidade.g*cos_dr_l * K_e.g * fe_spot,
-                cena.luzSpot.intensidade.b*cos_dr_l * K_e.b * fe_spot);
+            Ie_spot = Color(cena.luzSpot.intensidade.r*cos_dr_l * Ke.r * fe_spot,
+                cena.luzSpot.intensidade.g*cos_dr_l * Ke.g * fe_spot,
+                cena.luzSpot.intensidade.b*cos_dr_l * Ke.b * fe_spot);
 
             I_spot = Color(Id_spot.r + Ie_spot.r, 
                 Id_spot.g + Ie_spot.g, 
@@ -155,7 +159,7 @@ Color CalcularCor(const Cena& cena, float t, const Vector& dir,
     float cosAlpha_pontual = lidarExcecao(calcula_prod_esc(r_pontual, v));
     float fe_pontual = pow(cosAlpha_pontual, cena.expoenteEspecular);
 
-    Color Ia(cena.luzAmbiente.r * K_a.r, cena.luzAmbiente.g * K_a.g, cena.luzAmbiente.b * K_a.b);
+    Color Ia(cena.luzAmbiente.r * Ka.r, cena.luzAmbiente.g * Ka.g, cena.luzAmbiente.b * Ka.b);
     if (naSombra || naSombraSpot) {
         Color I(lidarExcecao(Ia.r), lidarExcecao(Ia.g), lidarExcecao(Ia.b));
         int R = static_cast<int>(roundf(I.r * 255.0f));
@@ -164,13 +168,13 @@ Color CalcularCor(const Cena& cena, float t, const Vector& dir,
         return Color(R, G, B);
     }
 
-    Color Id_pontual(cena.luz.intensidade.r * K_d.r * fd_pontual,
-        cena.luz.intensidade.g * K_d.g * fd_pontual,
-        cena.luz.intensidade.b * K_d.b * fd_pontual);
+    Color Id_pontual(cena.luz.intensidade.r * Kd.r * fd_pontual,
+        cena.luz.intensidade.g * Kd.g * fd_pontual,
+        cena.luz.intensidade.b * Kd.b * fd_pontual);
 
-    Color Ie_pontual(cena.luz.intensidade.r * K_e.r * fe_pontual,
-        cena.luz.intensidade.g * K_e.g * fe_pontual,
-        cena.luz.intensidade.b * K_e.b * fe_pontual);
+    Color Ie_pontual(cena.luz.intensidade.r * Ke.r * fe_pontual,
+        cena.luz.intensidade.g * Ke.g * fe_pontual,
+        cena.luz.intensidade.b * Ke.b * fe_pontual);
     
     //calcula da cor final*******************************
 

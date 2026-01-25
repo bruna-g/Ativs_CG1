@@ -1,10 +1,15 @@
 #include "../include/Malha.h"
 #include "../include/Utils.h"
+#include "../include/Textura.hpp"
 #include <cmath>
 #include <limits>
 #include <Matriz4x4.h>
 
-Malha::Malha() : arestas(), faces(), vertices(), normal(0.0f, 0.0f, 0.0f), al() {
+Malha::Malha() : arestas(), faces(), vertices(), normal(0.0f, 0.0f, 0.0f), al(), plano(Point(0.0f, 0.0f, 0.0f), Vector(0.0f, 1.0f, 0.0f), Material()) {
+}
+
+Malha::Malha(const Plano& plano) : Malha() {
+    this->plano = plano;
 }
 
 void Malha::adicionarAresta(Aresta aresta) {
@@ -362,6 +367,32 @@ Color Malha::CalcularCor(const Cena& cena, float t, const Vector& dir) const {
     Vetor normal_vec = normal; // Usa a normal da face atingida, calculada na interseção.
     Vector normal_v(normal_vec.i, normal_vec.j, normal_vec.k);
 
+    Color Kd_textured = K_d;
+    if (plano.material.usarTextura && plano.material.textura != nullptr) {
+        Vector nLocal = normal_v;
+        Vector arbitrary = (fabs(nLocal.i) < 0.9f) ? Vector(1.0f, 0.0f, 0.0f) : Vector(0.0f, 1.0f, 0.0f);
+        Vector u_axis = cross(arbitrary, nLocal);
+        float nu = calcula_norma(u_axis);
+        if (nu == 0.0f) nu = 1.0f;
+        u_axis = calcula_esc_por_vetor(1.0f / nu, u_axis);
+        Vector v_axis = cross(nLocal, u_axis);
+
+        Vector vecPi = subtrai_pontos(P, plano.p_pi);
+        float u = calcula_prod_esc(vecPi, u_axis) * plano.material.texturaScale;
+        float v = calcula_prod_esc(vecPi, v_axis) * plano.material.texturaScale;
+        u = u - floor(u);
+        if (u < 0) u += 1.0f;
+        v = v - floor(v);
+        if (v < 0) v += 1.0f;
+
+        size_t tx = static_cast<size_t>(u * plano.material.textura->get_largura_pixels()) % plano.material.textura->get_largura_pixels();
+        size_t ty = static_cast<size_t>(v * plano.material.textura->get_altura_pixels()) % plano.material.textura->get_altura_pixels();
+
+        rgb px = plano.material.textura->get_cor_pixel(ty, tx);
+        Color texCol(px[0] / 255.0f, px[1] / 255.0f, px[2] / 255.0f);
+        Kd_textured = Color(texCol.r, texCol.g, texCol.b);
+    }
+
     bool naSombraSpot = false;
     Color I_spot(0.0f, 0.0f, 0.0f);
 
@@ -386,9 +417,9 @@ Color Malha::CalcularCor(const Cena& cena, float t, const Vector& dir) const {
             float cos_ang = cosf(cena.luzSpot.angulo * (3.14159265f / 180.0f));
 
             if (cos_dr_l >= cos_ang) {
-                Color Id_spot(cena.luzSpot.intensidade.r * cos_dr_l * K_d.r * fd_spot,
-                    cena.luzSpot.intensidade.g * cos_dr_l * K_d.g * fd_spot,
-                    cena.luzSpot.intensidade.b * cos_dr_l * K_d.b * fd_spot);
+                Color Id_spot(cena.luzSpot.intensidade.r * cos_dr_l * Kd_textured.r * fd_spot,
+                    cena.luzSpot.intensidade.g * cos_dr_l * Kd_textured.g * fd_spot,
+                    cena.luzSpot.intensidade.b * cos_dr_l * Kd_textured.b * fd_spot);
 
                 Color Ie_spot(cena.luzSpot.intensidade.r * cos_dr_l * K_e.r * fe_spot,
                     cena.luzSpot.intensidade.g * cos_dr_l * K_e.g * fe_spot,
@@ -416,9 +447,9 @@ Color Malha::CalcularCor(const Cena& cena, float t, const Vector& dir) const {
         float cosAlpha_pontual = lidarExcecao(calcula_prod_esc(r_pontual, v));
         float fe_pontual = pow(cosAlpha_pontual, static_cast<float>(getShininess()));
 
-        Color Id_pontual(cena.luz.intensidade.r * K_d.r * fd_pontual,
-            cena.luz.intensidade.g * K_d.g * fd_pontual,
-            cena.luz.intensidade.b * K_d.b * fd_pontual);
+        Color Id_pontual(cena.luz.intensidade.r * Kd_textured.r * fd_pontual,
+            cena.luz.intensidade.g * Kd_textured.g * fd_pontual,
+            cena.luz.intensidade.b * Kd_textured.b * fd_pontual);
 
         Color Ie_pontual(cena.luz.intensidade.r * K_e.r * fe_pontual,
             cena.luz.intensidade.g * K_e.g * fe_pontual,

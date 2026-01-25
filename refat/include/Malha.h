@@ -7,9 +7,11 @@
 #include "Vector.h"
 #include "Color.h"
 #include "Cena.h"
+#include "Plano.h"
 
 #include <vector>
 #include <initializer_list>
+#include "Material.h"
 
 struct Vertice {
     Vetor pos;
@@ -38,12 +40,14 @@ public:
     std::vector<Aresta> arestas;
     std::vector<Face> faces;
     std::vector<Vertice> vertices;
+    Plano plano;
 
     Vetor normal;
 
     AlgebraLinear al;
 
     Malha();
+    Malha(const Plano& plano_);
 
     void adicionarAresta(Aresta aresta);
     void adicionarFace(Face face);
