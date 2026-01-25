@@ -73,13 +73,7 @@ Color Plano::CalcularCor(const Cena& cena, const Vector& dir) const {
     // Se tem textura, aplica também no termo ambiente.
     Color Ka_textured = material.usarTextura ? Kd_textured : Ka;
     Color Ia(cena.luzAmbiente.r * Ka_textured.r, cena.luzAmbiente.g * Ka_textured.g, cena.luzAmbiente.b * Ka_textured.b);
-    if (naSombra) {
-        Color I(lidarExcecao(Ia.r), lidarExcecao(Ia.g), lidarExcecao(Ia.b));
-        int R = static_cast<int>(roundf(I.r * 255.0f));
-        int G = static_cast<int>(roundf(I.g * 255.0f));
-        int B = static_cast<int>(roundf(I.b * 255.0f));
-        return Color(R, G, B);
-    }
+    
 
     Vector v = Vector(-dir.i, -dir.j, -dir.k);
     Vector r1 = calcula_esc_por_vetor(2.0f, calcula_esc_por_vetor(calcula_prod_esc(n, l), n));
@@ -89,13 +83,66 @@ Color Plano::CalcularCor(const Cena& cena, const Vector& dir) const {
     float cosAlpha = lidarExcecao(calcula_prod_esc(r, v));
     float fe = pow(cosAlpha, static_cast<float>(getShininess()));
 
+    bool naSombraSpot = false;
+    Color I_spot(0.0f, 0.0f, 0.0f);
+    //spot********
+    if(cena.luzSpotAtiva) {
+        Vector l_spot = calcula_l(cena.luzSpot.pos, Pi);
+        Point P_mod_spot(Pi.x + l_spot.i * 1e-4f, Pi.y + l_spot.j * 1e-4f, Pi.z + l_spot.k * 1e-4f);
+        float dist_Pi_Luz_spot = calcula_norma(subtrai_pontos(cena.luzSpot.pos, P_mod_spot));
+        
+        naSombraSpot = cena.estaNaSombra(P_mod_spot, l_spot, dist_Pi_Luz_spot);
+        
+        Vector r1_spot = calcula_esc_por_vetor(2.0f, calcula_esc_por_vetor(calcula_prod_esc(n, l_spot), n));
+        Vector r_spot(r1_spot.i - l_spot.i, r1_spot.j - l_spot.j, r1_spot.k - l_spot.k);
+        
+        float fd_spot = lidarExcecao(calcula_prod_esc(n, l_spot));
+        float cosAlpha_spot = lidarExcecao(calcula_prod_esc(r_spot, Vector(-dir.i, -dir.j, -dir.k)));
+        float fe_spot = pow(cosAlpha_spot, cena.expoenteEspecular);
+
+        float cos_dr_l = calcula_prod_esc(cena.luzSpot.direcao, 
+            calcula_esc_por_vetor(-1.0f, l_spot));
+
+        float cos_ang = cosf(cena.luzSpot.angulo * (3.14159265f / 180.0f));
+        
+        if(cos_dr_l >= cos_ang) {
+            Color Id_spot(cena.luzSpot.intensidade.r*cos_dr_l * Kd_textured.r * fd_spot,
+            cena.luzSpot.intensidade.g*cos_dr_l * Kd_textured.g * fd_spot,
+            cena.luzSpot.intensidade.b*cos_dr_l * Kd_textured.b * fd_spot);
+
+            Color Ie_spot(cena.luzSpot.intensidade.r*cos_dr_l * Ke.r * fe_spot,
+                cena.luzSpot.intensidade.g*cos_dr_l * Ke.g * fe_spot,
+                cena.luzSpot.intensidade.b*cos_dr_l * Ke.b * fe_spot);
+
+            I_spot = Color(Id_spot.r + Ie_spot.r, 
+                Id_spot.g + Ie_spot.g, 
+                Id_spot.b + Ie_spot.b);
+        }
+    }
+
+    if (naSombra || naSombraSpot) {
+        Color I(lidarExcecao(Ia.r), lidarExcecao(Ia.g), lidarExcecao(Ia.b));
+        int R = static_cast<int>(roundf(I.r * 255.0f));
+        int G = static_cast<int>(roundf(I.g * 255.0f));
+        int B = static_cast<int>(roundf(I.b * 255.0f));
+        return Color(R, G, B);
+    }
+    
     Color Id(cena.luz.intensidade.r * Kd_textured.r * fd,
         cena.luz.intensidade.g * Kd_textured.g * fd,
         cena.luz.intensidade.b * Kd_textured.b * fd);
     Color Ie(cena.luz.intensidade.r * Ke.r * fe,
         cena.luz.intensidade.g * Ke.g * fe,
         cena.luz.intensidade.b * Ke.b * fe);
-    Color I(lidarExcecao(Id.r + Ie.r + Ia.r), lidarExcecao(Id.g + Ie.g + Ia.g), lidarExcecao(Id.b + Ie.b + Ia.b));
+    //Color I(lidarExcecao(Id.r + Ie.r + Ia.r), lidarExcecao(Id.g + Ie.g + Ia.g), lidarExcecao(Id.b + Ie.b + Ia.b));
+
+    Color I_pontual(Id.r + Ie.r, 
+        Id.g + Ie.g, 
+        Id.b + Ie.b);
+    
+    Color I(lidarExcecao(I_pontual.r + I_spot.r + Ia.r), 
+        lidarExcecao(I_pontual.g + I_spot.g + Ia.g), 
+        lidarExcecao(I_pontual.b + I_spot.b + Ia.b));  
 
     int R = static_cast<int>(roundf(I.r * 255.0f));
     int G = static_cast<int>(roundf(I.g * 255.0f));

@@ -3,6 +3,8 @@
 
 #include "Point.h"
 #include "Vector.h"
+#include "Color.h"
+#include "Cena.h"
 
 float calcula_norma(const Vector& v);
 float calcula_prod_esc(const Vector& v1, const Vector& v2);
@@ -23,5 +25,7 @@ Vector produto_vetorial(const Vector& a, const Vector& b);
 Vector subtrai_pontos(const Point& p1, const Point& p2);
 Vector subtrai_vetores(const Vector& v1, const Vector& v2);
 Vector calcula_dr(const Point& Po, const Point& Pj);
+Color CalcularCor(const Cena& cena, float t, const Vector& dir, 
+    const Color& K_a, const Color& K_d, const Color& K_e, Vector normal, Objeto* obj);
 
 #endif // UTILS_H

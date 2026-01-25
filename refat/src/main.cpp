@@ -114,6 +114,12 @@ Point P_F(-20.f, 185.f, 450.f);
 float r_lua = 25.0f;
 Esfera lua(P_F, r_lua);
 
+//luz spot
+Color I_Spot(1.0f, 0.7f, 0.0f);
+Point P_Spot(165.f, 180.f, 125.f);
+Vector D_Spot(0.f, -1.f, 0.f);
+float angulo_Spot = 30.f;
+
 // Dica: para deixar as árvores com iluminação mais parecida, coloque a luz bem longe
 // e aproximadamente centrada no "grupo" de árvores (vira quase uma luz direcional).
 // Colocar a luz abaixo da base das copas (y < 60) evita que o cone projete sombra no tronco.
@@ -392,6 +398,7 @@ int main() {
     texturaMadeira = new Textura("madeira", "madeira.bmp");
     texturaVaca = new Textura("vaca", "vaca.bmp");
     texturaCeu = new Textura("ceu", "ceu.bmp");
+    //texturaMadeira = new Textura("grama", "grama.bmp");
 
     // Materiais / propriedades via Objeto (Ka/Kd/Ke/shininess)
     // esfera.setKa(Vetor(K_e.r, K_e.g, K_e.b));
@@ -583,6 +590,8 @@ int main() {
     Cena cena;
     cena.observador = camera.getEye();
     cena.luz = LuzPontual{ P_F, I_F };
+    cena.luzSpot = LuzSpot{ I_Spot, P_Spot, D_Spot, angulo_Spot };
+    cena.luzSpotAtiva = true;
     cena.luzAmbiente = I_A;
     cena.objetosSombra = { &cilindro, &cone, &cilindro2, &cone2, &cilindro3, &cone3, &nave,
         &esfera1_nave, &esfera2_nave, &esfera3_nave, &cilindro4, &cilindro5, &cilindro6, &cilindro7, &cilindro8, &cuboMalha, &esfera_cabeca,
@@ -592,6 +601,138 @@ int main() {
     gCena = &cena;
 
     renderScene(renderer, cena);
+
+    // Point p_aux = calcula_eq_ray(Po, t_best, dr_e);
+
+    //         switch (hit) {
+    //         case Hit::Fundo:
+    //             cor = plano_fundo.CalcularCor(cena, dr_e);
+    //             break;
+    //         case Hit::Chao:
+    //             cor = plano_chao.CalcularCor(cena, dr_e);
+    //             break;
+    //         case Hit::Cilindro:
+    //             // cor = cilindro.CalcularCor(cena, t_best, dr_e);
+    //             cor = CalcularCor(cena, t_best, dr_e, KCil_a, 
+    //                                 KCil_d, KCil_e, cilindro.CalcularNormal(p_aux), &cilindro);
+    //             break;
+    //         case Hit::Cilindro2:
+    //             //cor = cilindro2.CalcularCor(cena, t_best, dr_e);
+    //             cor = CalcularCor(cena, t_best, dr_e, KCil_a2, 
+    //                                 KCil_d2, KCil_e2, cilindro2.CalcularNormal(p_aux), &cilindro2);
+    //             break;
+    //         case Hit::Cilindro3:
+    //             // cor = cilindro3.CalcularCor(cena, t_best, dr_e);
+    //             cor = CalcularCor(cena, t_best, dr_e, KCil_a3, 
+    //                                 KCil_d3, KCil_e3, cilindro3.CalcularNormal(p_aux), &cilindro3);
+    //             break;
+    //         case Hit::Cilindro4:
+    //             //cor = cilindro4.CalcularCor(cena, t_best, dr_e);
+    //             cor = CalcularCor(cena, t_best, dr_e, KCil_a4,
+    //                                 KCil_d4, KCil_e4, cilindro4.CalcularNormal(p_aux), &cilindro4);
+    //             break;
+    //         case Hit::Cilindro5:
+    //             // cor = cilindro5.CalcularCor(cena, t_best, dr_e);
+    //             cor = CalcularCor(cena, t_best, dr_e, KCil_a5, 
+    //                                 KCil_d5, KCil_e5, cilindro5.CalcularNormal(p_aux), &cilindro5);
+    //             break;
+    //         case Hit::Cilindro6:
+    //             // cor = cilindro6.CalcularCor(cena, t_best, dr_e);
+    //             cor = CalcularCor(cena, t_best, dr_e, KCil_a6, 
+    //                                 KCil_d6, KCil_e6, cilindro6.CalcularNormal(p_aux), &cilindro6);
+    //             break;
+    //         case Hit::Cilindro7:
+    //             // cor = cilindro7.CalcularCor(cena, t_best, dr_e);
+    //             cor = CalcularCor(cena, t_best, dr_e, KCil_a7, 
+    //                                 KCil_d7, KCil_e7, cilindro7.CalcularNormal(p_aux), &cilindro7);
+    //             break;
+    //         case Hit::Cauda:
+    //             // cor = cauda.CalcularCor(cena, t_best, dr_e);
+    //             cor = CalcularCor(cena, t_best, dr_e, K_cauda, 
+    //                                 K_cauda, K_cauda, cauda.CalcularNormal(p_aux), &cauda);
+    //             break;
+    //         case Hit::Cone:
+    //             // cor = cone.CalcularCor(cena, t_best, dr_e);
+    //             cor = CalcularCor(cena, t_best, dr_e, KCone, 
+    //                                 KCone, KCone, cone.CalcularNormal(p_aux, dr_e), &cone);
+    //             break;
+    //         case Hit::Cone2:
+    //             //cor = cone2.CalcularCor(cena, t_best, dr_e);
+    //             cor = CalcularCor(cena, t_best, dr_e, KCone2, 
+    //                                 KCone2, KCone2, cone2.CalcularNormal(p_aux, dr_e), &cone2);
+    //             break;
+    //         case Hit::Cone3:
+    //             // cor = cone3.CalcularCor(cena, t_best, dr_e);
+    //             cor = CalcularCor(cena, t_best, dr_e, KCone3, 
+    //                                 KCone3, KCone3, cone3.CalcularNormal(p_aux, dr_e), &cone3);
+    //             break;
+    //         case Hit::Chifre_esq:
+    //             //cor = chifre_esq.CalcularCor(cena, t_best, dr_e);
+    //             cor = CalcularCor(cena, t_best, dr_e, K_chifre, 
+    //                                 K_chifre, K_chifre, chifre_esq.CalcularNormal(p_aux, dr_e), &chifre_esq);
+    //             break;
+    //         case Hit::Chifre_dir:
+    //             //cor = chifre_dir.CalcularCor(cena, t_best, dr_e);
+    //             cor = CalcularCor(cena, t_best, dr_e, K_chifre, 
+    //                                 K_chifre, K_chifre, chifre_dir.CalcularNormal(p_aux, dr_e), &chifre_dir);
+    //             break;
+    //         case Hit::Nave:
+    //         {
+    //             // Se o ponto estiver no disco da base da nave, pinta de branco.
+    //             // (Caso contrário, usa o sombreamento normal do cone.)
+    //             Point Pi = calcula_eq_ray(Po, t_best, dr_e);
+    //             Vector dist_centro = subtrai_pontos(Pi, nave.cb);
+    //             float altura_Pi = calcula_prod_esc(dist_centro, nave.dc);
+    //             float dist2 = calcula_prod_esc(dist_centro, dist_centro);
+
+    //             const float epsBase = 1e-3f;
+    //             if (std::fabs(altura_Pi) < epsBase && dist2 <= nave.raio * nave.raio + epsBase) {
+    //                 cor = Color(45, 50, 60);
+    //             }
+    //             else {
+    //                 // cor = nave.CalcularCor(cena, t_best, dr_e);
+    //                 cor = CalcularCor(cena, t_best, dr_e, Ka_nave, 
+    //                                 Kd_nave, Ke_nave, nave.CalcularNormal(p_aux, dr_e), &nave);
+    //             }
+    //             break;
+    //         }
+    //         // case Hit::Esfera:
+    //         //     //cor = esfera.CalcularCor(cena, t_best, dr_e);
+    //         //    break;
+    //         case Hit::Esfera1_nave:
+    //             //cor = esfera1_nave.CalcularCor(cena, t_best, dr_e);
+    //             cor = CalcularCor(cena, t_best, dr_e, K_e1_nave, 
+    //                                 K_e1_nave, K_e1_nave, esfera.CalcularNormal(p_aux), &esfera1_nave);
+    //             break;
+    //         case Hit::Esfera2_nave:
+    //             //cor = esfera2_nave.CalcularCor(cena, t_best, dr_e);
+    //             cor = CalcularCor(cena, t_best, dr_e, K_e2_nave, 
+    //                                 K_e2_nave, K_e2_nave, esfera.CalcularNormal(p_aux), &esfera2_nave);
+    //             break;
+    //         case Hit::Esfera3_nave:
+    //             //cor = esfera3_nave.CalcularCor(cena, t_best, dr_e);
+    //             cor = CalcularCor(cena, t_best, dr_e, K_e3_nave, 
+    //                                 K_e3_nave, K_e3_nave, esfera.CalcularNormal(p_aux), &esfera3_nave);
+    //             break;
+    //         case Hit::Cubo: {
+    //             // Vetor PiV = cuboMalha.getPontoIntersecao();
+    //             // Vetor nV = cuboMalha.calcularNormal(PiV);
+    //             // Plano plano_cubo(Point(PiV.i, PiV.j, PiV.k), Vector(nV.i, nV.j, nV.k), Material());
+    //             // plano_cubo.setKa(cuboMalha.getKa());
+    //             // plano_cubo.setKd(cuboMalha.getKd());
+    //             // plano_cubo.setKe(cuboMalha.getKe());
+    //             // plano_cubo.setShininess(cuboMalha.getShininess());
+    //             //cor = plano_cubo.CalcularCor(cena, dr_e);
+    //             cor = cuboMalha.CalcularCor(cena, t_best, dr_e);
+    //             break;
+    //         }
+    //         case Hit::Esfera_cabeca:
+    //             cor = esfera_cabeca.CalcularCor(cena, t_best, dr_e);
+    //             break;
+    //         case Hit::None:
+    //         default:
+    //             break;
+    //         }
 
     // Escuta eventos para manter janela aberta
     SDL_Event event;

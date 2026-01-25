@@ -1,4 +1,5 @@
 #include "../include/Malha.h"
+#include "../include/Utils.h"
 #include <cmath>
 #include <limits>
 #include <Matriz4x4.h>
@@ -346,4 +347,95 @@ void Malha::aplicarEscalaNoPivoObjeto(const Vetor& escala, const Point& pivo) {
         }
     }
     atualizarNormalGlobal();
+}
+
+
+Color Malha::CalcularCor(const Cena& cena, float t, const Vector& dir) const {
+    Vetor kaV = getKa();
+    Vetor kdV = getKd();
+    Vetor keV = getKe();
+    Color K_a(kaV.i, kaV.j, kaV.k);
+    Color K_d(kdV.i, kdV.j, kdV.k);
+    Color K_e(keV.i, keV.j, keV.k);
+
+    Point P = calcula_eq_ray(cena.observador, t, dir);
+    Vetor normal_vec = normal; // Usa a normal da face atingida, calculada na interseção.
+    Vector normal_v(normal_vec.i, normal_vec.j, normal_vec.k);
+
+    bool naSombraSpot = false;
+    Color I_spot(0.0f, 0.0f, 0.0f);
+
+    // --- Luz Spot ---
+    if (cena.luzSpotAtiva) {
+        Vector l_spot = calcula_l(cena.luzSpot.pos, P);
+        Point P_mod_spot(P.x + l_spot.i * 1e-4f, P.y + l_spot.j * 1e-4f, P.z + l_spot.k * 1e-4f);
+        float dist_Pi_Luz_spot = calcula_norma(subtrai_pontos(cena.luzSpot.pos, P_mod_spot));
+
+        naSombraSpot = cena.estaNaSombra(P_mod_spot, l_spot, dist_Pi_Luz_spot, const_cast<Malha*>(this));
+
+        if (!naSombraSpot) {
+            Vector r1_spot = calcula_esc_por_vetor(2.0f, calcula_esc_por_vetor(calcula_prod_esc(normal_v, l_spot), normal_v));
+            Vector r_spot(r1_spot.i - l_spot.i, r1_spot.j - l_spot.j, r1_spot.k - l_spot.k);
+
+            float fd_spot = lidarExcecao(calcula_prod_esc(normal_v, l_spot));
+            float cosAlpha_spot = lidarExcecao(calcula_prod_esc(r_spot, Vector(-dir.i, -dir.j, -dir.k)));
+            float fe_spot = pow(cosAlpha_spot, static_cast<float>(getShininess()));
+
+            Vector l_spot_neg = calcula_esc_por_vetor(-1.0f, l_spot);
+            float cos_dr_l = calcula_prod_esc(cena.luzSpot.direcao, l_spot_neg);
+            float cos_ang = cosf(cena.luzSpot.angulo * (3.14159265f / 180.0f));
+
+            if (cos_dr_l >= cos_ang) {
+                Color Id_spot(cena.luzSpot.intensidade.r * cos_dr_l * K_d.r * fd_spot,
+                    cena.luzSpot.intensidade.g * cos_dr_l * K_d.g * fd_spot,
+                    cena.luzSpot.intensidade.b * cos_dr_l * K_d.b * fd_spot);
+
+                Color Ie_spot(cena.luzSpot.intensidade.r * cos_dr_l * K_e.r * fe_spot,
+                    cena.luzSpot.intensidade.g * cos_dr_l * K_e.g * fe_spot,
+                    cena.luzSpot.intensidade.b * cos_dr_l * K_e.b * fe_spot);
+
+                I_spot = Color(Id_spot.r + Ie_spot.r, Id_spot.g + Ie_spot.g, Id_spot.b + Ie_spot.b);
+            }
+        }
+    }
+
+    // --- Luz Pontual ---
+    Vector l_pontual = calcula_l(cena.luz.pos, P);
+    Point P_mod_pontual(P.x + l_pontual.i * 1e-4f, P.y + l_pontual.j * 1e-4f, P.z + l_pontual.k * 1e-4f);
+    float dist_Pi_Luz_pontual = calcula_norma(subtrai_pontos(cena.luz.pos, P_mod_pontual));
+
+    bool naSombraPontual = cena.estaNaSombra(P_mod_pontual, l_pontual, dist_Pi_Luz_pontual, const_cast<Malha*>(this));
+
+    Color I_pontual(0.0f, 0.0f, 0.0f);
+    if (!naSombraPontual) {
+        Vector v(-dir.i, -dir.j, -dir.k);
+        Vector r1_pontual = calcula_esc_por_vetor(2.0f, calcula_esc_por_vetor(calcula_prod_esc(normal_v, l_pontual), normal_v));
+        Vector r_pontual(r1_pontual.i - l_pontual.i, r1_pontual.j - l_pontual.j, r1_pontual.k - l_pontual.k);
+
+        float fd_pontual = lidarExcecao(calcula_prod_esc(normal_v, l_pontual));
+        float cosAlpha_pontual = lidarExcecao(calcula_prod_esc(r_pontual, v));
+        float fe_pontual = pow(cosAlpha_pontual, static_cast<float>(getShininess()));
+
+        Color Id_pontual(cena.luz.intensidade.r * K_d.r * fd_pontual,
+            cena.luz.intensidade.g * K_d.g * fd_pontual,
+            cena.luz.intensidade.b * K_d.b * fd_pontual);
+
+        Color Ie_pontual(cena.luz.intensidade.r * K_e.r * fe_pontual,
+            cena.luz.intensidade.g * K_e.g * fe_pontual,
+            cena.luz.intensidade.b * K_e.b * fe_pontual);
+
+        I_pontual = Color(Id_pontual.r + Ie_pontual.r, Id_pontual.g + Ie_pontual.g, Id_pontual.b + Ie_pontual.b);
+    }
+
+    // --- Cor Final ---
+    Color Ia(cena.luzAmbiente.r * K_a.r, cena.luzAmbiente.g * K_a.g, cena.luzAmbiente.b * K_a.b);
+
+    Color I(lidarExcecao(I_pontual.r + I_spot.r + Ia.r),
+        lidarExcecao(I_pontual.g + I_spot.g + Ia.g),
+        lidarExcecao(I_pontual.b + I_spot.b + Ia.b));
+
+    int R = static_cast<int>(roundf(I.r * 255.0f));
+    int G = static_cast<int>(roundf(I.g * 255.0f));
+    int B = static_cast<int>(roundf(I.b * 255.0f));
+    return Color(R, G, B);
 }

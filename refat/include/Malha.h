@@ -3,6 +3,10 @@
 
 #include "Objeto.h"
 #include "AlgebraLinear.h"
+#include "Point.h"
+#include "Vector.h"
+#include "Color.h"
+#include "Cena.h"
 
 #include <vector>
 #include <initializer_list>
@@ -63,8 +67,9 @@ public:
     void rotacionarY(float angulo);
     void rotacionarZ(float angulo);
     void rotacaoArbitraria(Vector eixo, float angulo);
-
+    Color CalcularCor(const Cena& cena, float t, const Vector& dir) const;
     Point calcularCentro();
+
 
 private:
     bool rayTriangleIntersect(const Vetor& origem, const Vetor& dir,
