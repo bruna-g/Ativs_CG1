@@ -41,6 +41,7 @@ set(REFAT_COMMON_SOURCES
   "${REFAT_SRC_DIR}/Cubo.cpp"
   "${REFAT_SRC_DIR}/Esfera.cpp"
   "${REFAT_SRC_DIR}/Matriz3x3.cpp"
+  "${REFAT_SRC_DIR}/Matriz4x4.cpp"
   "${REFAT_SRC_DIR}/Utils.cpp"
   "${REFAT_SRC_DIR}/Textura.cpp"
   "${REFAT_SRC_DIR}/Camera.cpp"

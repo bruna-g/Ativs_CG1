@@ -46,6 +46,12 @@ public:
     Point aplicarEscala(const Point& ponto, const Vetor& escala) const {
         return Objeto::aplicarEscala(ponto, escala);
     }
+
+    void rotacionarX(float angulo);
+    void rotacionarY(float angulo);
+    void rotacionarZ(float angulo);
+    void rotacaoArbitraria(Vector eixo, float angulo);
+
 };
 
 // Funções relacionadas à Esfera
