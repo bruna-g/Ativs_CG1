@@ -46,6 +46,8 @@ public:
         return Objeto::aplicarEscala(ponto, escala);
     }
 
+    Vector CalcularNormal(const Point& Pi, const Vector& dir) const;
+
     void rotacionarX(float angulo);
     void rotacionarY(float angulo);
     void rotacionarZ(float angulo);

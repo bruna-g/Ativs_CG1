@@ -18,6 +18,10 @@
 // Dependências globais (continuam sendo definidas em main.cpp)
 extern Camera camera;
 extern Plano plano_chao;
+extern Plano plano_fundo;
+extern Plano plano_esq;
+extern Plano plano_dir;
+extern Plano plano_teto;
 extern Cilindro cilindro;
 extern Cone cone;
 extern Esfera esfera1_nave;
@@ -44,6 +48,119 @@ extern Malha cuboMalha;
 extern Esfera lua;
 
 PickResult gSelecionado;
+
+static std::string vetorToString(const Vetor& v) {
+    std::ostringstream oss;
+    oss << "(" << v.i << ", " << v.j << ", " << v.k << ")";
+    return oss.str();
+}
+
+static std::string pointToString(const Point& p) {
+    std::ostringstream oss;
+    oss << "(" << p.x << ", " << p.y << ", " << p.z << ")";
+    return oss.str();
+}
+
+static Point midpoint(const Point& a, const Point& b) {
+    return Point(
+        0.5f * (a.x + b.x),
+        0.5f * (a.y + b.y),
+        0.5f * (a.z + b.z));
+}
+
+static bool obterCentroPorHit(Hit hit, Point& outCentro) {
+    switch (hit) {
+    case Hit::Chao:
+        outCentro = plano_chao.p_pi;
+        return true;
+    case Hit::Fundo:
+        outCentro = plano_fundo.p_pi;
+        return true;
+    case Hit::Esq:
+        outCentro = plano_esq.p_pi;
+        return true;
+    case Hit::Dir:
+        outCentro = plano_dir.p_pi;
+        return true;
+    case Hit::Teto:
+        outCentro = plano_teto.p_pi;
+        return true;
+    case Hit::Esfera1_nave:
+        outCentro = esfera1_nave.centro;
+        return true;
+    case Hit::Esfera2_nave:
+        outCentro = esfera2_nave.centro;
+        return true;
+    case Hit::Esfera3_nave:
+        outCentro = esfera3_nave.centro;
+        return true;
+    case Hit::Esfera_cabeca:
+        outCentro = esfera_cabeca.centro;
+        return true;
+    case Hit::Lua:
+        outCentro = lua.centro;
+        return true;
+    case Hit::Cilindro:
+        outCentro = cilindro.cb;
+        return true;
+    case Hit::Cilindro2:
+        outCentro = cilindro2.cb;
+        return true;
+    case Hit::Cilindro3:
+        outCentro = cilindro3.cb;
+        return true;
+    case Hit::Cilindro4:
+        outCentro = cilindro4.cb;
+        return true;
+    case Hit::Cilindro5:
+        outCentro = cilindro5.cb;
+        return true;
+    case Hit::Cilindro6:
+        outCentro = cilindro6.cb;
+        return true;
+    case Hit::Cilindro7:
+        outCentro = cilindro7.cb;
+        return true;
+    case Hit::Cilindro8:
+        outCentro = cilindro8.cb;
+        return true;
+    case Hit::Cilindro9:
+        outCentro = cilindro9.cb;
+        return true;
+    case Hit::Cauda:
+        outCentro = cauda.cb;
+        return true;
+    case Hit::Cone:
+        outCentro = cone.cb;
+        return true;
+    case Hit::Cone2:
+        outCentro = cone2.cb;
+        return true;
+    case Hit::Cone3:
+        outCentro = cone3.cb;
+        return true;
+    case Hit::Cone8:
+        outCentro = cone8.cb;
+        return true;
+    case Hit::Cone9:
+        outCentro = cone9.cb;
+        return true;
+    case Hit::Chifre_esq:
+        outCentro = chifre_esq.cb;
+        return true;
+    case Hit::Chifre_dir:
+        outCentro = chifre_dir.cb;
+        return true;
+    case Hit::Nave:
+        outCentro = nave.cb;
+        return true;
+    case Hit::Cubo:
+        outCentro = cuboMalha.calcularCentro();
+        return true;
+    default:
+        return false;
+    }
+}
 
 const char* hitToString(Hit hit) {
     switch (hit) {
@@ -500,6 +617,35 @@ void imprimirAjudaSelecao() {
         << "  s = escala uniforme (fator)\n"
         << "  v = escala vetorial (sx sy sz)\n"
         << "  h = ajuda\n\n";
+}
+
+void imprimirSelecaoDetalhada(const PickResult& pr) {
+    if (pr.hit == Hit::None || pr.objeto == nullptr) {
+        std::cout << "Selecionado: None" << std::endl;
+        return;
+    }
+
+    Point centro(0.0f, 0.0f, 0.0f);
+    const bool temCentro = obterCentroPorHit(pr.hit, centro);
+
+    const Vetor ka = pr.objeto->getKa();
+    const Vetor kd = pr.objeto->getKd();
+    const Vetor ke = pr.objeto->getKe();
+    const double m = pr.objeto->getShininess();
+
+    std::cout << "Selecionado: " << hitToString(pr.hit)
+        << " | t=" << pr.t;
+    if (temCentro) {
+        std::cout << " | centro=" << pointToString(centro);
+    }
+    else {
+        std::cout << " | centro=(indisponivel)";
+    }
+    std::cout << " | Ka=" << vetorToString(ka)
+        << " | Kd=" << vetorToString(kd)
+        << " | Ke=" << vetorToString(ke)
+        << " | m=" << m
+        << std::endl;
 }
 
 static bool lerLinha(std::string& line) {

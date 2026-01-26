@@ -114,6 +114,12 @@ Point P_F(-20.f, 185.f, 450.f);
 float r_lua = 25.0f;
 Esfera lua(P_F, r_lua);
 
+//luz spot
+Color I_Spot(1.0f, 0.7f, 0.0f);
+Point P_Spot(165.f, 180.f, 125.f);
+Vector D_Spot(0.f, -1.f, 0.f);
+float angulo_Spot = 30.f;
+
 // Dica: para deixar as árvores com iluminação mais parecida, coloque a luz bem longe
 // e aproximadamente centrada no "grupo" de árvores (vira quase uma luz direcional).
 // Colocar a luz abaixo da base das copas (y < 60) evita que o cone projete sombra no tronco.
@@ -330,7 +336,7 @@ Point cb_cauda(
     cubo_centro.z);
 Vector dc_cauda(0.f, 1.f, 0.0f);
 Cilindro cauda(cb_cauda, raio_cauda, altura_cauda, dc_cauda);
-Color K_cauda(0.45f, 0.25f, 0.10f);
+Color K_cauda(1.f, 1.f, 1.f);
 float m_cauda = 15.0f;
 
 // Cubo (como malha)
@@ -389,9 +395,10 @@ int main() {
     SDL_Init(SDL_INIT_VIDEO);
     SDL_CreateWindowAndRenderer(nCol, nLin, 0, &window, &renderer);
     SDL_SetWindowTitle(window, "Trabalho Final - CG");
-    texturaMadeira = new Textura("madeira", "madeira.bmp");
+    //texturaMadeira = new Textura("madeira", "madeira.bmp");
     texturaVaca = new Textura("vaca", "vaca.bmp");
     texturaCeu = new Textura("ceu", "ceu.bmp");
+    texturaMadeira = new Textura("grama", "grama.bmp");
 
     // Materiais / propriedades via Objeto (Ka/Kd/Ke/shininess)
     // esfera.setKa(Vetor(K_e.r, K_e.g, K_e.b));
@@ -451,10 +458,10 @@ int main() {
     cauda.setKe(Vetor(K_cauda.r, K_cauda.g, K_cauda.b));
     cauda.setShininess(m_cauda);
 
-    // Textura da vaca (cauda)
-    cauda.material.usarTextura = true;
-    cauda.material.textura = texturaVaca;
-    cauda.material.texturaScale = 1.0f;
+    // // Textura da vaca (cauda)
+    // cauda.material.usarTextura = true;
+    // cauda.material.textura = texturaVaca;
+    // cauda.material.texturaScale = 1.0f;
 
     // Chão com textura
     mat_chao.usarTextura = true;
@@ -583,6 +590,8 @@ int main() {
     Cena cena;
     cena.observador = camera.getEye();
     cena.luz = LuzPontual{ P_F, I_F };
+    cena.luzSpot = LuzSpot{ I_Spot, P_Spot, D_Spot, angulo_Spot };
+    cena.luzSpotAtiva = false;
     cena.luzAmbiente = I_A;
     cena.objetosSombra = { &cilindro, &cone, &cilindro2, &cone2, &cilindro3, &cone3, &nave,
         &esfera1_nave, &esfera2_nave, &esfera3_nave, &cilindro4, &cilindro5, &cilindro6, &cilindro7, &cilindro8, &cuboMalha, &esfera_cabeca,
@@ -603,12 +612,8 @@ int main() {
 
             if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
                 gSelecionado = pickFromScreen(event.button.x, event.button.y, nCol, nLin);
-                if (gSelecionado.hit == Hit::None) {
-                    std::cout << "Selecionado: None" << std::endl;
-                }
-                else {
-                    std::cout << "Selecionado: " << hitToString(gSelecionado.hit)
-                        << " | t=" << gSelecionado.t << std::endl;
+                imprimirSelecaoDetalhada(gSelecionado);
+                if (gSelecionado.hit != Hit::None) {
                     imprimirAjudaSelecao();
                 }
             }
@@ -736,6 +741,16 @@ int main() {
         }
     }
 
+    gCena = nullptr;
+
+    delete texturaMadeira;
+    texturaMadeira = nullptr;
+    delete texturaVaca;
+    texturaVaca = nullptr;
+    delete texturaCeu;
+    texturaCeu = nullptr;
+
+    SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
 

@@ -60,6 +60,9 @@ PickResult pickFromScreen(int mouseX, int mouseY, int width, int height);
 // Comandos da seleção
 void imprimirAjudaSelecao();
 
+// Imprime informações detalhadas do objeto selecionado: nome, centro e material.
+void imprimirSelecaoDetalhada(const PickResult& pr);
+
 void setCorObjeto(Objeto* obj, float r, float g, float b);
 void aplicarMaterialCustom(Objeto* obj,
     float ka_r, float ka_g, float ka_b,

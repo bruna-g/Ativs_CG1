@@ -15,11 +15,20 @@ struct LuzPontual {
     Color intensidade;
 };
 
+struct LuzSpot {
+    Color intensidade;
+    Point pos;
+    Vector direcao;
+    float angulo; // em graus
+};
+
 // Contexto mínimo para cálculo de cor/sombra.
 // A ideia é evitar dependências de variáveis globais dentro dos objetos.
 struct Cena {
     Point observador;
     LuzPontual luz;
+    bool luzSpotAtiva;
+    LuzSpot luzSpot;
     Color luzAmbiente;
 
     // Objetos que participam dos testes de sombra (ex.: cones/cilindros/esferas/malhas).
@@ -39,6 +48,7 @@ struct Cena {
     Cena()
         : observador(0.0f, 0.0f, 0.0f),
         luz{ Point(0.0f, 0.0f, 0.0f), Color(0.0f, 0.0f, 0.0f) },
+        luzSpot{ Color(0.0f, 0.0f, 0.0f), Point(0.0f, 0.0f, 0.0f), Vector(0.0f, 0.0f, -1.0f), 0.0f },
         luzAmbiente(0.0f, 0.0f, 0.0f) {
     }
 };

@@ -388,6 +388,33 @@ Color Cone::CalcularCor(const Cena& cena, float t, const Vector& dir) const {
     return Color(R, G, B);
 }
 
+Vector Cone::CalcularNormal(const Point& Pi, const Vector& dir) const {
+    // Base do cone: plano em cb com normal dc
+    Vector dist_centro = subtrai_pontos(Pi, cb);
+    float altura_Pi = calcula_prod_esc(dist_centro, dc);
+    bool na_base = fabs(altura_Pi) < 1e-3f;
+
+    return na_base
+        ? Vector(
+            (calcula_prod_esc(dc, dir) > 0 ? -dc.i : dc.i),
+            (calcula_prod_esc(dc, dir) > 0 ? -dc.j : dc.j),
+            (calcula_prod_esc(dc, dir) > 0 ? -dc.k : dc.k))
+        : [&]() {
+        Vector V = subtrai_pontos(v, Pi);
+        float vNorma = calcula_norma(V);
+        if (vNorma == 0.0f) vNorma = 1.0f;
+        Vector s_conjugado(V.i / vNorma, V.j / vNorma, V.k / vNorma);
+        Matriz3x3 M_id(1.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 1.0f);
+        Matriz3x3 M_e = matrizSubtrai(M_id, outerProduto(s_conjugado));
+        Vector N = matrizVetorProduto(M_e, dc);
+        float N_norma = calcula_norma(N);
+        if (N_norma == 0.0f) N_norma = 1.0f;
+        return Vector(N.i / N_norma, N.j / N_norma, N.k / N_norma);
+        }();
+}
+
 // Wrapper legado (mantido para compatibilidade com código antigo)
 extern Point Po;
 extern Cone cone;
