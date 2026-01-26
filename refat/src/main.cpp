@@ -741,6 +741,16 @@ int main() {
         }
     }
 
+    gCena = nullptr;
+
+    delete texturaMadeira;
+    texturaMadeira = nullptr;
+    delete texturaVaca;
+    texturaVaca = nullptr;
+    delete texturaCeu;
+    texturaCeu = nullptr;
+
+    SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
 
