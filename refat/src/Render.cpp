@@ -412,7 +412,8 @@ void renderScene(SDL_Renderer* renderer, const Cena& cena) {
                 break;
             }
             case Hit::Esfera_cabeca:
-                cor = esfera_cabeca.CalcularCor(cena, t_best, dr_e);
+                cor = CalcularCor(cena, t_best, dr_e, esfera_cabeca.getKa(),
+                                     esfera_cabeca.getKd(), esfera_cabeca.getKe(), esfera_cabeca.CalcularNormal(p_aux), &esfera_cabeca);
                 break;
             case Hit::Lua:
                 cor = lua.CalcularCor(cena, t_best, dr_e);
