@@ -404,9 +404,11 @@ void renderScene(SDL_Renderer* renderer, const Cena& cena) {
                 plano_cubo.setKe(cuboMalha.getKe());
                 plano_cubo.setShininess(cuboMalha.getShininess());
                 cuboMalha.plano = plano_cubo;
-                // cor = plano_cubo.CalcularCor(cena, dr_e);
-                cor = cuboMalha.CalcularCor(cena, t_best, dr_e);
-
+                if(cena.luzSpotAtiva){
+                    cor = cuboMalha.CalcularCor(cena, t_best, dr_e);
+                } else{
+                    cor = plano_cubo.CalcularCor(cena, dr_e);
+                }                     
                 break;
             }
             case Hit::Esfera_cabeca:
