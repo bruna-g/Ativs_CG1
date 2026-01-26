@@ -252,7 +252,7 @@ void renderScene(SDL_Renderer* renderer, const Cena& cena) {
             case Hit::Cilindro4:
                 //cor = cilindro4.CalcularCor(cena, t_best, dr_e);
                 cor = CalcularCor(cena, t_best, dr_e, cilindro4.getKa(),
-                                cilindro.getKd(), cilindro4.getKe(), cilindro4.CalcularNormal(p_aux), &cilindro4);
+                                cilindro4.getKd(), cilindro4.getKe(), cilindro4.CalcularNormal(p_aux), &cilindro4);
                 break;
             case Hit::Cilindro5:
                 // cor = cilindro5.CalcularCor(cena, t_best, dr_e);

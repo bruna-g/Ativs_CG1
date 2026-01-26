@@ -98,7 +98,7 @@ Color Plano::CalcularCor(const Cena& cena, const Vector& dir) const {
         
         float fd_spot = lidarExcecao(calcula_prod_esc(n, l_spot));
         float cosAlpha_spot = lidarExcecao(calcula_prod_esc(r_spot, Vector(-dir.i, -dir.j, -dir.k)));
-        float fe_spot = pow(cosAlpha_spot, cena.expoenteEspecular);
+        float fe_spot = pow(cosAlpha_spot, static_cast<float>(getShininess()));
 
         float cos_dr_l = calcula_prod_esc(cena.luzSpot.direcao, 
             calcula_esc_por_vetor(-1.0f, l_spot));
