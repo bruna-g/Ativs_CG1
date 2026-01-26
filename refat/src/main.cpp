@@ -336,7 +336,7 @@ Point cb_cauda(
     cubo_centro.z);
 Vector dc_cauda(0.f, 1.f, 0.0f);
 Cilindro cauda(cb_cauda, raio_cauda, altura_cauda, dc_cauda);
-Color K_cauda(0.45f, 0.25f, 0.10f);
+Color K_cauda(1.f, 1.f, 1.f);
 float m_cauda = 15.0f;
 
 // Cubo (como malha)
@@ -458,10 +458,10 @@ int main() {
     cauda.setKe(Vetor(K_cauda.r, K_cauda.g, K_cauda.b));
     cauda.setShininess(m_cauda);
 
-    // Textura da vaca (cauda)
-    cauda.material.usarTextura = true;
-    cauda.material.textura = texturaVaca;
-    cauda.material.texturaScale = 1.0f;
+    // // Textura da vaca (cauda)
+    // cauda.material.usarTextura = true;
+    // cauda.material.textura = texturaVaca;
+    // cauda.material.texturaScale = 1.0f;
 
     // Chão com textura
     mat_chao.usarTextura = true;
